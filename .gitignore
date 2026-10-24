@@ -1,0 +1,13 @@
+# Build output and IDE state
+build/
+.gradle/
+.kotlin/
+.idea/
+*.iml
+local.properties
+__pycache__/
+
+# Signing keys must never be committed
+*.jks
+*.keystore
+keystore.properties

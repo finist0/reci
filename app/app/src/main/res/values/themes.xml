@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.Reci" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/bg</item>
+    </style>
+
+    <style name="Theme.Reci.Lock" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/lock_bg</item>
+        <item name="android:windowAnimationStyle">@null</item>
+    </style>
+</resources>

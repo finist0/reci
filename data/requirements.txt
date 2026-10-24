@@ -1,0 +1,5 @@
+# build_json.py: Russian gender check of noun cards
+pymorphy3==2.0.6
+pymorphy3-dicts-ru
+# lemmatize.py only: Serbian lemmatizer for the frequency list
+classla==2.2.3
