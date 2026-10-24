@@ -161,19 +161,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                             Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${ctx.packageName}"))
                         )
                     }
-                    if (!overlay) {
-                        Text(
-                            "Если переключатель не включается, Android ограничил настройки для приложения " +
-                                "не из Google Play. Снимите ограничение: Settings → Apps → НЕРодная речь → " +
-                                "⋮ справа вверху → Allow restricted settings, подтвердите PIN-кодом или " +
-                                "отпечатком. Потом снова нажмите «выдать». Если пункта в меню нет, сначала " +
-                                "попробуйте включить разрешение, а потом загляните в меню ещё раз.",
-                            fontSize = 12.sp,
-                            color = p.secondary,
-                            lineHeight = 17.sp,
-                            modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 10.dp),
-                        )
-                    }
+                    if (!overlay) RestrictedHint()
                     Line()
                     Permission("Уведомления", "Для слов на повторение в шторке", notify) {
                         if (Build.VERSION.SDK_INT >= 33) notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -341,6 +329,43 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                 }
             },
             confirmButton = { TextButton(onClick = { showPermissions = false }) { Text("Понятно") } },
+        )
+    }
+}
+
+@Composable
+private fun RestrictedHint() {
+    val p = LocalPalette.current
+    val steps = listOf(
+        "Settings → Apps → НЕРодная речь.",
+        "⋮ справа вверху → Allow restricted settings.",
+        "Подтвердите PIN-кодом или отпечатком.",
+        "Вернитесь сюда и снова нажмите «выдать».",
+    )
+    Column(
+        Modifier.padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text(
+            "Если переключатель не включается, Android ограничил настройки. Так бывает у приложений, " +
+                "установленных не из Google Play. Снимите ограничение:",
+            fontSize = 12.sp,
+            color = p.secondary,
+            lineHeight = 17.sp,
+        )
+        steps.forEachIndexed { i, step ->
+            Row {
+                Text("${i + 1}.", fontSize = 12.sp, color = p.accent, fontWeight = FontWeight.SemiBold, lineHeight = 17.sp, modifier = Modifier.width(18.dp))
+                Text(step, fontSize = 12.sp, color = p.text, lineHeight = 17.sp)
+            }
+        }
+        Text(
+            "Если пункта Allow restricted settings в меню нет, сначала попробуйте включить разрешение, " +
+                "а потом откройте меню ещё раз.",
+            fontSize = 12.sp,
+            color = p.secondary,
+            lineHeight = 17.sp,
+            modifier = Modifier.padding(top = 4.dp),
         )
     }
 }
