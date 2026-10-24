@@ -123,7 +123,7 @@ fun WordBody(
         if (onGrammar != null) GrammarLinks(w, onGrammar)
 
         Spacer(Modifier.height(18.dp))
-        Box {
+        Box(Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 w.meanings.forEachIndexed { i, m -> Meaning(i + 1, m) }
             }
