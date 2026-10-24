@@ -167,7 +167,7 @@ fun CategoriesScreen(openList: (String) -> Unit, back: () -> Unit) {
     val counts = remember(Repo.version.intValue) { Repo.counts() }
     val count = { id: String -> counts[id]?.get(0) ?: 0 }
     val known = { id: String -> counts[id]?.get(1) ?: 0 }
-    val dots = mapOf("M:dontknow" to MarkDontKnow, "M:known" to p.accent, "M:fav" to MarkUnsure)
+    val dots = mapOf("M:dontknow" to MarkDontKnow, "M:known" to p.known, "M:fav" to MarkUnsure)
 
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
         Header("Что учим", back)
@@ -270,7 +270,7 @@ private fun LevelRow(name: String, known: Int, total: Int, selected: Boolean, on
             Spacer(Modifier.height(6.dp))
             Box(Modifier.fillMaxWidth().height(4.dp).clip(RoundedCornerShape(50)).background(p.panel)) {
                 if (total > 0) {
-                    Box(Modifier.fillMaxWidth(known.toFloat() / total).fillMaxHeight().background(p.accent))
+                    Box(Modifier.fillMaxWidth(known.toFloat() / total).fillMaxHeight().background(p.known))
                 }
             }
             Text("знаю $known из $total", fontSize = 12.sp, color = p.secondary, modifier = Modifier.padding(top = 4.dp))
@@ -489,7 +489,7 @@ fun WordListScreen(category: String, open: (String) -> Unit, back: () -> Unit) {
                         Box(
                             Modifier.size(9.dp).clip(CircleShape).background(
                                 when (state) {
-                                    State.KNOWN -> p.accent
+                                    State.KNOWN -> p.known
                                     State.UNSURE -> MarkUnsure
                                     else -> MarkDontKnow
                                 }

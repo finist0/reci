@@ -64,6 +64,13 @@ val Serif = FontFamily(
 
 val Display = FontFamily(Font(R.font.ruslan_display))
 
+// The Know mark is always green: the accent where it is green itself, the Lipa green elsewhere.
+val Palette.known get() = when {
+    accent.green > accent.red && accent.green > accent.blue -> accent
+    dark -> Color(0xFF5B9440)
+    else -> Color(0xFF4F7F34)
+}
+
 val Palette.titleRed get() = if (dark) Color(0xFFE5574A) else Color(0xFFB8322A)
 
 val LocalPalette =staticCompositionLocalOf { Palettes[2] }

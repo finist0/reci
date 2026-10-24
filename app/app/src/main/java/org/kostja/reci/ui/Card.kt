@@ -329,7 +329,7 @@ fun MarksRow(answered: State?, modifier: Modifier = Modifier, onAnswer: (State, 
         Mark(
             "Знаю",
             answered == State.KNOWN,
-            p.accent,
+            p.known,
             Modifier.weight(1f),
             onLongClick = { onAnswer(State.KNOWN, true) },
         ) { onAnswer(State.KNOWN, false) }
