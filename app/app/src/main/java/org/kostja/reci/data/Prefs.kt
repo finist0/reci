@@ -99,7 +99,7 @@ object Prefs {
         set(v) = setBool("use_marks", v)
 
     var reviewNotification: Boolean
-        get() = bool("review_notification", true)
+        get() = bool("review_notification", false)
         set(v) = setBool("review_notification", v)
 
     var reviewKnown: Boolean
