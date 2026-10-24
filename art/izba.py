@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Izbushka on chicken legs saying "Ђ": the launcher icon of «Речь».
+"""Izbushka on chicken legs saying "Ђ": the launcher icon of «НЕРодная речь».
 
-Writes the adaptive-icon layers into the app resources.
+Writes the adaptive-icon layers into the app resources and web/icon.svg for the web app.
 Usage: python3 art/izba.py [--preview DIR]  (DIR gets SVG previews of both layers)
 """
 import os
@@ -105,9 +105,8 @@ def izba(p, detail=True, smoke=True, bubble=False, sw=2.2):
     return "".join(g)
 
 
-def layer(drawing, bg=None):
+def layer(drawing, bg=None, s=0.31):
     # 108x108 adaptive canvas; the drawing's centre (87,97) goes to the canvas centre
-    s = 0.31
     back = f'<rect width="108" height="108" fill="{bg}"/>' if bg else ""
     return (f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 108 108">{back}'
             f'<g transform="translate({54 - 87 * s:.2f} {54 - 97 * s:.2f}) scale({s})">{drawing}</g></svg>\n')
@@ -128,6 +127,9 @@ def main():
         write(os.path.join(out, "icon-mono.svg"), layer(mono, "#ffffff"))
     write(os.path.join(RES, "ic_launcher_fg.xml"), svg2vd(layer(fg)))
     write(os.path.join(RES, "ic_launcher_mono.xml"), svg2vd(layer(mono)))
+    # iOS only rounds the corners instead of cutting a circle, so the drawing can be larger.
+    write(os.path.join(ROOT, "web/icon.svg"), layer(fg, ICON_BG, s=0.42))
+    write(os.path.join(ROOT, "web/icon-maskable.svg"), layer(fg, ICON_BG))
 
 
 if __name__ == "__main__":
