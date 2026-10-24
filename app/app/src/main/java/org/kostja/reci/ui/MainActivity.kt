@@ -1,5 +1,6 @@
 package org.kostja.reci.ui
 
+import android.app.ActivityManager
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -9,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
+import org.kostja.reci.R
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
@@ -46,6 +48,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        // The activity label is the short one for the launcher; recents get the full name.
+        @Suppress("DEPRECATION")
+        setTaskDescription(ActivityManager.TaskDescription(getString(R.string.app_name)))
         LockService.sync(this)
         handle(intent)
         setContent {

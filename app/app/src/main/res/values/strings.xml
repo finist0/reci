@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">НЕРечь</string>
+    <string name="app_name">НЕРодная речь</string>
+    <!-- The Pixel launcher cuts the full name under the icon. -->
+    <string name="app_name_short">НЕРечь</string>
 </resources>
