@@ -185,6 +185,7 @@ object Repo {
     fun toggleFav(w: Word) = update(w) { it.copy(fav = !it.fav) }
 
     fun markShown(w: Word) {
+        if (revisit) return
         update(w) { it.copy(seen = it.seen + 1, last = System.currentTimeMillis()) }
         val c = Calendar.getInstance()
         Prefs.countShown(c.get(Calendar.YEAR) * 1000 + c.get(Calendar.DAY_OF_YEAR))
@@ -318,6 +319,13 @@ object Repo {
 
     private val history = ArrayDeque<String>()
 
+    // Cards left by going back, shown again in the same order by going forward.
+    private val forward = ArrayDeque<String>()
+
+    // The card on screen was reached by going back or forward, so it was already counted.
+    @Volatile
+    private var revisit = false
+
     // Set when nothing is left to show for the chosen sections.
     val exhausted = mutableStateOf(false)
 
@@ -328,6 +336,7 @@ object Repo {
 
     fun resetPosition() {
         history.clear()
+        forward.clear()
         answers.clear()
         exhausted.value = false
         Prefs.setCurrent(0, null, null, System.nanoTime())
@@ -344,6 +353,8 @@ object Repo {
         val cur = Prefs.currentKey
         if (delta < 0) {
             val prev = history.removeLastOrNull()?.let { word(it) } ?: return
+            if (cur != null) forward.addLast(cur)
+            revisit = true
             Prefs.setCurrent(0, prev.key, WordJson.write(prev))
             return
         }
@@ -351,6 +362,12 @@ object Repo {
             history.addLast(cur)
             if (history.size > 100) history.removeFirst()
         }
+        forward.removeLastOrNull()?.let { word(it) }?.let {
+            revisit = true
+            Prefs.setCurrent(0, it.key, WordJson.write(it))
+            return
+        }
+        revisit = false
         Prefs.bumpCardCount()
         val next = pickNext(cur)
         exhausted.value = next == null
