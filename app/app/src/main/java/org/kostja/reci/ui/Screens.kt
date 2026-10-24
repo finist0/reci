@@ -408,12 +408,10 @@ fun DetailScreen(key: String, back: () -> Unit, onGrammar: ((String) -> Unit)? =
                 .verticalScroll(rememberScrollState())
                 .padding(24.dp)
         ) { WordBody(w, slide = false, onGrammar = onGrammar) }
-        var answered by remember(w.key) { mutableStateOf<State?>(null) }
+        var answered by remember(w.key) { mutableStateOf(Repo.answerOf(w)) }
         MarksRow(answered, Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) { a, learnedNow ->
-            if (answered == null) {
-                if (learnedNow) Repo.markLearned(w) else Repo.answer(w, a)
-                answered = a
-            }
+            Repo.answer(w, a, learnedNow)
+            answered = a
         }
     }
 }

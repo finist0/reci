@@ -76,15 +76,15 @@ fun CardScreen(
     val w = Repo.current()
 
     // Fixed for one showing of a card: answering moves the word to its next stage, but the
-    // card on screen keeps the layout it was shown with, and only the first answer counts.
+    // card on screen keeps the layout it was shown with. A later answer replaces the earlier one.
     val showId = Prefs.cardCount
     val recall = remember(w?.key, showId) { w != null && Repo.asksRecall(w) }
     val stage = remember(w?.key, showId) { w?.let { stageLabel(it) } }
-    var revealed by rememberSaveable(w?.key, showId) { mutableStateOf(false) }
-    var answered by remember(w?.key, showId) { mutableStateOf<State?>(null) }
+    var revealed by rememberSaveable(w?.key, showId) { mutableStateOf(w != null && Repo.answerOf(w) != null) }
+    var answered by remember(w?.key, showId) { mutableStateOf(w?.let { Repo.answerOf(it) }) }
     val onAnswer = { a: State, learnedNow: Boolean ->
-        if (w != null && answered == null) {
-            if (learnedNow) Repo.markLearned(w) else Repo.answer(w, a)
+        if (w != null) {
+            Repo.answer(w, a, learnedNow)
             answered = a
         }
         revealed = true
@@ -155,7 +155,7 @@ fun CardScreen(
 // What the user is asked to do with this card, shown above it.
 private fun stageLabel(w: Word): String? {
     if (Repo.isArticle(w)) return null
-    val pr = Repo.progress(w)
+    val pr = Repo.shownProgress(w)
     return when {
         Repo.isDue(pr) -> "Проверка: вспомните слово"
         pr.phase == Repo.RECALL -> "Вспомните слово · «Знаю» ${pr.streak} из 3"

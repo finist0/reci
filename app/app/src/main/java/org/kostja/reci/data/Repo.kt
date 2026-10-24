@@ -130,12 +130,39 @@ object Repo {
         if (isArticle(w)) return false
         if (Prefs.cardMode == 1) return true
         if (Prefs.cardMode == 2) return false
-        val p = progress(w)
+        val p = shownProgress(w)
         return p.phase == RECALL || isDue(p)
     }
 
-    // An answer to the card on screen: KNOWN or DONT_KNOW.
-    fun answer(w: Word, a: State) = update(w) { p ->
+    private class Answer(val before: Progress, val state: State, val learned: Boolean)
+
+    // Answers to recently shown cards with the progress they were given on, so an answer can
+    // be changed, also after going back to the card.
+    private val answers = ConcurrentHashMap<String, Answer>()
+
+    fun answerOf(w: Word): State? = answers[w.key]?.state
+
+    // The progress the card was shown with, before it was answered.
+    fun shownProgress(w: Word): Progress = answers[w.key]?.before ?: progress(w)
+
+    // KNOWN or DONT_KNOW; learned skips the stages for a word the user already knows. A new
+    // answer to the same card replaces the previous one.
+    fun answer(w: Word, a: State, learned: Boolean = false) {
+        val old = answers[w.key]
+        if (old != null && old.state == a && old.learned == learned) return
+        update(w) { cur ->
+            val before = answers[w.key]?.before ?: cur
+            answers[w.key] = Answer(before, a, learned)
+            val p = cur.copy(state = before.state, phase = before.phase, streak = before.streak, step = before.step, due = before.due)
+            when {
+                !learned -> advance(w, p, a)
+                p.phase == LEARNED -> p
+                else -> learned(p)
+            }
+        }
+    }
+
+    private fun advance(w: Word, p: Progress, a: State): Progress =
         when {
             isArticle(w) -> when {
                 a != State.KNOWN -> p.copy(state = a, phase = 0, streak = 0, due = 0)
@@ -154,10 +181,6 @@ object Repo {
                 else p.copy(phase = INTRO, streak = p.streak + 1, state = State.NEW)
             else -> p.copy(phase = INTRO, streak = 0, state = a)
         }
-    }
-
-    // A word the user already knows skips the stages.
-    fun markLearned(w: Word) = update(w) { if (it.phase == LEARNED) it else learned(it) }
 
     fun toggleFav(w: Word) = update(w) { it.copy(fav = !it.fav) }
 
@@ -170,6 +193,7 @@ object Repo {
     fun resetAll() = io.execute {
         db.clear()
         progress.clear()
+        answers.clear()
         version.intValue++
     }
 
@@ -304,6 +328,7 @@ object Repo {
 
     fun resetPosition() {
         history.clear()
+        answers.clear()
         exhausted.value = false
         Prefs.setCurrent(0, null, null, System.nanoTime())
     }
@@ -329,6 +354,9 @@ object Repo {
         Prefs.bumpCardCount()
         val next = pickNext(cur)
         exhausted.value = next == null
+        // A fresh showing of a card takes a fresh answer.
+        next?.let { answers.remove(it.key) }
+        answers.keys.retainAll(history.toSet() + listOfNotNull(next?.key))
         Prefs.setCurrent(0, next?.key, next?.let { WordJson.write(it) })
     }
 
