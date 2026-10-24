@@ -176,7 +176,7 @@ fun GrammarIndexScreen(open: (String) -> Unit, openCard: (String) -> Unit, back:
                             Box(
                                 Modifier.padding(start = 10.dp).size(8.dp).clip(CircleShape).background(
                                     when (state) {
-                                        State.KNOWN -> MarkKnown
+                                        State.KNOWN -> p.accent
                                         State.UNSURE -> MarkUnsure
                                         else -> MarkDontKnow
                                     }

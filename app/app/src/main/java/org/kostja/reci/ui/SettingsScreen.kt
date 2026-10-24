@@ -361,7 +361,7 @@ private fun ProgressCard() {
         }
         Spacer(Modifier.height(10.dp))
         Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(p.panel)) {
-            if (all.isNotEmpty()) Box(Modifier.fillMaxWidth(known.toFloat() / all.size).fillMaxHeight().background(MarkKnown))
+            if (all.isNotEmpty()) Box(Modifier.fillMaxWidth(known.toFloat() / all.size).fillMaxHeight().background(p.accent))
         }
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -512,12 +512,12 @@ private fun Permission(title: String, hint: String, granted: Boolean, onGrant: (
         }
         Text(
             if (granted) "есть" else "выдать",
-            color = if (granted) MarkKnown else Color.White,
+            color = if (granted) p.accent else Color.White,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
                 .clip(RoundedCornerShape(50))
-                .background(if (granted) MarkKnown.copy(alpha = 0.12f) else p.accent)
+                .background(if (granted) p.accent.copy(alpha = 0.12f) else p.accent)
                 .padding(horizontal = 12.dp, vertical = 5.dp),
         )
     }

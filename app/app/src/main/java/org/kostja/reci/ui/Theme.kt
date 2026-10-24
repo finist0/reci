@@ -43,7 +43,6 @@ data class Palette(
 
 val MarkDontKnow = Color(0xFFD64545)
 val MarkUnsure = Color(0xFFE0A526)
-val MarkKnown = Color(0xFF3E9E6A)
 
 val Palettes = listOf(
     Palette("Кајмак", Color(0xFFF5EFE6), Color(0xFFFFFCF7), Color(0xFFC2502D), Color(0xFF2B2D42), Color(0xFFF6DDD2), false),
