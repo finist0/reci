@@ -207,6 +207,21 @@ input { font: inherit; color: var(--text); }
 .mark.on { background: var(--c); color: #fff; }
 .mark.on .dot { background: #fff; }
 
+.tip {
+    display: flex;
+    align-items: center;
+    margin: 4px 14px;
+    padding: 8px 0 8px 14px;
+    border-radius: 14px;
+    background: var(--hl);
+    font-size: 13px;
+    line-height: 18px;
+    flex: none;
+}
+
+.tip span { flex: 1; }
+.tip button { width: 40px; height: 40px; border-radius: 50%; color: var(--secondary); text-align: center; font-size: 15px; flex: none; }
+
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
 
 .bottom { display: flex; gap: 10px; align-items: center; padding: 6px 14px 12px; flex: none; }

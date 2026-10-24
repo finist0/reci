@@ -82,12 +82,24 @@ fun CardScreen(
     val stage = remember(w?.key, showId) { w?.let { stageLabel(it) } }
     var revealed by rememberSaveable(w?.key, showId) { mutableStateOf(w != null && Repo.answerOf(w) != null) }
     var answered by remember(w?.key, showId) { mutableStateOf(w?.let { Repo.answerOf(it) }) }
+    val fresh = remember(w?.key, showId) {
+        w != null && !Repo.isArticle(w) && Repo.shownProgress(w).let { it.phase <= Repo.INTRO && it.streak == 0 }
+    }
+    var hintCounted by remember(w?.key, showId) { mutableStateOf(false) }
+    var hint by remember(w?.key, showId) { mutableStateOf(false) }
     val onAnswer = { a: State, learnedNow: Boolean ->
         if (w != null) {
             Repo.answer(w, a, learnedNow)
             answered = a
         }
         revealed = true
+        if (learnedNow) {
+            Prefs.hintDone = true
+            hint = false
+        } else if (a == State.KNOWN && fresh && !hintCounted) {
+            hintCounted = true
+            hint = Prefs.hintAfterNewKnown()
+        }
     }
 
     Column(
@@ -146,6 +158,7 @@ fun CardScreen(
             Star(w, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp))
         }
         if (Prefs.useMarks && w != null) {
+            if (hint) LongPressHint { hint = false; Prefs.hintDone = true }
             MarksRow(answered, Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer)
         }
         BottomNav(onPrev = { Repo.step(-1) }, onNext = onNext, onDone = onDone)
@@ -310,6 +323,34 @@ private fun Star(w: Word, modifier: Modifier) {
             tint = if (fav) MarkUnsure else p.faint,
             modifier = Modifier.size(24.dp),
         )
+    }
+}
+
+@Composable
+private fun LongPressHint(onClose: () -> Unit) {
+    val p = LocalPalette.current
+    Row(
+        Modifier
+            .padding(horizontal = 14.dp, vertical = 4.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(p.highlight)
+            .padding(start = 14.dp, top = 8.dp, bottom = 8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(
+            "Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.",
+            fontSize = 13.sp,
+            color = p.text,
+            lineHeight = 18.sp,
+            modifier = Modifier.weight(1f),
+        )
+        Box(
+            Modifier.size(40.dp).clip(CircleShape).clickable(onClick = onClose),
+            contentAlignment = Alignment.Center,
+        ) {
+            Text("✕", fontSize = 15.sp, color = p.secondary)
+        }
     }
 }
 

@@ -3,7 +3,7 @@
 
 import * as D from "./data.js";
 import * as R from "./repo.js";
-import { prefs, setPref, onChange, exportData, importData, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
+import { prefs, setPref, setPrefs, onChange, exportData, importData, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
 import { speak, voiceName, onVoices, canSpeak } from "./speech.js";
 
 const esc = D.esc;
@@ -314,9 +314,11 @@ function cardShow(w) {
     const id = w.key + "#" + prefs.cardCount;
     if (show?.id !== id) {
         const answered = R.answerOf(w);
+        const p = R.shownProgress(w);
         show = {
             id, key: w.key, recall: R.asksRecall(w), stage: stageLabel(w), answered, revealed: answered !== null,
             covered: prefs.cardMode === 2 && !R.isArticle(w),
+            fresh: !R.isArticle(w) && p.phase <= R.INTRO && p.streak === 0, hintCounted: false, hint: false,
         };
         R.markShown(w);
     }
@@ -379,8 +381,22 @@ function cardScreen() {
             </div>
             <button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>
         </div>
+        ${prefs.useMarks && s.hint ? longPressHint : ""}
         ${prefs.useMarks ? marksRow(s.answered) : ""}
         ${bottomNav()}`;
+}
+
+const longPressHint = `
+    <div class="tip"><span>Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.</span>
+        <button ${act("hintclose")} aria-label="Закрыть">✕</button></div>`;
+
+// The long-press hint is shown on the 1st, 10th and 30th «Знаю» given to a new word, until it is
+// closed or the long press is used once.
+function hintAfterNewKnown() {
+    if (prefs.hintDone) return false;
+    const n = prefs.newKnownCount + 1;
+    setPrefs({ newKnownCount: n, hintDone: n >= 30 });
+    return n === 1 || n === 10 || n === 30;
 }
 
 const bottomNav = () => `
@@ -746,6 +762,10 @@ const actions = {
         if (show) show.covered = false;
         schedule();
     },
+    hintclose: () => {
+        if (show) show.hint = false;
+        setPref("hintDone", true);
+    },
     prev: () => R.step(-1),
     next: () => {
         R.step(1);
@@ -813,6 +833,13 @@ function answer(a, learnedNow) {
         R.answer(R.word(show.key), a, learnedNow);
         show.answered = a;
         show.revealed = true;
+        if (learnedNow) {
+            show.hint = false;
+            setPref("hintDone", true);
+        } else if (a === KNOWN && show.fresh && !show.hintCounted) {
+            show.hintCounted = true;
+            show.hint = hintAfterNewKnown();
+        }
     }
     schedule();
 }

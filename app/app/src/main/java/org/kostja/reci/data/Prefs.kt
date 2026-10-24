@@ -102,6 +102,20 @@ object Prefs {
         get() = bool("review_notification", false)
         set(v) = setBool("review_notification", v)
 
+    // The long-press hint is shown on the 1st, 10th and 30th «Знаю» given to a new word, until
+    // it is closed or the long press is used once.
+    var hintDone: Boolean
+        get() = bool("hint_done", false)
+        set(v) = setBool("hint_done", v)
+
+    fun hintAfterNewKnown(): Boolean {
+        if (hintDone) return false
+        val n = sp.getInt("new_known_count", 0) + 1
+        sp.edit { putInt("new_known_count", n) }
+        if (n >= 30) hintDone = true
+        return n == 1 || n == 10 || n == 30
+    }
+
     var reviewKnown: Boolean
         get() = bool("review_known", true)
         set(v) = setBool("review_known", v)

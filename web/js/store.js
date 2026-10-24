@@ -26,6 +26,8 @@ const defaults = {
     categories: ["L3", "L4", ...sections.map(s => s[0])],
     todayDate: 0,
     todayCount: 0,
+    hintDone: false,
+    newKnownCount: 0,
 };
 
 function read(key) {
