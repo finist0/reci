@@ -156,9 +156,10 @@ fun CardScreen(
 private fun stageLabel(w: Word): String? {
     if (Repo.isArticle(w)) return null
     val pr = Repo.shownProgress(w)
+    val what = if (Prefs.cardMode == 2) "перевод" else "слово"
     return when {
-        Repo.isDue(pr) -> "Проверка: вспомните слово"
-        pr.phase == Repo.RECALL -> "Вспомните слово · «Знаю» ${pr.streak} из 3"
+        Repo.isDue(pr) -> "Проверка: вспомните $what"
+        pr.phase == Repo.RECALL -> "Вспомните $what · «Знаю» ${pr.streak} из 3"
         pr.phase == Repo.LEARNED -> "Выучено"
         pr.streak > 0 -> "Знакомство · «Знаю» ${pr.streak} из 2"
         else -> "Новое слово"
