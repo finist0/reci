@@ -1,0 +1,16 @@
+{
+    "name": "НЕРодная речь",
+    "short_name": "НЕРечь",
+    "description": "Сербские слова для тех, кто говорит по-русски",
+    "lang": "ru",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#EEF2E6",
+    "theme_color": "#EEF2E6",
+    "icons": [
+        { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+        { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+        { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    ]
+}
