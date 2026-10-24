@@ -161,6 +161,19 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                             Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${ctx.packageName}"))
                         )
                     }
+                    if (!overlay) {
+                        Text(
+                            "Если переключатель не включается, Android ограничил настройки для приложения " +
+                                "не из Google Play. Снимите ограничение: Settings → Apps → НЕРодная речь → " +
+                                "⋮ справа вверху → Allow restricted settings, подтвердите PIN-кодом или " +
+                                "отпечатком. Потом снова нажмите «выдать». Если пункта в меню нет, сначала " +
+                                "попробуйте включить разрешение, а потом загляните в меню ещё раз.",
+                            fontSize = 12.sp,
+                            color = p.secondary,
+                            lineHeight = 17.sp,
+                            modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 10.dp),
+                        )
+                    }
                     Line()
                     Permission("Уведомления", "Для слов на повторение в шторке", notify) {
                         if (Build.VERSION.SDK_INT >= 33) notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
