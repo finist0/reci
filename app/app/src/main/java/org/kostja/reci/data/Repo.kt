@@ -106,7 +106,7 @@ object Repo {
     const val INTRO = 1
     const val RECALL = 2
     const val LEARNED = 3
-    private const val INTRO_STREAK = 2
+    private const val INTRO_STREAK = 1
     private const val RECALL_STREAK = 3
 
     // After five right answers in a row the first check comes in a week; each passed check

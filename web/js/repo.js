@@ -86,7 +86,7 @@ const DAY = 24 * 60 * 60 * 1000;
 // A word goes: not started -> INTRO (word and translation shown) -> RECALL (translation
 // only, the user names the word) -> LEARNED, then comes back for checks.
 export const INTRO = 1, RECALL = 2, LEARNED = 3;
-const INTRO_STREAK = 2, RECALL_STREAK = 3;
+const INTRO_STREAK = 1, RECALL_STREAK = 3;
 
 const reviewIntervals = [7 * DAY, 21 * DAY, 60 * DAY, 180 * DAY, 365 * DAY];
 
