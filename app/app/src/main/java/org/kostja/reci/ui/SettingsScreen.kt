@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
@@ -46,6 +47,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -62,7 +64,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.kostja.reci.R
+import org.kostja.reci.data.Backup
 import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
@@ -70,6 +76,7 @@ import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.State
 import org.kostja.reci.lock.LockService
 import java.text.SimpleDateFormat
+import java.time.LocalDate
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
@@ -98,6 +105,32 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
     val notify = canNotify(ctx)
     val battery = ignoresBattery(ctx)
     val notifyLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { tick++ }
+    val scope = rememberCoroutineScope()
+    val toast = { text: String -> Toast.makeText(ctx, text, Toast.LENGTH_LONG).show() }
+    val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
+        if (uri != null) scope.launch {
+            val ok = withContext(Dispatchers.IO) {
+                runCatching {
+                    val text = Backup.export()
+                    ctx.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(text.toByteArray()) }
+                }.isSuccess
+            }
+            toast(if (ok) "Прогресс сохранён." else "Не удалось сохранить файл.")
+        }
+    }
+    val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) scope.launch {
+            val n = withContext(Dispatchers.IO) {
+                runCatching {
+                    Backup.import(ctx.contentResolver.openInputStream(uri)!!.use { it.readBytes().decodeToString() })
+                }.getOrNull()
+            }
+            toast(
+                if (n == null) "Это не файл с прогрессом."
+                else "Загружен прогресс по $n ${plural(n, "слову", "словам", "словам")}."
+            )
+        }
+    }
     var confirmReset by remember { mutableStateOf(false) }
     var confirmArticles by remember { mutableStateOf<String?>(null) }
     var showPermissions by remember { mutableStateOf(false) }
@@ -243,6 +276,14 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
 
             GroupTitle("Данные")
             Panel {
+                NavRow("Сохранить прогресс в файл", "Чтобы перенести его на другое устройство") {
+                    exportLauncher.launch("reci-progress-${LocalDate.now()}.json")
+                }
+                Line()
+                NavRow("Загрузить прогресс из файла", "Заменит прогресс на этом устройстве") {
+                    importLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain"))
+                }
+                Line()
                 for ((pos, title) in listOf("compare" to "Снова показывать разборы", "note" to "Снова показывать заметки")) {
                     val hidden = Repo.hiddenArticles(pos)
                     NavRow(
