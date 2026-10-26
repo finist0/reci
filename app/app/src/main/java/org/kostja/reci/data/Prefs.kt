@@ -180,7 +180,8 @@ object Prefs {
             return stored?.toSet() ?: (setOf("L3", "L4") + Labels.sections.keys)
         }
         set(v) {
-            sp.edit { putStringSet("categories", v) }
+            // A choice made in this version already knows about the sections.
+            sp.edit { putStringSet("categories", v).putBoolean("sections_added", true) }
             changed()
         }
 
