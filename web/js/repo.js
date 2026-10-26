@@ -142,8 +142,10 @@ function advance(w, p, a) {
         if (a !== KNOWN) return { ...p, state: a, phase: 0, streak: 0, due: 0 };
         return p.phase === LEARNED ? passedCheck(p) : learned(p);
     }
+    // A forgotten learned word skips the introduction and is asked again a full round later.
     if (p.phase === LEARNED) {
-        return a === KNOWN ? passedCheck(p) : { ...p, phase: INTRO, streak: 0, state: a, step: 0, due: 0 };
+        return a === KNOWN ? passedCheck(p)
+            : { ...p, phase: RECALL, streak: 0, state: a, step: 0, due: 0, showAt: n + prefs.activeSize };
     }
     if (p.phase === RECALL) {
         if (a === KNOWN) return p.streak + 1 >= RECALL_STREAK ? learned(p) : { ...p, streak: p.streak + 1, state: NEW };

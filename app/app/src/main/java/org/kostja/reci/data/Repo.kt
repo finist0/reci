@@ -176,8 +176,10 @@ object Repo {
                 p.phase == LEARNED -> passedCheck(p)
                 else -> learned(p)
             }
+            // A forgotten learned word skips the introduction and is asked again a full round later.
             p.phase == LEARNED ->
-                if (a == State.KNOWN) passedCheck(p) else p.copy(phase = INTRO, streak = 0, state = a, step = 0, due = 0)
+                if (a == State.KNOWN) passedCheck(p)
+                else p.copy(phase = RECALL, streak = 0, state = a, step = 0, due = 0, showAt = n + Prefs.activeSize)
             p.phase == RECALL -> when (a) {
                 State.KNOWN -> if (p.streak + 1 >= RECALL_STREAK) learned(p) else p.copy(streak = p.streak + 1, state = State.NEW)
                 State.UNSURE -> p.copy(streak = 0, state = a)
