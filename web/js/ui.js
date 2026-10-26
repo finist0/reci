@@ -874,9 +874,10 @@ let pressTimer = 0;
 let longFired = false;
 
 root.addEventListener("pointerdown", ev => {
+    // Some browsers send no click after a long press, so the flag must not outlive the gesture.
+    longFired = false;
     const el = ev.target.closest("[data-long]");
     if (!el) return;
-    longFired = false;
     const [x, y] = [ev.clientX, ev.clientY];
     pressTimer = setTimeout(() => {
         longFired = true;
