@@ -206,7 +206,7 @@ class LearningScenariosTest(private val name: String, private val index: Int) {
         val s = scenario.optJSONObject("settings") ?: JSONObject()
         Prefs.activeSize = s.optInt("activeSize", 20)
         Prefs.order = Order.entries[s.optInt("order", 0)]
-        Prefs.reviewKnown = true
+        Prefs.reviewKnown = s.optBoolean("reviewKnown", true)
         Prefs.cardMode = 0
         val cats = s.optJSONArray("categories")
         // Prefs adds the article sections to stored categories once, for users of older versions.

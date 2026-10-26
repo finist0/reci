@@ -190,6 +190,17 @@
     ]
   },
   {
+    "name": "with checks turned off a learned word does not come back",
+    "settings": {"reviewKnown": false},
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "long"},
+      {"do": "advanceDays", "days": 400},
+      {"do": "skim", "count": 40, "answer": "know", "collect": true},
+      {"expect": {"notSeen": "a", "word": "a", "phase": "learned"}}
+    ]
+  },
+  {
     "name": "Hide removes an article for good",
     "settings": {"categories": ["L3", "X:compare", "X:note"]},
     "steps": [

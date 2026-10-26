@@ -45,7 +45,7 @@ function run(sc) {
 
     R.resetAll();
     const s = sc.settings ?? {};
-    S.setPrefs({ activeSize: s.activeSize ?? 20, order: s.order ?? 0, reviewKnown: true, cardMode: 0, cardCount: 0 });
+    S.setPrefs({ activeSize: s.activeSize ?? 20, order: s.order ?? 0, reviewKnown: s.reviewKnown ?? true, cardMode: 0, cardCount: 0 });
     R.setCategories(s.categories ?? ["L3"], s.order ?? 0);
 
     const current = () => R.current() ?? assert.fail("no card on screen");
