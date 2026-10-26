@@ -302,7 +302,7 @@ function stageLabel(w) {
     if (R.isDue(p)) return `Проверка: вспомните ${what}`;
     if (p.phase === R.RECALL) return `Вспомните ${what} · «Знаю» ${p.streak} из 3`;
     if (p.phase === R.LEARNED) return "Выучено";
-    if (p.streak > 0) return `Знакомство · «Знаю» ${p.streak} из 2`;
+    if (p.state === DONT_KNOW || p.state === UNSURE) return "Ещё раз: запомните слово";
     return "Новое слово";
 }
 
@@ -593,7 +593,7 @@ function settingsScreen(e) {
     for (const w of R.words) counts[R.progress(w).state]++;
     const all = R.words.length, knownN = counts[KNOWN];
     const cats = prefs.categories;
-    const modeText = ["Слово учится по шагам: сначала показано целиком, после двух «Знаю» подряд надо вспомнить его по переводу, после трёх «Знаю» оно выучено. Долгое нажатие на «Знаю» — слово уже знакомо.",
+    const modeText = ["Слово учится по шагам: сначала показано целиком, после «Знаю» надо вспомнить его по переводу, после трёх «Знаю» подряд оно выучено. «Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо.",
         "Видно только перевод: вспомните слово и откройте его кнопкой или ответом.",
         "Видно только слово: перевод открывается по нажатию."][prefs.cardMode];
     const sizes = [10, 15, 20, 30];
