@@ -579,8 +579,8 @@ const choice = (title, options, selected, a) => `
         <div class="segments">${options.map((o, i) => `<button class="${i === selected ? "on" : ""}" ${act(a, i)}>${esc(o)}</button>`).join("")}</div>
     </div>`;
 
-const navRow = (title, summary, a) => `
-    <button class="setting" ${act(a)}>
+const navRow = (title, summary, a, arg = "") => `
+    <button class="setting" ${act(a, arg)}>
         <span class="setting-main"><span class="setting-title">${esc(title)}</span>${summary ? `<span class="setting-sub">${esc(summary)}</span>` : ""}</span>
         ${icon("arrow_forward", "faint")}
     </button>`;
@@ -640,6 +640,10 @@ function settingsScreen(e) {
             ${groupTitle("Данные")}
             ${panel(navRow("Сохранить прогресс в файл", "Чтобы перенести его на другое устройство", "export") + line +
                 navRow("Загрузить прогресс из файла", "Заменит прогресс на этом устройстве", "import") + line +
+                [["compare", "Снова показывать разборы"], ["note", "Снова показывать заметки"]].map(([pos, title]) => {
+                    const hidden = R.hiddenArticles(pos);
+                    return navRow(title, hidden ? `Скрыто: ${hidden}` : "Скрытых нет", "articles", pos) + line;
+                }).join("") +
                 `<button class="setting danger" ${act("reset")}>Сбросить прогресс</button>` +
                 (e.msg ? `<div class="note">${esc(e.msg)}</div>` : ""))}
             <input type="file" accept="application/json,.json" data-input="importfile" hidden>
@@ -656,6 +660,11 @@ function settingsScreen(e) {
                     Иконки: Material Icons, Apache 2.0.</div></div>`)}
             <div class="spacer"></div>
         </div>
+        ${e.articles ? `<div class="modal"><div class="dialog">
+            <div class="dialog-title">Снова показывать ${e.articles === "compare" ? "разборы похожих слов" : "заметки"}?</div>
+            <div class="dialog-text">Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.</div>
+            <div class="dialog-buttons"><button ${act("cancel")}>Отмена</button><button ${act("showagain")}>Показывать</button></div>
+        </div></div>` : ""}
         ${e.confirm ? `<div class="modal"><div class="dialog">
             <div class="dialog-title">Сбросить прогресс?</div>
             <div class="dialog-text">Все слова снова станут новыми, избранное очистится.</div>
@@ -815,8 +824,18 @@ const actions = {
         schedule();
     },
     cancel: () => {
-        top().confirm = false;
+        Object.assign(top(), { confirm: false, articles: null });
         schedule();
+    },
+    articles: arg => {
+        if (!R.hiddenArticles(arg)) return;
+        top().articles = arg;
+        schedule();
+    },
+    showagain: () => {
+        const e = top();
+        R.showArticlesAgain(e.articles);
+        e.articles = null;
     },
     doreset: () => {
         Object.assign(top(), { confirm: false, msg: "Прогресс сброшен." });
