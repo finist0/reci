@@ -102,6 +102,7 @@ class LearningScenariosTest(private val name: String, private val index: Int) {
             "remember" -> vars[step.getString("as")] = Mark(current().key, Prefs.cardCount)
             "fav" -> Repo.toggleFav(current())
             "advanceDays" -> clock += step.getInt("days") * DAY
+            "set" -> Prefs.activeSize = step.getInt("activeSize")
             "showArticlesAgain" -> Repo.showArticlesAgain(step.getString("pos"))
             "pick" -> {
                 val level = step.getInt("level")
@@ -167,6 +168,9 @@ class LearningScenariosTest(private val name: String, private val index: Int) {
         if (e.has("cardNumber")) assertEquals("card number", e.getInt("cardNumber"), Prefs.cardCount)
         if (e.has("activeCount")) {
             assertEquals("active words", e.getInt("activeCount"), Repo.words.count { Repo.progress(it).phase in Repo.INTRO..Repo.RECALL })
+        }
+        if (e.has("distinctWords")) {
+            assertEquals("different words", e.getInt("distinctWords"), collected.filter { it.third != "compare" && it.third != "note" }.map { it.second }.toSet().size)
         }
         if (e.has("hidden")) {
             val h = e.getJSONObject("hidden")

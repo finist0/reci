@@ -82,6 +82,7 @@ function run(sc) {
         remember: st => (vars[st.as] = { key: current().key, n: S.prefs.cardCount }),
         fav: () => R.toggleFav(current()),
         advanceDays: st => (clock += st.days * DAY),
+        set: st => S.setPrefs({ activeSize: st.activeSize }),
         showArticlesAgain: st => R.showArticlesAgain(st.pos),
         pick: st => {
             const pool = R.words.filter(w => w.level === st.level);
@@ -141,6 +142,10 @@ function run(sc) {
         if ("activeCount" in e) {
             const n = R.words.filter(w => [R.INTRO, R.RECALL].includes(R.progress(w).phase)).length;
             assert.equal(n, e.activeCount, "active words");
+        }
+        if ("distinctWords" in e) {
+            const n = new Set(collected.filter(c => c[2] !== "compare" && c[2] !== "note").map(c => c[1])).size;
+            assert.equal(n, e.distinctWords, "different words");
         }
         if ("hidden" in e) for (const [pos, n] of Object.entries(e.hidden)) assert.equal(R.hiddenArticles(pos), n, `hidden ${pos}`);
         if ("articleSlots" in e) {

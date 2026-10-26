@@ -190,6 +190,18 @@
     ]
   },
   {
+    "name": "a smaller active set takes effect at once",
+    "settings": {"activeSize": 20},
+    "steps": [
+      {"do": "next"},
+      {"do": "answer", "a": "dontknow"},
+      {"do": "skim", "count": 3},
+      {"do": "set", "activeSize": 10},
+      {"do": "skim", "count": 30, "collect": true},
+      {"expect": {"activeCount": 10, "distinctWords": 10}}
+    ]
+  },
+  {
     "name": "with checks turned off a learned word does not come back",
     "settings": {"reviewKnown": false},
     "steps": [
