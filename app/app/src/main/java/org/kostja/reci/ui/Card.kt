@@ -159,7 +159,7 @@ fun CardScreen(
         }
         if (Prefs.useMarks && w != null) {
             if (hint) LongPressHint { hint = false; Prefs.hintDone = true }
-            MarksRow(answered, Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer)
+            MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer)
         }
         BottomNav(onPrev = { Repo.step(-1) }, onNext = onNext, onDone = onDone)
     }
@@ -354,9 +354,10 @@ private fun LongPressHint(onClose: () -> Unit) {
     }
 }
 
-// Long-press on «Знаю» marks a word the user already knows as learned at once.
+// Long-press on «Знаю» marks a word the user already knows as learned at once. Articles are
+// read, not learned, so their buttons only say whether to show them again.
 @Composable
-fun MarksRow(answered: State?, modifier: Modifier = Modifier, onAnswer: (State, Boolean) -> Unit) {
+fun MarksRow(answered: State?, article: Boolean, modifier: Modifier = Modifier, onAnswer: (State, Boolean) -> Unit) {
     val p = LocalPalette.current
     Row(
         modifier
@@ -366,13 +367,18 @@ fun MarksRow(answered: State?, modifier: Modifier = Modifier, onAnswer: (State, 
             .padding(4.dp),
         horizontalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Mark("Не знаю", answered == State.DONT_KNOW, MarkDontKnow, Modifier.weight(1f)) { onAnswer(State.DONT_KNOW, false) }
         Mark(
-            "Знаю",
+            if (article) "Перечитать позже" else "Не знаю",
+            answered == State.DONT_KNOW,
+            if (article) p.secondary else MarkDontKnow,
+            Modifier.weight(1f),
+        ) { onAnswer(State.DONT_KNOW, false) }
+        Mark(
+            if (article) "Не показывать" else "Знаю",
             answered == State.KNOWN,
             p.known,
             Modifier.weight(1f),
-            onLongClick = { onAnswer(State.KNOWN, true) },
+            onLongClick = if (article) null else ({ onAnswer(State.KNOWN, true) }),
         ) { onAnswer(State.KNOWN, false) }
     }
 }

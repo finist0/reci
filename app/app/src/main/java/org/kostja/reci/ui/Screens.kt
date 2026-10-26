@@ -409,7 +409,7 @@ fun DetailScreen(key: String, back: () -> Unit, onGrammar: ((String) -> Unit)? =
                 .padding(24.dp)
         ) { WordBody(w, slide = false, onGrammar = onGrammar) }
         var answered by remember(w.key) { mutableStateOf(Repo.answerOf(w)) }
-        MarksRow(answered, Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) { a, learnedNow ->
+        MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) { a, learnedNow ->
             Repo.answer(w, a, learnedNow)
             answered = a
         }
