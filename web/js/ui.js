@@ -171,13 +171,14 @@ const chip = (text, selected, a, arg, opts = {}) => `
         ${opts.dot ? `<span class="dot" style="background:${selected ? "#fff" : opts.dot}"></span>` : ""}${esc(text)}
     </button>`;
 
-function marksRow(answered) {
+// Articles are read, not learned, so their buttons only say whether to show them again.
+function marksRow(answered, article) {
     return `
     <div class="marks">
-        <button class="mark ${answered === DONT_KNOW ? "on" : ""}" style="--c:var(--red)" ${act("mark", DONT_KNOW)}>
-            <span class="dot"></span>Не знаю</button>
-        <button class="mark ${answered === KNOWN ? "on" : ""}" style="--c:var(--known)" ${act("mark", KNOWN)} data-long="learned">
-            <span class="dot"></span>Знаю</button>
+        <button class="mark ${answered === DONT_KNOW ? "on" : ""}" style="--c:${article ? "var(--secondary)" : "var(--red)"}" ${act("mark", DONT_KNOW)}>
+            <span class="dot"></span>${article ? "Перечитать позже" : "Не знаю"}</button>
+        <button class="mark ${answered === KNOWN ? "on" : ""}" style="--c:var(--known)" ${act("mark", KNOWN)} ${article ? "" : 'data-long="learned"'}>
+            <span class="dot"></span>${article ? "Не показывать" : "Знаю"}</button>
     </div>`;
 }
 
@@ -382,7 +383,7 @@ function cardScreen() {
             <button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>
         </div>
         ${prefs.useMarks && s.hint ? longPressHint : ""}
-        ${prefs.useMarks ? marksRow(s.answered) : ""}
+        ${prefs.useMarks ? marksRow(s.answered, R.isArticle(w)) : ""}
         ${bottomNav()}`;
 }
 
@@ -487,7 +488,7 @@ function detailScreen(e) {
     e.answered ??= R.answerOf(w);
     return `<div class="screen-col">${header("")}
         <div class="card-wrap detail"><div class="card-scroll" data-scroll="detail">${wordBody(w)}</div></div>
-        ${marksRow(e.answered)}
+        ${marksRow(e.answered, R.isArticle(w))}
     </div>`;
 }
 
