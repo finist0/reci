@@ -304,11 +304,13 @@ object Repo {
         return active + fresh
     }
 
+    // The article shown longest ago, a comparison and a note in turn while both are left.
     private fun articleFor(exclude: String?): Word? {
         val cats = Prefs.categories
-        return words.asSequence()
-            .filter { isArticle(it) && "X:${it.pos}" in cats && it.key != exclude && phaseOf(it) != LEARNED }
-            .minByOrNull { progress[it.key]?.last ?: 0 }
+        val pool = words.filter { isArticle(it) && "X:${it.pos}" in cats && it.key != exclude && phaseOf(it) != LEARNED }
+        val lastPos = words.filter { isArticle(it) }.maxByOrNull { progress[it.key]?.last ?: 0 }
+            ?.takeIf { (progress[it.key]?.last ?: 0) > 0 }?.pos
+        return pool.filter { it.pos != lastPos }.ifEmpty { pool }.minByOrNull { progress[it.key]?.last ?: 0 }
     }
 
     // Articles of one kind ("compare" or "note") hidden with «Не показывать».

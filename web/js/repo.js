@@ -303,9 +303,14 @@ function minBy(list, f) {
     return best;
 }
 
+// The article shown longest ago, a comparison and a note in turn while both are left.
 function articleFor(exclude) {
     const cats = prefs.categories;
-    return minBy(words.filter(w => isArticle(w) && cats.includes("X:" + w.pos) && w.key !== exclude && phaseOf(w) !== LEARNED), lastOf);
+    const pool = words.filter(w => isArticle(w) && cats.includes("X:" + w.pos) && w.key !== exclude && phaseOf(w) !== LEARNED);
+    let latest = null;
+    for (const w of words) if (isArticle(w) && lastOf(w) > 0 && (!latest || lastOf(w) > lastOf(latest))) latest = w;
+    const other = pool.filter(w => w.pos !== latest?.pos);
+    return minBy(other.length ? other : pool, lastOf);
 }
 
 // Articles of one kind ("compare" or "note") hidden with «Не показывать».
