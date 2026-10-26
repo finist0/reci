@@ -99,6 +99,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
     val battery = ignoresBattery(ctx)
     val notifyLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { tick++ }
     var confirmReset by remember { mutableStateOf(false) }
+    var confirmArticles by remember { mutableStateOf<String?>(null) }
     var showPermissions by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { Speaker.connect() }
 
@@ -242,6 +243,14 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
 
             GroupTitle("Данные")
             Panel {
+                for ((pos, title) in listOf("compare" to "Снова показывать разборы", "note" to "Снова показывать заметки")) {
+                    val hidden = Repo.hiddenArticles(pos)
+                    NavRow(
+                        title,
+                        if (hidden == 0) "Скрытых нет" else "Скрыто: $hidden",
+                    ) { if (hidden > 0) confirmArticles = pos }
+                    Line()
+                }
                 Text(
                     "Сбросить прогресс",
                     fontSize = 16.sp,
@@ -287,6 +296,17 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
             }
             Spacer(Modifier.height(28.dp))
         }
+    }
+
+    confirmArticles?.let { pos ->
+        val what = if (pos == "compare") "разборы похожих слов" else "заметки"
+        AlertDialog(
+            onDismissRequest = { confirmArticles = null },
+            title = { Text("Снова показывать $what?") },
+            text = { Text("Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.") },
+            confirmButton = { TextButton(onClick = { Repo.showArticlesAgain(pos); confirmArticles = null }) { Text("Показывать") } },
+            dismissButton = { TextButton(onClick = { confirmArticles = null }) { Text("Отмена") } },
+        )
     }
 
     if (confirmReset) {
