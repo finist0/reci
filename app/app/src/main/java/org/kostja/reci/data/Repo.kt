@@ -203,6 +203,22 @@ object Repo {
         Prefs.countShown(c.get(Calendar.YEAR) * 1000 + c.get(Calendar.DAY_OF_YEAR))
     }
 
+    // Waits for the dictionary and for pending writes, so call it off the main thread.
+    fun allProgress(): Map<String, Progress> {
+        load()
+        io.submit {}.get()
+        return HashMap(progress)
+    }
+
+    fun replaceProgress(all: Map<String, Progress>) {
+        load()
+        io.submit { db.replaceAll(all) }.get()
+        progress.clear()
+        progress.putAll(all)
+        resetPosition()
+        version.intValue++
+    }
+
     fun resetAll() = io.execute {
         db.clear()
         progress.clear()

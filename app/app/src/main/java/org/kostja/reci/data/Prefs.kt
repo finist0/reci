@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.core.content.edit
+import org.json.JSONArray
+import org.json.JSONObject
 
 object Prefs {
     private lateinit var sp: SharedPreferences
@@ -190,6 +192,43 @@ object Prefs {
         sp.edit {
             putInt("today_date", today)
             putInt("today_count", n)
+        }
+        changed()
+    }
+
+    // Settings that mean the same in the web version, under its names. Lock screen settings
+    // stay on the device: they depend on permissions granted there.
+    private val portable = listOf(
+        "latinFirst" to "latin_first", "showBothScripts" to "show_both", "autoSpeak" to "auto_speak",
+        "useMarks" to "use_marks", "reviewKnown" to "review_known", "hintDone" to "hint_done",
+        "cardMode" to "card_mode", "activeSize" to "active_size", "cardCount" to "card_count",
+        "accentMode" to "accent_mode", "theme" to "theme", "wordSize" to "word_size", "order" to "order",
+        "newKnownCount" to "new_known_count", "shuffleSeed" to "shuffle_seed",
+    )
+
+    fun exportJson(): JSONObject {
+        val o = JSONObject()
+        for ((name, key) in portable) {
+            when (val v = sp.all[key]) {
+                is Boolean, is Int, is Long -> o.put(name, v)
+            }
+        }
+        o.put("categories", JSONArray(categories.sorted()))
+        return o
+    }
+
+    fun importJson(o: JSONObject) {
+        sp.edit {
+            for ((name, key) in portable) {
+                when (val v = o.opt(name)) {
+                    is Boolean -> putBoolean(key, v)
+                    is Number -> if (key == "shuffle_seed") putLong(key, v.toLong()) else putInt(key, v.toInt())
+                }
+            }
+            o.optJSONArray("categories")?.let { a ->
+                putStringSet("categories", (0 until a.length()).map { a.getString(it) }.toSet())
+                putBoolean("sections_added", true)
+            }
         }
         changed()
     }

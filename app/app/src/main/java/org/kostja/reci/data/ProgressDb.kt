@@ -51,7 +51,23 @@ class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 4) {
     }
 
     fun put(key: String, p: Progress) {
-        val v = ContentValues().apply {
+        writableDatabase.insertWithOnConflict("progress", null, values(key, p), SQLiteDatabase.CONFLICT_REPLACE)
+    }
+
+    fun replaceAll(all: Map<String, Progress>) {
+        val db = writableDatabase
+        db.beginTransaction()
+        try {
+            db.delete("progress", null, null)
+            for ((key, p) in all) db.insert("progress", null, values(key, p))
+            db.setTransactionSuccessful()
+        } finally {
+            db.endTransaction()
+        }
+    }
+
+    private fun values(key: String, p: Progress) =
+        ContentValues().apply {
             put("key", key)
             put("state", p.state.ordinal)
             put("fav", if (p.fav) 1 else 0)
@@ -63,8 +79,6 @@ class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 4) {
             put("streak", p.streak)
             put("show_at", p.showAt)
         }
-        writableDatabase.insertWithOnConflict("progress", null, v, SQLiteDatabase.CONFLICT_REPLACE)
-    }
 
     fun clear() {
         writableDatabase.delete("progress", null, null)
