@@ -71,9 +71,9 @@ class LockActivity : ComponentActivity() {
         // Also resumed briefly when started on screen-off; speak only on a screen the user sees.
         if (!getSystemService(PowerManager::class.java).isInteractive) return
         val w = Repo.current() ?: return
-        if (Prefs.autoSpeak && spokenKey != w.key) {
+        if (spokenKey != w.key) {
             spokenKey = w.key
-            Speaker.speak(w.cyr)
+            Speaker.autoSpeak(w)
         }
     }
 

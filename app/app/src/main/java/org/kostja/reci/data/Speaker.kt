@@ -48,6 +48,15 @@ object Speaker : TextToSpeech.OnInitListener {
         failed.value = true
     }
 
+    // Reading out a word the user is asked to recall would give the answer away, and an
+    // article title is not a word to read out.
+    fun autoSpeak(w: Word) {
+        if (Prefs.autoSpeak && !Repo.isArticle(w) && !Repo.asksRecall(w)) say(w.cyr)
+    }
+
+    // Tests replace it to hear what would be said.
+    internal var say: (String) -> Unit = ::speak
+
     fun speak(cyr: String) {
         connect()
         if (!ready) {

@@ -74,7 +74,7 @@ class MainActivity : ComponentActivity() {
                 when (s) {
                     Screen.Card -> {
                         val w = Repo.current()
-                        LaunchedEffect(w?.key) { if (w != null && Prefs.autoSpeak) Speaker.speak(w.cyr) }
+                        LaunchedEffect(w?.key) { if (w != null) Speaker.autoSpeak(w) }
                         CardScreen(
                             onNext = { Repo.step(1) },
                             onSearch = { go(Screen.Search) },
