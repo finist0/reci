@@ -93,9 +93,28 @@ python3 -m venv /path/to/venv
 | Интерфейс веб-версии | `node --test "web/tests/ui/*.test.mjs"` | Node.js и Google Chrome |
 | Интерфейс Android | `cd app && ./gradlew connectedDebugAndroidTest` | эмулятор или телефон |
 
+Что в каких файлах:
+
+| Файл | Что проверяет |
+|---|---|
+| `app/app/src/test/…/LearningScenariosTest.kt` | правила обучения по сценариям |
+| `app/app/src/test/…/BackupTest.kt` | файл прогресса |
+| `app/app/src/test/…/LockSettingsTest.kt` | настройки экрана блокировки: пауза, звонки, новое слово, шторка, озвучка |
+| `app/app/src/androidTest/…/CardScreenTest.kt` | карточка: долгое нажатие, смена ответа, подсказка, статьи |
+| `app/app/src/androidTest/…/SettingsScreenTest.kt` | каждая настройка на экране настроек и карточка на экране блокировки |
+| `web/tests/learning.test.mjs` | правила обучения по сценариям |
+| `web/tests/backup.test.mjs` | файл прогресса |
+| `web/tests/ui/app.test.mjs` | карточка, поиск, справочник, тема, прогресс, запуск из кэша |
+| `web/tests/ui/settings.test.mjs` | каждая настройка на экране настроек |
+
+Не проверяются автоматически кнопки, которые открывают системные экраны Android:
+разрешения, голос, выбор файла для прогресса.
+
 - Если Chrome называется не `google-chrome`, укажите путь: `CHROME=/path/to/chrome`.
 - Тесты интерфейса Android ставят отладочную сборку отдельным пакетом
   `org.kostja.reci.debug`, поэтому установленное приложение и его прогресс не трогают.
+- Тест карточки на экране блокировки выключает и включает экран эмулятора. На телефоне с
+  PIN-кодом после него экран останется заблокированным.
 
 ### Как написать новый сценарий
 
