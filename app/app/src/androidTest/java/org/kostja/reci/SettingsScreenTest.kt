@@ -1,5 +1,6 @@
 package org.kostja.reci
 
+import android.Manifest
 import android.content.Context
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
@@ -15,6 +16,8 @@ import androidx.compose.ui.test.performSemanticsAction
 import androidx.test.core.app.ActivityScenario
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import androidx.test.platform.app.InstrumentationRegistry
+import androidx.test.runner.lifecycle.ActivityLifecycleMonitorRegistry
+import androidx.test.runner.lifecycle.Stage
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -30,6 +33,8 @@ import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.State
 import org.kostja.reci.data.Translit
+import org.kostja.reci.lock.LockActivity
+import org.kostja.reci.lock.LockService
 import org.kostja.reci.ui.MainActivity
 import org.kostja.reci.ui.Palettes
 import java.text.Collator
@@ -66,7 +71,13 @@ class SettingsScreenTest {
     @After
     fun close() {
         Speaker.say = Speaker::speak
+        Prefs.lockEnabled = false
+        LockService.sync(InstrumentationRegistry.getInstrumentation().targetContext)
         activity.close()
+    }
+
+    private fun shell(cmd: String) {
+        InstrumentationRegistry.getInstrumentation().uiAutomation.executeShellCommand(cmd).close()
     }
 
     private fun word() = Repo.current()!!
@@ -256,5 +267,49 @@ class SettingsScreenTest {
         click("Сбросить")
         waitIo()
         assertTrue(Repo.words.none { Repo.progress(it).state != State.NEW || Repo.progress(it).phase > Repo.INTRO })
+    }
+
+    @Test
+    fun lockScreenRowsChangeTheirSettings() {
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        val now = System.currentTimeMillis()
+        click("1 час")
+        assertTrue(Prefs.pausedUntil in now + 59 * 60_000L..now + 61 * 60_000L)
+        click("Снять паузу")
+        assertEquals(0L, Prefs.pausedUntil)
+        click("Не показывать во время звонков")
+        assertFalse(Prefs.skipDuringCalls)
+        click("Новое слово при каждом включении")
+        assertTrue(Prefs.newWordEachTime)
+        click("Слова на повторение в шторке")
+        assertTrue(Prefs.reviewNotification)
+    }
+
+    @Test
+    fun theLockCardAppearsWhenTheScreenTurnsBackOn() {
+        val inst = InstrumentationRegistry.getInstrumentation()
+        val pkg = inst.targetContext.packageName
+        inst.uiAutomation.grantRuntimePermission(pkg, Manifest.permission.POST_NOTIFICATIONS)
+        shell("appops set $pkg SYSTEM_ALERT_WINDOW allow")
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        click("Карточка при включении экрана")
+        assertTrue(Prefs.lockEnabled)
+        Thread.sleep(1000)
+
+        shell("input keyevent KEYCODE_SLEEP")
+        Thread.sleep(1500)
+        shell("input keyevent KEYCODE_WAKEUP")
+        var card: LockActivity? = null
+        for (i in 0 until 50) {
+            inst.runOnMainSync {
+                card = ActivityLifecycleMonitorRegistry.getInstance().getActivitiesInStage(Stage.RESUMED)
+                    .filterIsInstance<LockActivity>().firstOrNull()
+            }
+            if (card != null) break
+            Thread.sleep(200)
+        }
+        assertTrue("no card on the lock screen", card != null)
+        inst.runOnMainSync { card!!.finish() }
+        shell("wm dismiss-keyguard")
     }
 }
