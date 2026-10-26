@@ -138,9 +138,10 @@ export function answer(w, a, learnedNow = false) {
 
 function advance(w, p, a) {
     const n = prefs.cardCount;
+    // «Не показывать» hides an article for good; «Перечитать позже» leaves it in the round.
     if (isArticle(w)) {
-        if (a !== KNOWN) return { ...p, state: a, phase: 0, streak: 0, due: 0 };
-        return p.phase === LEARNED ? passedCheck(p) : learned(p);
+        return a === KNOWN ? { ...p, state: KNOWN, phase: LEARNED, streak: 0, step: 0, due: 0 }
+            : { ...p, state: NEW, phase: 0, streak: 0, due: 0 };
     }
     // A forgotten learned word skips the introduction and is asked again a full round later.
     if (p.phase === LEARNED) {
@@ -304,8 +305,16 @@ function minBy(list, f) {
 
 function articleFor(exclude) {
     const cats = prefs.categories;
-    return minBy(words.filter(w => isArticle(w) && cats.includes("X:" + w.pos) && w.key !== exclude &&
-        (phaseOf(w) !== LEARNED || isDue(getProgress(w.key)))), lastOf);
+    return minBy(words.filter(w => isArticle(w) && cats.includes("X:" + w.pos) && w.key !== exclude && phaseOf(w) !== LEARNED), lastOf);
+}
+
+// Articles of one kind ("compare" or "note") hidden with «Не показывать».
+export const hiddenArticles = pos => words.filter(w => w.pos === pos && phaseOf(w) === LEARNED).length;
+
+export function showArticlesAgain(pos) {
+    for (const w of words) {
+        if (w.pos === pos && phaseOf(w) === LEARNED) update(w, p => ({ ...p, state: NEW, phase: 0, step: 0, due: 0, last: 0 }));
+    }
 }
 
 const dueFor = exclude => minBy(queue().filter(w => w.key !== exclude && isDue(getProgress(w.key))), w => getProgress(w.key).due);

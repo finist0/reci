@@ -171,11 +171,10 @@ object Repo {
     private fun advance(w: Word, p: Progress, a: State): Progress {
         val n = Prefs.cardCount
         return when {
-            isArticle(w) -> when {
-                a != State.KNOWN -> p.copy(state = a, phase = 0, streak = 0, due = 0)
-                p.phase == LEARNED -> passedCheck(p)
-                else -> learned(p)
-            }
+            // «Не показывать» hides an article for good; «Перечитать позже» leaves it in the round.
+            isArticle(w) ->
+                if (a == State.KNOWN) p.copy(state = State.KNOWN, phase = LEARNED, streak = 0, step = 0, due = 0)
+                else p.copy(state = State.NEW, phase = 0, streak = 0, due = 0)
             // A forgotten learned word skips the introduction and is asked again a full round later.
             p.phase == LEARNED ->
                 if (a == State.KNOWN) passedCheck(p)
@@ -308,9 +307,17 @@ object Repo {
     private fun articleFor(exclude: String?): Word? {
         val cats = Prefs.categories
         return words.asSequence()
-            .filter { isArticle(it) && "X:${it.pos}" in cats && it.key != exclude }
-            .filter { phaseOf(it) != LEARNED || isDue(progress[it.key]) }
+            .filter { isArticle(it) && "X:${it.pos}" in cats && it.key != exclude && phaseOf(it) != LEARNED }
             .minByOrNull { progress[it.key]?.last ?: 0 }
+    }
+
+    // Articles of one kind ("compare" or "note") hidden with «Не показывать».
+    fun hiddenArticles(pos: String): Int = words.count { it.pos == pos && phaseOf(it) == LEARNED }
+
+    fun showArticlesAgain(pos: String) {
+        for (w in words) {
+            if (w.pos == pos && phaseOf(w) == LEARNED) update(w) { it.copy(state = State.NEW, phase = 0, step = 0, due = 0, last = 0) }
+        }
     }
 
     private fun dueFor(exclude: String?): Word? =
