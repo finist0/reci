@@ -109,6 +109,9 @@ object Repo {
     private const val INTRO_STREAK = 1
     private const val RECALL_STREAK = 3
 
+    // A word answered «Не знаю» comes back this many cards later, while it is still fresh.
+    private const val RETRY_AFTER = 5
+
     // After five right answers in a row the first check comes in a week; each passed check
     // roughly triples the gap, as in spaced-repetition schedules.
     private val reviewIntervals = longArrayOf(7 * DAY, 21 * DAY, 60 * DAY, 180 * DAY, 365 * DAY)
@@ -153,7 +156,10 @@ object Repo {
         update(w) { cur ->
             val before = answers[w.key]?.before ?: cur
             answers[w.key] = Answer(before, a, learned)
-            val p = cur.copy(state = before.state, phase = before.phase, streak = before.streak, step = before.step, due = before.due)
+            val p = cur.copy(
+                state = before.state, phase = before.phase, streak = before.streak, step = before.step,
+                due = before.due, showAt = before.showAt,
+            )
             when {
                 !learned -> advance(w, p, a)
                 p.phase == LEARNED -> p
@@ -162,8 +168,9 @@ object Repo {
         }
     }
 
-    private fun advance(w: Word, p: Progress, a: State): Progress =
-        when {
+    private fun advance(w: Word, p: Progress, a: State): Progress {
+        val n = Prefs.cardCount
+        return when {
             isArticle(w) -> when {
                 a != State.KNOWN -> p.copy(state = a, phase = 0, streak = 0, due = 0)
                 p.phase == LEARNED -> passedCheck(p)
@@ -174,19 +181,20 @@ object Repo {
             p.phase == RECALL -> when (a) {
                 State.KNOWN -> if (p.streak + 1 >= RECALL_STREAK) learned(p) else p.copy(streak = p.streak + 1, state = State.NEW)
                 State.UNSURE -> p.copy(streak = 0, state = a)
-                else -> p.copy(phase = INTRO, streak = 0, state = State.DONT_KNOW)
+                else -> p.copy(phase = INTRO, streak = 0, state = State.DONT_KNOW, showAt = n + RETRY_AFTER)
             }
             a == State.KNOWN ->
                 if (p.streak + 1 >= INTRO_STREAK) p.copy(phase = RECALL, streak = 0, state = State.NEW)
                 else p.copy(phase = INTRO, streak = p.streak + 1, state = State.NEW)
-            else -> p.copy(phase = INTRO, streak = 0, state = a)
+            else -> p.copy(phase = INTRO, streak = 0, state = a, showAt = n + RETRY_AFTER)
         }
+    }
 
     fun toggleFav(w: Word) = update(w) { it.copy(fav = !it.fav) }
 
     fun markShown(w: Word) {
         if (revisit) return
-        update(w) { it.copy(seen = it.seen + 1, last = System.currentTimeMillis()) }
+        update(w) { it.copy(seen = it.seen + 1, last = System.currentTimeMillis(), showAt = 0) }
         val c = Calendar.getInstance()
         Prefs.countShown(c.get(Calendar.YEAR) * 1000 + c.get(Calendar.DAY_OF_YEAR))
     }
@@ -282,6 +290,8 @@ object Repo {
 
     private fun phaseOf(w: Word) = progress[w.key]?.phase ?: 0
 
+    private fun showAtOf(w: Word) = progress[w.key]?.showAt ?: 0
+
     // The words being learned now; topped up from the queue when some were learned.
     private fun activeSet(): List<Word> {
         val q = queue()
@@ -304,14 +314,15 @@ object Repo {
     private fun dueFor(exclude: String?): Word? =
         queue().asSequence().filter { it.key != exclude && isDue(progress[it.key]) }.minByOrNull { progress[it.key]!!.due }
 
-    // Next card: every fifth an article, every fourth a check of a learned word when one is due,
-    // otherwise the active word that was shown longest ago.
+    // Next card: a word whose return after «Не знаю» is due, every fifth an article, every fourth
+    // a check of a learned word when one is due, otherwise the active word shown longest ago.
     private fun pickNext(exclude: String?): Word? {
         val n = Prefs.cardCount
+        val active = activeSet()
+        active.filter { it.key != exclude && showAtOf(it) in 1..n }.minByOrNull { showAtOf(it) }?.let { return it }
         if (n % 5 == 4) articleFor(exclude)?.let { return it }
         if (n % 4 == 3) dueFor(exclude)?.let { return it }
-        val active = activeSet()
-        return active.filter { it.key != exclude }.minByOrNull { progress[it.key]?.last ?: 0 }
+        return active.filter { it.key != exclude && showAtOf(it) <= n }.minByOrNull { progress[it.key]?.last ?: 0 }
             ?: active.firstOrNull()
             ?: dueFor(exclude)
             ?: articleFor(exclude)

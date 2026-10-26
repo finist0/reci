@@ -42,6 +42,8 @@ data class Progress(
     // Learning stage (Repo.INTRO, RECALL, LEARNED; 0 = not started) and «Знаю» answers in a row.
     val phase: Int = 0,
     val streak: Int = 0,
+    // The card number from which a word answered «Не знаю» is shown again; 0 when none.
+    val showAt: Int = 0,
 )
 
 enum class Order(val label: String) {

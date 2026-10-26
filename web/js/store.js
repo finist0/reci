@@ -67,7 +67,8 @@ export function setPrefs(values) {
 // key -> {state, fav, seen, last, due, step, phase, streak}; only words that were touched.
 const progress = new Map(Object.entries(read(PROGRESS)));
 
-export const emptyProgress = { state: NEW, fav: false, seen: 0, last: 0, due: 0, step: 0, phase: 0, streak: 0 };
+// showAt: the card number from which a word answered «Не знаю» is shown again; 0 when none.
+export const emptyProgress = { state: NEW, fav: false, seen: 0, last: 0, due: 0, step: 0, phase: 0, streak: 0, showAt: 0 };
 
 export const getProgress = key => progress.get(key);
 

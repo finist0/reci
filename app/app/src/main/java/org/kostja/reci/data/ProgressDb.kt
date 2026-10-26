@@ -5,13 +5,14 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 3) {
+class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 4) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             "CREATE TABLE progress (key TEXT PRIMARY KEY, state INTEGER NOT NULL, " +
                 "fav INTEGER NOT NULL, seen INTEGER NOT NULL, last INTEGER NOT NULL, " +
                 "due INTEGER NOT NULL DEFAULT 0, step INTEGER NOT NULL DEFAULT 0, " +
-                "phase INTEGER NOT NULL DEFAULT 0, streak INTEGER NOT NULL DEFAULT 0)"
+                "phase INTEGER NOT NULL DEFAULT 0, streak INTEGER NOT NULL DEFAULT 0, " +
+                "show_at INTEGER NOT NULL DEFAULT 0)"
         )
     }
 
@@ -26,11 +27,12 @@ class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 3) {
             // Words marked known before the learning stages existed count as learned.
             db.execSQL("UPDATE progress SET phase = 3 WHERE state = 3")
         }
+        if (oldVersion < 4) db.execSQL("ALTER TABLE progress ADD COLUMN show_at INTEGER NOT NULL DEFAULT 0")
     }
 
     fun loadAll(): Map<String, Progress> {
         val out = HashMap<String, Progress>()
-        readableDatabase.rawQuery("SELECT key, state, fav, seen, last, due, step, phase, streak FROM progress", null).use { c ->
+        readableDatabase.rawQuery("SELECT key, state, fav, seen, last, due, step, phase, streak, show_at FROM progress", null).use { c ->
             while (c.moveToNext()) {
                 out[c.getString(0)] = Progress(
                     state = State.entries.getOrElse(c.getInt(1)) { State.NEW },
@@ -41,6 +43,7 @@ class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 3) {
                     step = c.getInt(6),
                     phase = c.getInt(7),
                     streak = c.getInt(8),
+                    showAt = c.getInt(9),
                 )
             }
         }
@@ -58,6 +61,7 @@ class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 3) {
             put("step", p.step)
             put("phase", p.phase)
             put("streak", p.streak)
+            put("show_at", p.showAt)
         }
         writableDatabase.insertWithOnConflict("progress", null, v, SQLiteDatabase.CONFLICT_REPLACE)
     }

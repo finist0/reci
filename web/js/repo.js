@@ -88,6 +88,9 @@ const DAY = 24 * 60 * 60 * 1000;
 export const INTRO = 1, RECALL = 2, LEARNED = 3;
 const INTRO_STREAK = 1, RECALL_STREAK = 3;
 
+// A word answered «Не знаю» comes back this many cards later, while it is still fresh.
+const RETRY_AFTER = 5;
+
 const reviewIntervals = [7 * DAY, 21 * DAY, 60 * DAY, 180 * DAY, 365 * DAY];
 
 const reviewDue = step => Date.now() + reviewIntervals[Math.min(step, reviewIntervals.length - 1)];
@@ -124,13 +127,17 @@ export function answer(w, a, learnedNow = false) {
     update(w, cur => {
         const before = old?.before ?? cur;
         answers.set(w.key, { before, state: a, learned: learnedNow });
-        const p = { ...cur, state: before.state, phase: before.phase, streak: before.streak, step: before.step, due: before.due };
+        const p = {
+            ...cur, state: before.state, phase: before.phase, streak: before.streak, step: before.step,
+            due: before.due, showAt: before.showAt ?? 0,
+        };
         if (!learnedNow) return advance(w, p, a);
         return p.phase === LEARNED ? p : learned(p);
     });
 }
 
 function advance(w, p, a) {
+    const n = prefs.cardCount;
     if (isArticle(w)) {
         if (a !== KNOWN) return { ...p, state: a, phase: 0, streak: 0, due: 0 };
         return p.phase === LEARNED ? passedCheck(p) : learned(p);
@@ -141,13 +148,13 @@ function advance(w, p, a) {
     if (p.phase === RECALL) {
         if (a === KNOWN) return p.streak + 1 >= RECALL_STREAK ? learned(p) : { ...p, streak: p.streak + 1, state: NEW };
         if (a === UNSURE) return { ...p, streak: 0, state: a };
-        return { ...p, phase: INTRO, streak: 0, state: DONT_KNOW };
+        return { ...p, phase: INTRO, streak: 0, state: DONT_KNOW, showAt: n + RETRY_AFTER };
     }
     if (a === KNOWN) {
         return p.streak + 1 >= INTRO_STREAK ? { ...p, phase: RECALL, streak: 0, state: NEW }
             : { ...p, phase: INTRO, streak: p.streak + 1, state: NEW };
     }
-    return { ...p, phase: INTRO, streak: 0, state: a };
+    return { ...p, phase: INTRO, streak: 0, state: a, showAt: n + RETRY_AFTER };
 }
 
 export const toggleFav = w => update(w, p => ({ ...p, fav: !p.fav }));
@@ -161,7 +168,7 @@ export const todayCount = () => (prefs.todayDate === today() ? prefs.todayCount 
 
 export function markShown(w) {
     if (revisit) return;
-    update(w, p => ({ ...p, seen: p.seen + 1, last: Date.now() }));
+    update(w, p => ({ ...p, seen: p.seen + 1, last: Date.now(), showAt: 0 }));
     const t = today();
     setPrefs({ todayDate: t, todayCount: prefs.todayDate === t ? prefs.todayCount + 1 : 1 });
 }
@@ -267,6 +274,7 @@ function queue() {
 
 const phaseOf = w => getProgress(w.key)?.phase ?? 0;
 const lastOf = w => getProgress(w.key)?.last ?? 0;
+const showAtOf = w => getProgress(w.key)?.showAt ?? 0;
 
 // The words being learned now; topped up from the queue when some were learned.
 function activeSet() {
@@ -300,10 +308,13 @@ function articleFor(exclude) {
 
 const dueFor = exclude => minBy(queue().filter(w => w.key !== exclude && isDue(getProgress(w.key))), w => getProgress(w.key).due);
 
-// Next card: every fifth an article, every fourth a check of a learned word when one is due,
-// otherwise the active word that was shown longest ago.
+// Next card: a word whose return after «Не знаю» is due, every fifth an article, every fourth
+// a check of a learned word when one is due, otherwise the active word shown longest ago.
 function pickNext(exclude) {
     const n = prefs.cardCount;
+    const active = activeSet();
+    const back = minBy(active.filter(w => w.key !== exclude && showAtOf(w) >= 1 && showAtOf(w) <= n), showAtOf);
+    if (back) return back;
     if (n % 5 === 4) {
         const a = articleFor(exclude);
         if (a) return a;
@@ -312,8 +323,7 @@ function pickNext(exclude) {
         const d = dueFor(exclude);
         if (d) return d;
     }
-    const active = activeSet();
-    return minBy(active.filter(w => w.key !== exclude), lastOf) ?? active[0] ?? dueFor(exclude) ?? articleFor(exclude);
+    return minBy(active.filter(w => w.key !== exclude && showAtOf(w) <= n), lastOf) ?? active[0] ?? dueFor(exclude) ?? articleFor(exclude);
 }
 
 const history = [];
