@@ -381,6 +381,7 @@ function cardScreen() {
                 ${wordBody(w, { slide: prefs.cardMode === 2 && !R.isArticle(w), covered: s.covered, hideWord: s.recall && !s.revealed })}
             </div>
             <button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>
+            ${learnedToast ? toast("Слово отмечено выученным") : ""}
         </div>
         ${prefs.useMarks && s.hint ? longPressHint : ""}
         ${prefs.useMarks ? marksRow(s.answered, R.isArticle(w)) : ""}
@@ -398,6 +399,21 @@ function hintAfterNewKnown() {
     const n = prefs.newKnownCount + 1;
     setPrefs({ newKnownCount: n, hintDone: n >= 30 });
     return n === 1 || n === 10 || n === 30;
+}
+
+const toast = text => `<div class="toast">${icon("check")}<span>${esc(text)}</span></div>`;
+
+// A long press on «Знаю» moves on at once, so a toast shows that it worked.
+let learnedToast = false;
+let toastTimer = 0;
+
+function showLearnedToast() {
+    learnedToast = true;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => {
+        learnedToast = false;
+        schedule();
+    }, 2500);
 }
 
 const bottomNav = () => `
@@ -487,7 +503,8 @@ function detailScreen(e) {
     if (!w) return `<div class="screen-col">${header("")}</div>`;
     e.answered ??= R.answerOf(w);
     return `<div class="screen-col">${header("")}
-        <div class="card-wrap detail"><div class="card-scroll" data-scroll="detail">${wordBody(w)}</div></div>
+        <div class="card-wrap detail"><div class="card-scroll" data-scroll="detail">${wordBody(w)}</div>
+            ${e.learned ? toast("Слово отмечено выученным") : ""}</div>
         ${marksRow(e.answered, R.isArticle(w))}
     </div>`;
 }
@@ -849,6 +866,7 @@ function answer(a, learnedNow) {
     if (e.name === "detail") {
         R.answer(R.word(e.arg), a, learnedNow);
         e.answered = a;
+        e.learned = learnedNow;
     } else if (show) {
         R.answer(R.word(show.key), a, learnedNow);
         show.answered = a;
@@ -856,6 +874,8 @@ function answer(a, learnedNow) {
         if (learnedNow) {
             show.hint = false;
             setPref("hintDone", true);
+            showLearnedToast();
+            R.step(1);
         } else if (a === KNOWN && show.fresh && !show.hintCounted) {
             show.hintCounted = true;
             show.hint = hintAfterNewKnown();

@@ -222,6 +222,28 @@ input { font: inherit; color: var(--text); }
 .tip span { flex: 1; }
 .tip button { width: 40px; height: 40px; border-radius: 50%; color: var(--secondary); text-align: center; font-size: 15px; flex: none; }
 
+.toast {
+    position: absolute;
+    left: 50%;
+    bottom: 14px;
+    transform: translateX(-50%);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    max-width: calc(100% - 24px);
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: var(--known);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+}
+
+.toast .ic { width: 18px; height: 18px; }
+.toast span { overflow: hidden; text-overflow: ellipsis; }
+
 .dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; flex: none; }
 
 .bottom { display: flex; gap: 10px; align-items: center; padding: 6px 14px 12px; flex: none; }
