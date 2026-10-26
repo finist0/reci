@@ -318,10 +318,16 @@ function cardShow(w) {
         const p = R.shownProgress(w);
         show = {
             id, key: w.key, recall: R.asksRecall(w), stage: stageLabel(w), answered, revealed: answered !== null,
-            covered: prefs.cardMode === 2 && !R.isArticle(w),
+            covered: prefs.cardMode === 2 && !R.isArticle(w), mode: prefs.cardMode,
             fresh: !R.isArticle(w) && p.phase <= R.INTRO && p.streak === 0, hintCounted: false, hint: false,
         };
         R.markShown(w);
+    } else if (show.mode !== prefs.cardMode) {
+        // A card mode chosen in the settings applies to the card on screen as well.
+        Object.assign(show, {
+            mode: prefs.cardMode, recall: R.asksRecall(w), revealed: show.answered !== null,
+            covered: prefs.cardMode === 2 && !R.isArticle(w),
+        });
     }
     return show;
 }
