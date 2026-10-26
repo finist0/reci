@@ -80,5 +80,64 @@
   приложение отправляет, зачем и как от этого отказаться.
 - **Раздел «Безопасность данных»:** ответы должны совпадать с политикой
   конфиденциальности и с тем, что приложение отправляет на самом деле.
-- **Разрешения, которые проверяет Google:** «Поверх других окон» и служба переднего плана
-  типа `specialUse`. Для обоих понадобится короткое объяснение, зачем они нужны.
+- **Разрешения, которые проверяет Google:** тексты ниже, в разделе «Объяснения для
+  проверки».
+
+## Объяснения для проверки
+
+Тексты на английском: их читают проверяющие Google. Описание службы в манифесте тоже
+английское.
+
+### Служба переднего плана `specialUse`
+
+Где: Play Console → App content → Foreground service permissions. Для каждой службы
+Google просит описание, последствия её остановки, сценарий использования и ссылку на видео.
+
+**Use case:** «Other», вписать вручную:
+
+```
+Vocabulary card on the lock screen when the screen turns on
+```
+
+**Description:**
+
+```
+The app shows a vocabulary card on the lock screen each time the user turns the screen on. The user turns this on in the app settings ("Card when the screen turns on"). A foreground service keeps a receiver for the SCREEN_OFF broadcast, which Android delivers only to receivers registered at run time by a running app. When the screen goes off, the service starts the card activity, so the card is already in place when the user turns the screen back on. The ongoing notification of the service can also show words the user marked for review. Turning the setting off stops the service.
+```
+
+**User impact if the task is deferred or interrupted:**
+
+```
+If the service is stopped, the card no longer appears when the user turns the screen on, and the feature the user turned on silently stops working. The work cannot be deferred: the card has to be started at the moment the screen goes off, and no scheduled or deferrable API (WorkManager, JobScheduler, alarms) runs at that moment.
+```
+
+**Видео:** запись экрана телефона, по шагам:
+
+1. Открыть приложение → Настройки → «Карточка при включении экрана».
+2. Выдать «Поверх других окон».
+3. Выключить экран и включить снова: на экране блокировки карточка со словом.
+4. Ответить на карточку, нажать «Готово»: карточка закрывается.
+5. Опустить шторку: видно уведомление службы.
+6. Выключить настройку: после выключения и включения экрана карточки больше нет.
+
+Видео выложить на YouTube с доступом по ссылке.
+
+### «Поверх других окон» (`SYSTEM_ALERT_WINDOW`)
+
+Отдельной формы для этого разрешения в документации Google нет. Если проверка спросит:
+
+```
+The app needs "Display over other apps" for one feature only: to show its vocabulary card on the lock screen when the screen turns on. Android allows an app to start an activity from a background service only when it holds this permission. The permission is never requested at install time: the user grants it in the system settings after turning the lock screen card on, and the app explains beforehand why it is needed. Without it, everything else in the app keeps working.
+```
+
+### Исключение из оптимизации батареи
+
+`REQUEST_IGNORE_BATTERY_OPTIMIZATIONS` Google Play разрешает только приложениям, у которых
+без него не работает основная функция. Приложения для обучения в известные списки
+допустимых не входят, и разработчики сообщают об отклонении за одно это разрешение в
+манифесте.
+
+Перед публикацией в Google Play лучше убрать разрешение из манифеста. Кнопка в настройках
+тогда должна открывать общий системный экран оптимизации батареи
+(`Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS`): для него разрешение не нужно,
+человек сам находит там приложение.
