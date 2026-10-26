@@ -409,9 +409,12 @@ fun DetailScreen(key: String, back: () -> Unit, onGrammar: ((String) -> Unit)? =
                 .padding(24.dp)
         ) { WordBody(w, slide = false, onGrammar = onGrammar) }
         var answered by remember(w.key) { mutableStateOf(Repo.answerOf(w)) }
+        var learned by remember(w.key) { mutableStateOf(false) }
+        if (learned) LearnedToast(Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
         MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) { a, learnedNow ->
             Repo.answer(w, a, learnedNow)
             answered = a
+            learned = learnedNow
         }
     }
 }

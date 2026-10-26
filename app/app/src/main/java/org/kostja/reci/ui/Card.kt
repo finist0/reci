@@ -29,6 +29,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -87,6 +88,14 @@ fun CardScreen(
     }
     var hintCounted by remember(w?.key, showId) { mutableStateOf(false) }
     var hint by remember(w?.key, showId) { mutableStateOf(false) }
+    // A long press on «Знаю» moves on at once, so a toast shows that it worked.
+    var learnedToast by remember { mutableIntStateOf(0) }
+    LaunchedEffect(learnedToast) {
+        if (learnedToast > 0) {
+            delay(2500)
+            learnedToast = 0
+        }
+    }
     val onAnswer = { a: State, learnedNow: Boolean ->
         if (w != null) {
             Repo.answer(w, a, learnedNow)
@@ -96,6 +105,8 @@ fun CardScreen(
         if (learnedNow) {
             Prefs.hintDone = true
             hint = false
+            learnedToast++
+            onNext()
         } else if (a == State.KNOWN && fresh && !hintCounted) {
             hintCounted = true
             hint = Prefs.hintAfterNewKnown()
@@ -156,6 +167,7 @@ fun CardScreen(
                 }
             }
             Star(w, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp))
+            if (learnedToast > 0) LearnedToast(Modifier.align(Alignment.BottomCenter))
         }
         if (Prefs.useMarks && w != null) {
             if (hint) LongPressHint { hint = false; Prefs.hintDone = true }
@@ -323,6 +335,22 @@ private fun Star(w: Word, modifier: Modifier) {
             tint = if (fav) MarkUnsure else p.faint,
             modifier = Modifier.size(24.dp),
         )
+    }
+}
+
+@Composable
+fun LearnedToast(modifier: Modifier = Modifier) {
+    Row(
+        modifier
+            .padding(start = 12.dp, end = 12.dp, bottom = 14.dp)
+            .clip(RoundedCornerShape(50))
+            .background(LocalPalette.current.known)
+            .padding(horizontal = 16.dp, vertical = 9.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Icon(painterResource(R.drawable.ic_check), null, tint = Color.White, modifier = Modifier.size(18.dp))
+        Spacer(Modifier.width(8.dp))
+        Text("Слово отмечено выученным", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
