@@ -203,9 +203,10 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                     Line()
                     Permission("Без ограничений батареи", "Нужно, только если карточки пропадают", battery) {
                         ctx.startActivity(
-                            Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
+                            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))
                         )
                     }
+                    if (!battery) BatteryHint()
                 }
                 Line()
                 Pause()
@@ -390,6 +391,36 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                 }
             },
             confirmButton = { TextButton(onClick = { showPermissions = false }) { Text("Понятно") } },
+        )
+    }
+}
+
+@Composable
+private fun BatteryHint() {
+    val p = LocalPalette.current
+    val steps = listOf(
+        "App battery usage.",
+        "Allow background usage → Unrestricted.",
+        "Вернитесь сюда: вместо «выдать» будет «есть».",
+    )
+    Column(
+        Modifier.padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Text("Откроется страница приложения в настройках Android. Там:", fontSize = 12.sp, color = p.secondary, lineHeight = 17.sp)
+        steps.forEachIndexed { i, step ->
+            Row {
+                Text("${i + 1}.", fontSize = 12.sp, color = p.accent, fontWeight = FontWeight.SemiBold, lineHeight = 17.sp, modifier = Modifier.width(18.dp))
+                Text(step, fontSize = 12.sp, color = p.text, lineHeight = 17.sp)
+            }
+        }
+        Text(
+            "На старых версиях Android и на некоторых телефонах путь другой: Battery → Battery optimization → " +
+                "All apps → НЕРодная речь → Don't optimize.",
+            fontSize = 12.sp,
+            color = p.secondary,
+            lineHeight = 17.sp,
+            modifier = Modifier.padding(top = 4.dp),
         )
     }
 }
