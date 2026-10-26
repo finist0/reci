@@ -312,12 +312,21 @@ object Repo {
 
     private fun showAtOf(w: Word) = progress[w.key]?.showAt ?: 0
 
+    private fun untouched(w: Word) = progress[w.key].let { it != null && it.phase == INTRO && it.state == State.NEW && it.showAt == 0 }
+
     // The words being learned now; topped up from the queue when some were learned.
     private fun activeSet(): List<Word> {
         val q = queue()
         val active = q.filter { phaseOf(it) == INTRO || phaseOf(it) == RECALL }
         val missing = Prefs.activeSize - active.size
-        if (missing <= 0) return active
+        if (missing < 0) {
+            // A smaller set takes effect at once: words that were only shown, never answered,
+            // give way from the end of the queue.
+            val drop = active.asReversed().filter { untouched(it) }.take(-missing)
+            for (w in drop) update(w) { it.copy(phase = 0) }
+            return active - drop.toSet()
+        }
+        if (missing == 0) return active
         val fresh = q.asSequence().filter { phaseOf(it) == 0 && progress[it.key]?.state != State.KNOWN }.take(missing).toList()
         for (w in fresh) update(w) { it.copy(phase = INTRO, streak = 0) }
         return active + fresh

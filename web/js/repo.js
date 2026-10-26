@@ -281,13 +281,24 @@ function queue() {
 const phaseOf = w => getProgress(w.key)?.phase ?? 0;
 const lastOf = w => getProgress(w.key)?.last ?? 0;
 const showAtOf = w => getProgress(w.key)?.showAt ?? 0;
+const untouched = w => {
+    const p = getProgress(w.key);
+    return !!p && p.phase === INTRO && p.state === NEW && (p.showAt ?? 0) === 0;
+};
 
 // The words being learned now; topped up from the queue when some were learned.
 function activeSet() {
     const q = queue();
     const active = q.filter(w => phaseOf(w) === INTRO || phaseOf(w) === RECALL);
     const missing = prefs.activeSize - active.length;
-    if (missing <= 0) return active;
+    if (missing < 0) {
+        // A smaller set takes effect at once: words that were only shown, never answered,
+        // give way from the end of the queue.
+        const drop = new Set(active.filter(untouched).slice(missing));
+        for (const w of drop) update(w, p => ({ ...p, phase: 0 }));
+        return active.filter(w => !drop.has(w));
+    }
+    if (missing === 0) return active;
     const fresh = [];
     for (const w of q) {
         if (fresh.length >= missing) break;
