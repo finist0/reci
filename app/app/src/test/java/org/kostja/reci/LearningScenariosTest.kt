@@ -1,6 +1,5 @@
 package org.kostja.reci
 
-import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
 import org.junit.Assert.assertEquals
@@ -16,7 +15,6 @@ import org.kostja.reci.data.State
 import org.kostja.reci.data.Word
 import org.robolectric.ParameterizedRobolectricTestRunner
 import org.robolectric.ParameterizedRobolectricTestRunner.Parameters
-import org.robolectric.RuntimeEnvironment
 import org.robolectric.annotation.Config
 import java.io.File
 import java.text.Collator
@@ -213,9 +211,6 @@ class LearningScenariosTest(private val name: String, private val index: Int) {
         Prefs.reviewKnown = s.optBoolean("reviewKnown", true)
         Prefs.cardMode = 0
         val cats = s.optJSONArray("categories")
-        // Prefs adds the article sections to stored categories once, for users of older versions.
-        RuntimeEnvironment.getApplication().getSharedPreferences("prefs", Context.MODE_PRIVATE)
-            .edit().putBoolean("sections_added", true).commit()
         Repo.setCategories(if (cats == null) setOf("L3") else List(cats.length()) { cats.getString(it) }.toSet())
         val steps = scenario.getJSONArray("steps")
         for (i in 0 until steps.length()) {
