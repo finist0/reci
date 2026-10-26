@@ -1,0 +1,230 @@
+[
+  {
+    "name": "one Know moves a new word to recall",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"expect": {"word": "a", "phase": "intro", "streak": 0}},
+      {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "recall", "streak": 0}}
+    ]
+  },
+  {
+    "name": "Don't know on a new word brings it back five cards later",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "dontknow"},
+      {"expect": {"word": "a", "phase": "intro", "state": "dontknow"}},
+      {"do": "until", "word": "a", "max": 30, "answer": "know"},
+      {"expect": {"distance": 5}}
+    ]
+  },
+  {
+    "name": "Don't know in recall goes back to the introduction, five cards later",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "know"},
+      {"do": "until", "word": "a", "max": 60, "answer": "know"},
+      {"expect": {"distance": 20, "word": "a", "phase": "recall"}},
+      {"do": "answer", "a": "dontknow"},
+      {"expect": {"word": "a", "phase": "intro", "state": "dontknow"}},
+      {"do": "remember", "as": "a"},
+      {"do": "until", "word": "a", "max": 30, "answer": "know"},
+      {"expect": {"distance": 5}}
+    ]
+  },
+  {
+    "name": "three Know in recall learn the word, first check in a week",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "know"},
+      {"do": "until", "word": "a", "max": 60, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "recall", "streak": 1}},
+      {"do": "until", "word": "a", "max": 60, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "recall", "streak": 2}},
+      {"do": "until", "word": "a", "max": 60, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "learned", "state": "known", "dueInDays": 7}}
+    ]
+  },
+  {
+    "name": "passed checks come after 7, 21, 60, 180 and 365 days",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "long"},
+      {"expect": {"word": "a", "phase": "learned", "dueInDays": 7}},
+      {"do": "advanceDays", "days": 8},
+      {"do": "until", "word": "a", "max": 8, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "learned", "dueInDays": 21}},
+      {"do": "advanceDays", "days": 22},
+      {"do": "until", "word": "a", "max": 8, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "dueInDays": 60}},
+      {"do": "advanceDays", "days": 61},
+      {"do": "until", "word": "a", "max": 8, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "dueInDays": 180}},
+      {"do": "advanceDays", "days": 181},
+      {"do": "until", "word": "a", "max": 8, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "dueInDays": 365}},
+      {"do": "advanceDays", "days": 366},
+      {"do": "until", "word": "a", "max": 8, "answer": "know"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "dueInDays": 365}}
+    ]
+  },
+  {
+    "name": "a failed check goes back to recall and returns after the active set size",
+    "settings": {"activeSize": 20},
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "long"},
+      {"do": "advanceDays", "days": 8},
+      {"do": "until", "word": "a", "max": 8, "answer": "know"},
+      {"do": "answer", "a": "dontknow"},
+      {"expect": {"word": "a", "phase": "recall", "streak": 0, "state": "dontknow"}},
+      {"do": "remember", "as": "a"},
+      {"do": "until", "word": "a", "max": 40, "answer": "know"},
+      {"expect": {"distance": 20, "word": "a", "phase": "recall"}}
+    ]
+  },
+  {
+    "name": "a long press on Know learns the word at once",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "long"},
+      {"expect": {"word": "a", "phase": "learned", "state": "known", "dueInDays": 7}}
+    ]
+  },
+  {
+    "name": "a changed answer replaces the earlier one",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "know"}, {"do": "answer", "a": "dontknow"}, {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "recall", "streak": 0, "state": "new"}},
+      {"do": "answer", "a": "dontknow"},
+      {"expect": {"word": "a", "phase": "intro", "state": "dontknow"}},
+      {"do": "answer", "a": "long"},
+      {"expect": {"word": "a", "phase": "learned"}},
+      {"do": "answer", "a": "dontknow"},
+      {"expect": {"word": "a", "phase": "intro", "state": "dontknow"}}
+    ]
+  },
+  {
+    "name": "the active set keeps its size as words are learned",
+    "settings": {"activeSize": 10},
+    "steps": [
+      {"do": "next"},
+      {"expect": {"activeCount": 10}},
+      {"do": "skim", "count": 3, "answer": "long"},
+      {"expect": {"activeCount": 10}}
+    ]
+  },
+  {
+    "name": "every fifth card is an article and every fourth a due check",
+    "settings": {"categories": ["L3", "X:compare", "X:note"]},
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "long"},
+      {"do": "advanceDays", "days": 8},
+      {"do": "skim", "count": 19, "collect": true},
+      {"expect": {"articleSlots": true, "keyAt": {"3": "a", "7": "a", "11": "a", "15": "a"}}}
+    ]
+  },
+  {
+    "name": "a word due back after Don't know comes before a due check",
+    "settings": {"categories": ["L3", "X:compare", "X:note"]},
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "b"},
+      {"do": "answer", "a": "long"},
+      {"do": "advanceDays", "days": 8},
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "dontknow"},
+      {"do": "until", "word": "a", "max": 10},
+      {"expect": {"distance": 5, "cardNumber": 7}}
+    ]
+  },
+  {
+    "name": "by frequency the first card is the most frequent word",
+    "settings": {"order": 0},
+    "steps": [
+      {"do": "pick", "as": "f", "level": 3, "by": "rank"},
+      {"do": "next"},
+      {"expect": {"current": "f"}}
+    ]
+  },
+  {
+    "name": "alphabetically the first card is the first word of the level",
+    "settings": {"order": 2},
+    "steps": [
+      {"do": "pick", "as": "f", "level": 3, "by": "alpha"},
+      {"do": "next"},
+      {"expect": {"current": "f"}}
+    ]
+  },
+  {
+    "name": "phrases come as every fifth card of the queue",
+    "settings": {"categories": ["L3", "X:phrase"]},
+    "steps": [
+      {"do": "next"},
+      {"do": "skim", "count": 9, "collect": true},
+      {"expect": {"kindsAt": {"2": "word", "3": "word", "4": "word", "5": "phrase", "6": "word",
+        "7": "word", "8": "word", "9": "word", "10": "phrase"}}}
+    ]
+  },
+  {
+    "name": "going back and forward replays the same cards",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "c1"},
+      {"do": "next"}, {"do": "remember", "as": "c2"},
+      {"do": "next"}, {"do": "remember", "as": "c3"},
+      {"do": "prev"}, {"expect": {"current": "c2"}},
+      {"do": "prev"}, {"expect": {"current": "c1"}},
+      {"do": "next"}, {"expect": {"current": "c2"}},
+      {"do": "next"}, {"expect": {"current": "c3", "cardNumber": 3}},
+      {"do": "next"}, {"expect": {"currentNot": ["c1", "c2", "c3"], "cardNumber": 4}}
+    ]
+  },
+  {
+    "name": "comparisons and notes take turns",
+    "settings": {"categories": ["L3", "X:compare", "X:note"]},
+    "steps": [
+      {"do": "next"},
+      {"do": "skim", "count": 40, "answer": "know", "articles": "later", "collect": true},
+      {"expect": {"articlesAlternate": true}}
+    ]
+  },
+  {
+    "name": "Hide removes an article for good",
+    "settings": {"categories": ["L3", "X:compare", "X:note"]},
+    "steps": [
+      {"do": "next"},
+      {"do": "untilArticle", "max": 10, "answer": "know"}, {"do": "remember", "as": "x"},
+      {"do": "answer", "a": "hide"},
+      {"expect": {"word": "x", "phase": "learned", "dueInDays": null, "hidden": {"compare": 1, "note": 0}}},
+      {"do": "advanceDays", "days": 400},
+      {"do": "skim", "count": 60, "answer": "know", "articles": "later", "collect": true},
+      {"expect": {"notSeen": "x"}}
+    ]
+  },
+  {
+    "name": "Read later keeps an article in the round, at its end",
+    "settings": {"categories": ["L3", "X:compare", "X:note"]},
+    "steps": [
+      {"do": "next"},
+      {"do": "untilArticle", "max": 10, "answer": "know"}, {"do": "remember", "as": "x"},
+      {"do": "answer", "a": "later"},
+      {"expect": {"word": "x", "phase": "new", "state": "new", "hidden": {"compare": 0, "note": 0}}},
+      {"do": "skim", "count": 60, "answer": "know", "articles": "later", "collect": true},
+      {"expect": {"notSeen": "x"}}
+    ]
+  },
+  {
+    "name": "showing hidden articles again keeps favourites",
+    "settings": {"categories": ["L3", "X:compare", "X:note"]},
+    "steps": [
+      {"do": "next"},
+      {"do": "untilArticle", "max": 10, "answer": "know"}, {"do": "remember", "as": "x"},
+      {"do": "fav"},
+      {"do": "answer", "a": "hide"},
+      {"expect": {"hidden": {"compare": 1, "note": 0}}},
+      {"do": "showArticlesAgain", "pos": "compare"},
+      {"expect": {"hidden": {"compare": 0, "note": 0}, "word": "x", "phase": "new", "fav": true}}
+    ]
+  }
+]
