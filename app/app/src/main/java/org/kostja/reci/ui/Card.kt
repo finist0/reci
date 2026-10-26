@@ -174,7 +174,7 @@ private fun stageLabel(w: Word): String? {
         Repo.isDue(pr) -> "Проверка: вспомните $what"
         pr.phase == Repo.RECALL -> "Вспомните $what · «Знаю» ${pr.streak} из 3"
         pr.phase == Repo.LEARNED -> "Выучено"
-        pr.streak > 0 -> "Знакомство · «Знаю» ${pr.streak} из 2"
+        pr.state == State.DONT_KNOW || pr.state == State.UNSURE -> "Ещё раз: запомните слово"
         else -> "Новое слово"
     }
 }
