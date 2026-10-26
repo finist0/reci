@@ -83,6 +83,9 @@ function update(w, f) {
 
 const DAY = 24 * 60 * 60 * 1000;
 
+// Tests move time forward to make checks due.
+export const clock = { now: () => Date.now() };
+
 // A word goes: not started -> INTRO (word and translation shown) -> RECALL (translation
 // only, the user names the word) -> LEARNED, then comes back for checks.
 export const INTRO = 1, RECALL = 2, LEARNED = 3;
@@ -93,13 +96,13 @@ const RETRY_AFTER = 5;
 
 const reviewIntervals = [7 * DAY, 21 * DAY, 60 * DAY, 180 * DAY, 365 * DAY];
 
-const reviewDue = step => Date.now() + reviewIntervals[Math.min(step, reviewIntervals.length - 1)];
+const reviewDue = step => clock.now() + reviewIntervals[Math.min(step, reviewIntervals.length - 1)];
 const learned = p => ({ ...p, phase: LEARNED, streak: 0, state: KNOWN, step: 0, due: reviewDue(0) });
 const passedCheck = p => ({ ...p, step: p.step + 1, due: reviewDue(p.step + 1) });
 
 export const isArticle = w => w.pos === "compare" || w.pos === "note";
 
-export const isDue = p => !!p && p.phase === LEARNED && prefs.reviewKnown && p.due >= 1 && p.due <= Date.now();
+export const isDue = p => !!p && p.phase === LEARNED && prefs.reviewKnown && p.due >= 1 && p.due <= clock.now();
 
 // Whether the card should hide the Serbian side so the user recalls it.
 export function asksRecall(w) {
@@ -171,7 +174,7 @@ export const todayCount = () => (prefs.todayDate === today() ? prefs.todayCount 
 
 export function markShown(w) {
     if (revisit) return;
-    update(w, p => ({ ...p, seen: p.seen + 1, last: Date.now(), showAt: 0 }));
+    update(w, p => ({ ...p, seen: p.seen + 1, last: clock.now(), showAt: 0 }));
     const t = today();
     setPrefs({ todayDate: t, todayCount: prefs.todayDate === t ? prefs.todayCount + 1 : 1 });
 }

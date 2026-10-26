@@ -101,6 +101,9 @@ object Repo {
 
     private const val DAY = 24 * 60 * 60 * 1000L
 
+    // Tests move time forward to make checks due.
+    internal var now: () -> Long = System::currentTimeMillis
+
     // A word goes: not started -> INTRO (word and translation shown) -> RECALL (translation
     // only, the user names the word) -> LEARNED, then comes back for checks.
     const val INTRO = 1
@@ -116,7 +119,7 @@ object Repo {
     // roughly triples the gap, as in spaced-repetition schedules.
     private val reviewIntervals = longArrayOf(7 * DAY, 21 * DAY, 60 * DAY, 180 * DAY, 365 * DAY)
 
-    private fun reviewDue(step: Int) = System.currentTimeMillis() + reviewIntervals[minOf(step, reviewIntervals.size - 1)]
+    private fun reviewDue(step: Int) = now() + reviewIntervals[minOf(step, reviewIntervals.size - 1)]
 
     private fun learned(p: Progress) =
         p.copy(phase = LEARNED, streak = 0, state = State.KNOWN, step = 0, due = reviewDue(0))
@@ -126,7 +129,7 @@ object Repo {
     fun isArticle(w: Word) = w.pos == "compare" || w.pos == "note"
 
     fun isDue(p: Progress?) =
-        p != null && p.phase == LEARNED && Prefs.reviewKnown && p.due in 1..System.currentTimeMillis()
+        p != null && p.phase == LEARNED && Prefs.reviewKnown && p.due in 1..now()
 
     // Whether the card should hide the Serbian side so the user recalls it.
     fun asksRecall(w: Word): Boolean {
@@ -195,7 +198,7 @@ object Repo {
 
     fun markShown(w: Word) {
         if (revisit) return
-        update(w) { it.copy(seen = it.seen + 1, last = System.currentTimeMillis(), showAt = 0) }
+        update(w) { it.copy(seen = it.seen + 1, last = now(), showAt = 0) }
         val c = Calendar.getInstance()
         Prefs.countShown(c.get(Calendar.YEAR) * 1000 + c.get(Calendar.DAY_OF_YEAR))
     }
