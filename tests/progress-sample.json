@@ -1,0 +1,32 @@
+{
+  "app": "reci",
+  "format": 1,
+  "exported": "2026-10-20T10:00:00.000Z",
+  "prefs": {
+    "latinFirst": true,
+    "showBothScripts": false,
+    "autoSpeak": true,
+    "cardMode": 2,
+    "activeSize": 30,
+    "cardCount": 123,
+    "useMarks": false,
+    "reviewKnown": false,
+    "accentMode": 0,
+    "theme": 5,
+    "wordSize": 48,
+    "order": 1,
+    "shuffleSeed": 7,
+    "currentKey": "да",
+    "categories": ["L2", "T:food", "X:note"],
+    "todayDate": 20261020,
+    "todayCount": 17,
+    "hintDone": true,
+    "newKnownCount": 12
+  },
+  "progress": {
+    "бити": {"state": 3, "fav": true, "seen": 9, "last": 1760954400000, "due": 1761559200000, "step": 2, "phase": 3, "streak": 0, "showAt": 0},
+    "да": {"state": 1, "fav": false, "seen": 2, "last": 1760954300000, "due": 0, "step": 0, "phase": 1, "streak": 0, "showAt": 128},
+    "се": {"state": 0, "fav": true, "seen": 4, "last": 1760954250000, "due": 0, "step": 0, "phase": 2, "streak": 2, "showAt": 0},
+    "note:turcizmi-odeca": {"state": 3, "fav": false, "seen": 1, "last": 1760954200000, "due": 0, "step": 0, "phase": 3, "streak": 0, "showAt": 0}
+  }
+}
