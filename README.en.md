@@ -92,7 +92,7 @@ Android 9 or later is required.
 ## Web version: iPhone, desktop
 
 The same cards, learning, search and reference, in a browser:
-https://finist0.github.io/reci/web/
+**[finist0.github.io/reci/web](https://finist0.github.io/reci/web/)**
 
 There is no lock screen card there: iOS and browsers do not allow it.
 

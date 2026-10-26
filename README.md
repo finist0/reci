@@ -91,7 +91,7 @@
 ## Веб-версия: iPhone, компьютер
 
 Те же карточки, обучение, поиск и справочник, но в браузере:
-https://finist0.github.io/reci/web/
+**[finist0.github.io/reci/web](https://finist0.github.io/reci/web/)**
 
 Карточки на экране блокировки там нет: iOS и браузеры этого не позволяют.
 
