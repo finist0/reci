@@ -20,7 +20,7 @@ jobs:
         working-directory: ios/ReciCore
 
   app-simulator:
-    name: App and UI tests on ${{ matrix.device }}, iOS ${{ matrix.ios }}
+    name: App and UI tests on ${{ matrix.device }}, iOS ${{ matrix.os }}
     runs-on: ${{ matrix.runner }}
     # GitHub may not offer the newest macOS image to every account yet.
     continue-on-error: ${{ matrix.experimental }}
@@ -30,17 +30,17 @@ jobs:
         include:
           - runner: macos-15
             device: iPhone 16
-            ios: "18"
+            os: "18.6"
             experimental: false
             main: true
           - runner: macos-15
             device: iPhone SE (3rd generation)
-            ios: "18"
+            os: "18.6"
             experimental: false
             main: false
           - runner: macos-26
             device: iPhone 17 Pro
-            ios: "26"
+            os: latest
             experimental: true
             main: false
     steps:
@@ -74,7 +74,7 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test -project Reci.xcodeproj -scheme Reci \
-            -destination "platform=iOS Simulator,name=${{ matrix.device }},OS=latest" \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }},OS=${{ matrix.os }}" \
             -resultBundlePath build/Reci.xcresult \
             CODE_SIGNING_ALLOWED=NO
       - name: Keep the test results
