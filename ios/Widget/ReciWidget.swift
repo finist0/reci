@@ -5,7 +5,6 @@ import WidgetKit
 
 struct CardEntry: TimelineEntry {
     let date: Date
-    // nil before the app ran once.
     let title: String?
     let subtitle: String
     let recall: Bool
@@ -26,24 +25,8 @@ struct CardProvider: TimelineProvider {
     }
 
     private func entry() -> CardEntry {
-        // The app picks the first card and counts it; the widgets only show what it picked.
-        guard let repo = LockDeck.repo() else {
-            return CardEntry(date: Date(), title: nil, subtitle: "Откройте приложение", recall: false)
-        }
-        guard let w = repo.current() else {
-            return CardEntry(date: Date(), title: nil, subtitle: "Слова закончились: выберите другие в приложении", recall: false)
-        }
-        let prefs = repo.prefs
-        let meanings = w.meanings.prefix(2).joined(separator: ", ")
-        if w.isArticle {
-            return CardEntry(date: Date(), title: w.pos == "compare" ? (w.meanings.first ?? w.cyr) : w.cyr,
-                             subtitle: w.pos == "compare" ? "похожие слова" : "заметка", recall: false)
-        }
-        // A word to recall shows its translation; the word itself opens with the app.
-        if repo.asksRecall(w) {
-            return CardEntry(date: Date(), title: meanings, subtitle: "вспомните слово", recall: true)
-        }
-        return CardEntry(date: Date(), title: prefs.headword(w), subtitle: meanings, recall: false)
+        let card = LockCard.of(LockDeck.repo())
+        return CardEntry(date: Date(), title: card.title, subtitle: card.subtitle, recall: card.recall)
     }
 }
 
