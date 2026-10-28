@@ -55,12 +55,10 @@ final class AppModel: ObservableObject {
         changed()
     }
 
-    // The widgets may have answered cards while the app was in the background. A card they moved
-    // to was counted as shown by them.
+    // The widgets may have answered cards while the app was in the background.
     func reload() {
-        let before = repo.prefs.currentKey
         repo.store.reload()
-        syncShowing(count: repo.prefs.currentKey == before)
+        syncShowing()
         changed()
     }
 
@@ -78,7 +76,7 @@ final class AppModel: ObservableObject {
     }
 
     // Makes sure the card on screen is picked and counted as shown once.
-    func syncShowing(count: Bool = true) {
+    func syncShowing() {
         if repo.current() == nil && !repo.exhausted { repo.step(1) }
         guard let w = repo.current() else {
             showing = nil
@@ -93,7 +91,7 @@ final class AppModel: ObservableObject {
                 revealed: answered != nil, covered: prefs.cardMode == 2 && !w.isArticle,
                 fresh: !w.isArticle && p.phase <= Repo.intro && p.streak == 0, mode: prefs.cardMode
             )
-            if count { repo.markShown(w) }
+            repo.markShown(w)
         } else if var s = showing, s.mode != prefs.cardMode {
             // A card mode chosen in the settings applies to the card on screen as well.
             s.mode = prefs.cardMode
