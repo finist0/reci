@@ -130,6 +130,15 @@ If the service is stopped, the card no longer appears when the user turns the sc
 The app needs "Display over other apps" for one feature only: to show its vocabulary card on the lock screen when the screen turns on. Android allows an app to start an activity from a background service only when it holds this permission. The permission is never requested at install time: the user grants it in the system settings after turning the lock screen card on, and the app explains beforehand why it is needed. Without it, everything else in the app keeps working.
 ```
 
+### «Звонки» (`READ_PHONE_STATE`)
+
+Разрешение необязательное, его выдают в настройках приложения. Отдельной формы для него
+нет. Если проверка спросит:
+
+```
+The phone permission is optional. The app uses it only to ask Android whether a call is going on (TelecomManager.isInCall), so that the lock screen card does not appear over a call. Without it the app falls back to the audio mode, and some messengers leave the ringing mode set after their calls end, which stops the cards. A talk in a messenger that does not report to Telecom is still told by the communication mode. The app does not make calls and does not read phone numbers.
+```
+
 ### Исключение из оптимизации батареи
 
 Приложение не запрашивает `REQUEST_IGNORE_BATTERY_OPTIMIZATIONS`: Google Play разрешает его

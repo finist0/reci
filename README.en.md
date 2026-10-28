@@ -85,7 +85,11 @@ How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/lea
    If the menu has no Allow restricted settings, first try to turn the permission on, then
    open the menu again.
 
-4. If cards stop appearing, lift the battery restrictions in the same section.
+4. If cards stop appearing, in the same section:
+   - lift the battery restrictions;
+   - grant «Звонки» (calls). Without it a call is told by the audio mode, and a messenger
+     that forgets to reset the mode after its call turns the cards off. The app makes no
+     calls and sees no numbers.
 
 Android 9 or later is required.
 

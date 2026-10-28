@@ -99,7 +99,7 @@ python3 -m venv /path/to/venv
 |---|---|
 | `app/app/src/test/…/LearningScenariosTest.kt` | правила обучения по сценариям |
 | `app/app/src/test/…/BackupTest.kt` | файл прогресса |
-| `app/app/src/test/…/LockSettingsTest.kt` | настройки экрана блокировки: пауза, звонки, новое слово, шторка, озвучка |
+| `app/app/src/test/…/LockSettingsTest.kt` | настройки экрана блокировки: пауза, звонки с разрешением «Звонки» и без него, новое слово, шторка, озвучка |
 | `app/app/src/androidTest/…/CardScreenTest.kt` | карточка: долгое нажатие, смена ответа, подсказка, статьи |
 | `app/app/src/androidTest/…/SettingsScreenTest.kt` | каждая настройка на экране настроек и карточка на экране блокировки |
 | `web/tests/learning.test.mjs` | правила обучения по сценариям |
