@@ -1,16 +1,19 @@
 package org.kostja.reci
 
 import android.Manifest
+import android.app.Activity
 import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent
 import android.media.AudioManager
+import android.provider.Settings
 import android.telecom.TelecomManager
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -21,6 +24,7 @@ import org.kostja.reci.data.State
 import org.kostja.reci.lock.LockActivity
 import org.kostja.reci.lock.LockService
 import org.kostja.reci.ui.MainActivity
+import org.kostja.reci.ui.afterCallsRequest
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -150,6 +154,20 @@ class LockSettingsTest {
         audioMode(AudioManager.MODE_IN_COMMUNICATION)
         telecomInCall(false)
         assertFalse(cardStarts())
+    }
+
+    @Test
+    fun aRefusedCallsPermissionLeadsToTheAppSettingsOnceAndroidStopsAsking() {
+        val activity = Robolectric.buildActivity(Activity::class.java).setup().get()
+        val pm = shadowOf(app.packageManager)
+        pm.setShouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE, true)
+        afterCallsRequest(activity, granted = false)
+        assertNull(shadowOf(activity).nextStartedActivity)
+        pm.setShouldShowRequestPermissionRationale(Manifest.permission.READ_PHONE_STATE, false)
+        afterCallsRequest(activity, granted = true)
+        assertNull(shadowOf(activity).nextStartedActivity)
+        afterCallsRequest(activity, granted = false)
+        assertEquals(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, shadowOf(activity).nextStartedActivity?.action)
     }
 
     @Test
