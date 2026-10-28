@@ -61,7 +61,7 @@ final class AppModel: ObservableObject {
 
     // The widgets may have answered cards while the app was in the background.
     func reload() {
-        repo.store.reload()
+        repo.reloadFromStore()
         syncShowing()
         changed()
     }

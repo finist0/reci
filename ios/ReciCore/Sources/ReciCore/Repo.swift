@@ -160,6 +160,88 @@ public final class Repo {
         }
     }
 
+    // Takes up what the other process (the app or a widget) wrote meanwhile. A card it moved on
+    // from goes into the history, so going back still reaches it.
+    public func reloadFromStore() {
+        let old = prefs.currentKey
+        store.reload()
+        if prefs.currentKey != old {
+            if let old {
+                history.append(old)
+                if history.count > 100 { history.removeFirst() }
+            }
+            forward.removeAll()
+            answers.removeAll()
+            revisit = false
+            exhausted = false
+        }
+        restorePending()
+    }
+
+    private func advance(_ w: Word, _ p: Progress, _ a: Int) -> Progress {
+        let n = prefs.cardCount
+        var p = p
+        // «Не показывать» hides an article for good; «Перечитать позже» leaves it in the round.
+        if w.isArticle {
+            if a == Mark.known {
+                p.state = Mark.known; p.phase = Repo.learned; p.streak = 0; p.step = 0; p.due = 0
+            } else {
+                p.state = Mark.new; p.phase = 0; p.streak = 0; p.due = 0
+            }
+            return p
+        }
+        // A forgotten learned word skips the introduction and is asked again a full round later.
+        if p.phase == Repo.learned {
+            if a == Mark.known { return passedCheck(p) }
+            p.phase = Repo.recall; p.streak = 0; p.state = a; p.step = 0; p.due = 0; p.showAt = n + prefs.activeSize
+            return p
+        }
+        if p.phase == Repo.recall {
+            if a == Mark.known {
+                if p.streak + 1 >= Repo.recallStreak { return learnedNow(p) }
+                p.streak += 1; p.state = Mark.new
+                return p
+            }
+            if a == Mark.unsure { p.streak = 0; p.state = a; return p }
+            p.phase = Repo.intro; p.streak = 0; p.state = Mark.dontKnow; p.showAt = n + Repo.retryAfter
+            return p
+        }
+        if a == Mark.known {
+            if p.streak + 1 >= Repo.introStreak {
+                p.phase = Repo.recall; p.streak = 0; p.state = Mark.new
+            } else {
+                p.phase = Repo.intro; p.streak += 1; p.state = Mark.new
+            }
+            return p
+        }
+        p.phase = Repo.intro; p.streak = 0; p.state = a; p.showAt = n + Repo.retryAfter
+        return p
+    }
+
+    public func toggleFav(_ w: Word) { update(w) { var p = $0; p.fav.toggle(); return p } }
+
+    private func today() -> Int {
+        let c = Calendar.current.dateComponents([.year, .month, .day], from: Date(timeIntervalSince1970: Double(now()) / 1000))
+        return (c.year ?? 0) * 10000 + (c.month ?? 0) * 100 + (c.day ?? 0)
+    }
+
+    public var todayCount: Int { prefs.todayDate == today() ? prefs.todayCount : 0 }
+
+    // The app and the widgets, or the app before and after a restart, show the same card, and a
+    // showing must count once.
+    public func markShown(_ w: Word) {
+        let showing = "\(w.key)#\(prefs.cardCount)"
+        if revisit || prefs.lastShown == showing { return }
+        let t = now()
+        update(w) { var p = $0; p.seen += 1; p.last = t; p.showAt = 0; return p }
+        var pr = prefs
+        let d = today()
+        pr.todayCount = pr.todayDate == d ? pr.todayCount + 1 : 1
+        pr.todayDate = d
+        pr.lastShown = showing
+        prefs = pr
+    }
+
     public func resetAll() {
         answers.removeAll()
         prefs.pendingAnswer = nil
