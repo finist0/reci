@@ -27,8 +27,11 @@ struct CardProvider: TimelineProvider {
 
     private func entry() -> CardEntry {
         // The app picks the first card and counts it; the widgets only show what it picked.
-        guard let repo = LockDeck.repo(), let w = repo.current() else {
+        guard let repo = LockDeck.repo() else {
             return CardEntry(date: Date(), title: nil, subtitle: "Откройте приложение", recall: false)
+        }
+        guard let w = repo.current() else {
+            return CardEntry(date: Date(), title: nil, subtitle: "Слова закончились: выберите другие в приложении", recall: false)
         }
         let prefs = repo.prefs
         let meanings = w.meanings.prefix(2).joined(separator: ", ")
@@ -90,6 +93,17 @@ struct CardWidget: Widget {
     }
 }
 
+// The buttons look the same whatever the card, so they need no dictionary to draw.
+struct ButtonProvider: TimelineProvider {
+    struct Entry: TimelineEntry { let date: Date }
+
+    func placeholder(in context: Context) -> Entry { Entry(date: Date()) }
+    func getSnapshot(in context: Context, completion: @escaping (Entry) -> Void) { completion(Entry(date: Date())) }
+    func getTimeline(in context: Context, completion: @escaping (Timeline<Entry>) -> Void) {
+        completion(Timeline(entries: [Entry(date: Date())], policy: .never))
+    }
+}
+
 struct AnswerButtonView: View {
     let know: Bool
     var body: some View {
@@ -109,7 +123,7 @@ struct AnswerButtonView: View {
 
 struct KnowWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "know", provider: CardProvider()) { _ in
+        StaticConfiguration(kind: "know", provider: ButtonProvider()) { _ in
             AnswerButtonView(know: true).containerBackground(.clear, for: .widget)
         }
         .configurationDisplayName("Знаю")
@@ -120,7 +134,7 @@ struct KnowWidget: Widget {
 
 struct DontKnowWidget: Widget {
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: "dontknow", provider: CardProvider()) { _ in
+        StaticConfiguration(kind: "dontknow", provider: ButtonProvider()) { _ in
             AnswerButtonView(know: false).containerBackground(.clear, for: .widget)
         }
         .configurationDisplayName("Не знаю")
@@ -130,7 +144,7 @@ struct DontKnowWidget: Widget {
 }
 
 @main
-struct ReciWidgets: WidgetBundle {
+struct ReciWidgetBundle: WidgetBundle {
     var body: some Widget {
         CardWidget()
         KnowWidget()

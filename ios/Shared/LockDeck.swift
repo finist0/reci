@@ -1,5 +1,6 @@
 import AppIntents
 import Foundation
+import OSLog
 import ReciCore
 import WidgetKit
 
@@ -8,8 +9,13 @@ enum LockDeck {
     static let appGroup = "group.org.kostja.reci"
 
     static var dir: URL {
-        let base = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup)
-            ?? FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        guard let base = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) else {
+            // Without the entitlement the app and the widgets each get their own directory, and the
+            // widgets never see a card.
+            Logger(subsystem: "org.kostja.reci", category: "store").error("no App Group \(appGroup, privacy: .public)")
+            return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+                .appendingPathComponent("reci", isDirectory: true)
+        }
         return base.appendingPathComponent("reci", isDirectory: true)
     }
 
@@ -42,7 +48,7 @@ enum LockDeck {
         repo.answer(w, know ? Mark.known : Mark.dontKnow)
         repo.step(1)
         if let w = repo.current() { repo.markShown(w) }
-        WidgetCenter.shared.reloadAllTimelines()
+        WidgetCenter.shared.reloadTimelines(ofKind: "card")
     }
 }
 

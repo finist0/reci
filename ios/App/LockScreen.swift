@@ -77,7 +77,7 @@ struct WallpaperCard: View {
                         }
                     }
                 } else {
-                    Text("Откройте приложение, чтобы выбрать слова").font(.system(size: 44)).foregroundStyle(palette.text)
+                    Text("Слова закончились: выберите другие в приложении").font(.system(size: 44)).foregroundStyle(palette.text)
                 }
             }
             .padding(.horizontal, 90)

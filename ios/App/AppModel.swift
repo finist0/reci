@@ -48,7 +48,7 @@ final class AppModel: ObservableObject {
     func changed() {
         version += 1
         // Reloads asked for while the app is in front do not count against the widgets' budget.
-        if UIApplication.shared.applicationState == .active { WidgetCenter.shared.reloadAllTimelines() }
+        if UIApplication.shared.applicationState == .active { WidgetCenter.shared.reloadTimelines(ofKind: "card") }
     }
 
     func set(_ f: (inout Prefs) -> Void) {
