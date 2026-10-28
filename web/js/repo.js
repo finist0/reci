@@ -20,6 +20,7 @@ export async function load() {
     }));
     byKey = new Map(words.map(x => [x.key, x]));
     topics = g;
+    restorePending();
 }
 
 export const word = key => byKey.get(key);
@@ -137,6 +138,24 @@ export function answer(w, a, learnedNow = false) {
         if (!learnedNow) return advance(w, p, a);
         return p.phase === LEARNED ? p : learned(p);
     });
+    setPref("pendingAnswer", { key: w.key, ...answers.get(w.key) });
+}
+
+// The answer to the card on screen outlives a reload, so that a changed answer still replaces
+// the first one instead of adding to it.
+function restorePending() {
+    const a = prefs.pendingAnswer;
+    if (a && a.key === prefs.currentKey) answers.set(a.key, { before: { ...emptyProgress, ...a.before }, state: a.state, learned: a.learned });
+}
+
+// What a reload forgets; the tests use it to stand for one.
+export function restart() {
+    history.length = 0;
+    forward.length = 0;
+    answers.clear();
+    revisit = false;
+    exhausted = false;
+    restorePending();
 }
 
 function advance(w, p, a) {
@@ -183,6 +202,7 @@ export function markShown(w) {
 
 export function resetAll() {
     answers.clear();
+    setPref("pendingAnswer", null);
     clearProgress();
 }
 
@@ -379,7 +399,7 @@ export function resetPosition() {
     forward.length = 0;
     answers.clear();
     exhausted = false;
-    setPrefs({ currentKey: null, shuffleSeed: Math.floor(Math.random() * 2 ** 31) });
+    setPrefs({ currentKey: null, shuffleSeed: Math.floor(Math.random() * 2 ** 31), pendingAnswer: null });
 }
 
 export const current = () => (prefs.currentKey ? word(prefs.currentKey) ?? null : null);

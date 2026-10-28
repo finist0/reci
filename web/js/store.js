@@ -29,6 +29,7 @@ const defaults = {
     hintDone: false,
     newKnownCount: 0,
     lastShown: "",
+    pendingAnswer: null,
 };
 
 function read(key) {
@@ -109,7 +110,7 @@ export function importData(data) {
     progress.clear();
     for (const [k, v] of Object.entries(data.progress)) progress.set(k, { ...emptyProgress, ...v });
     saveProgress();
-    if (data.prefs) setPrefs({ ...defaults, ...data.prefs, currentKey: null, lastShown: "" });
+    if (data.prefs) setPrefs({ ...defaults, ...data.prefs, currentKey: null, lastShown: "", pendingAnswer: null });
     else changed();
     return progress.size;
 }

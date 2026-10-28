@@ -23,6 +23,7 @@ public enum Backup {
             var prefs = try JSONDecoder().decode(Prefs.self, from: JSONSerialization.data(withJSONObject: prefsObj))
             prefs.currentKey = nil
             prefs.lastShown = ""
+            prefs.pendingAnswer = nil
             // How the card reaches the lock screen belongs to this phone, not to the file.
             prefs.lockMode = repo.prefs.lockMode
             repo.prefs = prefs

@@ -10,6 +10,7 @@ import java.util.Locale
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.Executors
 import kotlin.random.Random
+import org.json.JSONObject
 
 object Repo {
     private lateinit var ctx: Context
@@ -76,6 +77,7 @@ object Repo {
             r.endArray()
         }
         progress.putAll(db.loadAll())
+        restorePending()
         byKey = list.associateBy { it.key }
         loaded = list
         version.intValue++
@@ -169,6 +171,40 @@ object Repo {
                 else -> learned(p)
             }
         }
+        savePending(w.key)
+    }
+
+    // The answer to the card on screen outlives the process, so that a changed answer after a
+    // restart still replaces the first one instead of adding to it.
+    private fun savePending(key: String) {
+        val a = answers[key] ?: return
+        val b = a.before
+        val before = JSONObject().put("state", b.state.ordinal).put("fav", b.fav).put("seen", b.seen).put("last", b.last)
+            .put("due", b.due).put("step", b.step).put("phase", b.phase).put("streak", b.streak).put("showAt", b.showAt)
+        Prefs.pendingAnswer = JSONObject().put("key", key).put("state", a.state.ordinal).put("learned", a.learned)
+            .put("before", before).toString()
+    }
+
+    private fun restorePending() {
+        val o = runCatching { JSONObject(Prefs.pendingAnswer) }.getOrNull() ?: return
+        val key = o.optString("key")
+        if (key != Prefs.currentKey) return
+        val b = o.getJSONObject("before")
+        val before = Progress(
+            State.entries.getOrElse(b.optInt("state")) { State.NEW }, b.optBoolean("fav"), b.optInt("seen"), b.optLong("last"),
+            b.optLong("due"), b.optInt("step"), b.optInt("phase"), b.optInt("streak"), b.optInt("showAt"),
+        )
+        answers[key] = Answer(before, State.entries.getOrElse(o.optInt("state")) { State.NEW }, o.optBoolean("learned"))
+    }
+
+    // What a process restart forgets; the tests use it to stand for one.
+    internal fun restart() {
+        history.clear()
+        forward.clear()
+        answers.clear()
+        revisit = false
+        exhausted.value = false
+        restorePending()
     }
 
     private fun advance(w: Word, p: Progress, a: State): Progress {
@@ -224,6 +260,7 @@ object Repo {
         db.clear()
         progress.clear()
         answers.clear()
+        Prefs.pendingAnswer = ""
         version.intValue++
     }
 
@@ -389,6 +426,7 @@ object Repo {
         history.clear()
         forward.clear()
         answers.clear()
+        Prefs.pendingAnswer = ""
         exhausted.value = false
         Prefs.setCurrent(0, null, null, System.nanoTime())
     }

@@ -1,5 +1,13 @@
 import Foundation
 
+// The answer to the card on screen with the progress it was given on.
+public struct PendingAnswer: Codable, Equatable {
+    public var key: String
+    public var state: Int
+    public var learned: Bool
+    public var before: Progress
+}
+
 // Settings under the names of the web version, so progress files move between the versions.
 public struct Prefs: Codable, Equatable {
     public var latinFirst = false
@@ -27,13 +35,14 @@ public struct Prefs: Codable, Equatable {
     public var lockMode = 0
     // The showing counted last, "<key>#<card number>".
     public var lastShown = ""
+    public var pendingAnswer: PendingAnswer? = nil
 
     public init() {}
 
     enum CodingKeys: String, CodingKey {
         case latinFirst, showBothScripts, autoSpeak, cardMode, activeSize, cardCount, useMarks, reviewKnown, accentMode
         case theme, wordSize, order, shuffleSeed, currentKey, categories, todayDate, todayCount, hintDone, newKnownCount
-        case lockMode, lastShown
+        case lockMode, lastShown, pendingAnswer
     }
 
     public init(from decoder: Decoder) throws {
@@ -60,6 +69,7 @@ public struct Prefs: Codable, Equatable {
         newKnownCount = try c.decodeIfPresent(Int.self, forKey: .newKnownCount) ?? d.newKnownCount
         lockMode = try c.decodeIfPresent(Int.self, forKey: .lockMode) ?? d.lockMode
         lastShown = try c.decodeIfPresent(String.self, forKey: .lastShown) ?? d.lastShown
+        pendingAnswer = try c.decodeIfPresent(PendingAnswer.self, forKey: .pendingAnswer)
     }
 
     // The long-press hint is shown on the 1st, 10th and 30th «Знаю» given to a new word, until

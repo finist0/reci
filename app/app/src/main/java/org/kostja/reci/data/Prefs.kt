@@ -188,6 +188,11 @@ object Prefs {
     val todayCount: Int
         get() = int("today_count", 0)
 
+    // The answer to the card on screen with the progress it was given on, as JSON; "" when none.
+    var pendingAnswer: String
+        get() = sp.getString("pending_answer", "") ?: ""
+        set(v) = sp.edit { putString("pending_answer", v) }
+
     // The showing counted last, "<key>#<card number>": the lock card and the app show the same
     // card, and a showing must count once.
     val lastShown: String
