@@ -132,7 +132,7 @@ python3 -m venv /path/to/venv
 
 | Сценарий | Когда | Что делает | Что сохраняет |
 |---|---|---|---|
-| `android.yml` | каждый push | тесты на JVM, отладочный APK; тесты интерфейса на эмуляторе | `reci-debug-apk`, отчёты при ошибке |
+| `android.yml` | каждый push | тесты на JVM, отладочный APK; тесты интерфейса на эмуляторах Android 9, 13, 15 и 17 | `reci-debug-apk`, отчёты при ошибке |
 | `web.yml` | каждый push | правила обучения и файл прогресса в Node, интерфейс в Chrome | — |
 | `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах трёх iPhone | `reci-unsigned-ipa`, `ios-test-results-N` |
 
