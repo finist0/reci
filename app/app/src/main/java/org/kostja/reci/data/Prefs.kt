@@ -188,11 +188,17 @@ object Prefs {
     val todayCount: Int
         get() = int("today_count", 0)
 
-    fun countShown(today: Int) {
+    // The showing counted last, "<key>#<card number>": the lock card and the app show the same
+    // card, and a showing must count once.
+    val lastShown: String
+        get() = sp.getString("last_shown", "") ?: ""
+
+    fun countShown(today: Int, showing: String) {
         val n = if (sp.getInt("today_date", 0) == today) sp.getInt("today_count", 0) + 1 else 1
         sp.edit {
             putInt("today_date", today)
             putInt("today_count", n)
+            putString("last_shown", showing)
         }
         changed()
     }

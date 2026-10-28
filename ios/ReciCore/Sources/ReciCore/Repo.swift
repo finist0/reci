@@ -199,14 +199,18 @@ public final class Repo {
 
     public var todayCount: Int { prefs.todayDate == today() ? prefs.todayCount : 0 }
 
+    // The app and the widgets, or the app before and after a restart, show the same card, and a
+    // showing must count once.
     public func markShown(_ w: Word) {
-        if revisit { return }
+        let showing = "\(w.key)#\(prefs.cardCount)"
+        if revisit || prefs.lastShown == showing { return }
         let t = now()
         update(w) { var p = $0; p.seen += 1; p.last = t; p.showAt = 0; return p }
         var pr = prefs
         let d = today()
         pr.todayCount = pr.todayDate == d ? pr.todayCount + 1 : 1
         pr.todayDate = d
+        pr.lastShown = showing
         prefs = pr
     }
 

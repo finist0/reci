@@ -25,13 +25,15 @@ public struct Prefs: Codable, Equatable {
     public var newKnownCount = 0
     // iPhone only: how the card reaches the lock screen, 0: widgets, 1: wallpaper via Shortcuts.
     public var lockMode = 0
+    // The showing counted last, "<key>#<card number>".
+    public var lastShown = ""
 
     public init() {}
 
     enum CodingKeys: String, CodingKey {
         case latinFirst, showBothScripts, autoSpeak, cardMode, activeSize, cardCount, useMarks, reviewKnown, accentMode
         case theme, wordSize, order, shuffleSeed, currentKey, categories, todayDate, todayCount, hintDone, newKnownCount
-        case lockMode
+        case lockMode, lastShown
     }
 
     public init(from decoder: Decoder) throws {
@@ -57,6 +59,7 @@ public struct Prefs: Codable, Equatable {
         hintDone = try c.decodeIfPresent(Bool.self, forKey: .hintDone) ?? d.hintDone
         newKnownCount = try c.decodeIfPresent(Int.self, forKey: .newKnownCount) ?? d.newKnownCount
         lockMode = try c.decodeIfPresent(Int.self, forKey: .lockMode) ?? d.lockMode
+        lastShown = try c.decodeIfPresent(String.self, forKey: .lastShown) ?? d.lastShown
     }
 
     // The long-press hint is shown on the 1st, 10th and 30th «Знаю» given to a new word, until

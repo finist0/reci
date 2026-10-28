@@ -172,11 +172,13 @@ function today() {
 
 export const todayCount = () => (prefs.todayDate === today() ? prefs.todayCount : 0);
 
+// A reload shows the same card again, and a showing must count once.
 export function markShown(w) {
-    if (revisit) return;
+    const showing = `${w.key}#${prefs.cardCount}`;
+    if (revisit || prefs.lastShown === showing) return;
     update(w, p => ({ ...p, seen: p.seen + 1, last: clock.now(), showAt: 0 }));
     const t = today();
-    setPrefs({ todayDate: t, todayCount: prefs.todayDate === t ? prefs.todayCount + 1 : 1 });
+    setPrefs({ todayDate: t, todayCount: prefs.todayDate === t ? prefs.todayCount + 1 : 1, lastShown: showing });
 }
 
 export function resetAll() {

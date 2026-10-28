@@ -197,10 +197,11 @@ object Repo {
     fun toggleFav(w: Word) = update(w) { it.copy(fav = !it.fav) }
 
     fun markShown(w: Word) {
-        if (revisit) return
+        val showing = "${w.key}#${Prefs.cardCount}"
+        if (revisit || Prefs.lastShown == showing) return
         update(w) { it.copy(seen = it.seen + 1, last = now(), showAt = 0) }
         val c = Calendar.getInstance()
-        Prefs.countShown(c.get(Calendar.YEAR) * 1000 + c.get(Calendar.DAY_OF_YEAR))
+        Prefs.countShown(c.get(Calendar.YEAR) * 1000 + c.get(Calendar.DAY_OF_YEAR), showing)
     }
 
     // Waits for the dictionary and for pending writes, so call it off the main thread.
