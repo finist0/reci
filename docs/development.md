@@ -94,7 +94,7 @@ python3 -m venv /path/to/venv
 | Правила обучения и файл прогресса, веб | `node --test "web/tests/*.test.mjs"` | Node.js |
 | Интерфейс веб-версии | `node --test "web/tests/ui/*.test.mjs"` | Node.js и Google Chrome |
 | Интерфейс Android | `cd app && ./gradlew connectedDebugAndroidTest` | эмулятор или телефон |
-| Логика iPhone | `docker run --rm -v "$PWD":/src -w /src/ios/ReciCore swift:6.1 swift test` | Docker |
+| Логика iPhone | `docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp -v "$PWD":/src -w /src/ios/ReciCore swift:6.1 swift test` | Docker |
 | Приложение iPhone | GitHub Actions, сценарий `iOS` | Mac или GitHub |
 
 Что в каких файлах:

@@ -68,10 +68,12 @@ open Reci.xcodeproj
 Логика на Linux, без Mac и без установки Swift:
 
 ```sh
-docker run --rm -v "$PWD":/src -w /src/ios/ReciCore swift:6.1 swift test
+docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
+    -v "$PWD":/src -w /src/ios/ReciCore swift:6.1 swift test
 ```
 
-Команда запускается из корня репозитория.
+Команда запускается из корня репозитория. `--user` запускает Swift от вашего пользователя:
+без него файлы сборки в `ios/ReciCore/.build` окажутся принадлежать root.
 
 ### На GitHub
 
