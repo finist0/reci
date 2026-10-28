@@ -101,6 +101,7 @@ class LearningScenariosTest(private val name: String, private val index: Int) {
             "fav" -> Repo.toggleFav(current())
             "advanceDays" -> clock += step.getInt("days") * DAY
             "set" -> Prefs.activeSize = step.getInt("activeSize")
+            "showAgain" -> Repo.markShown(current())
             "showArticlesAgain" -> Repo.showArticlesAgain(step.getString("pos"))
             "pick" -> {
                 val level = step.getInt("level")
@@ -152,6 +153,7 @@ class LearningScenariosTest(private val name: String, private val index: Int) {
             if (e.has("streak")) assertEquals("streak of ${w.key}", e.getInt("streak"), p.streak)
             if (e.has("state")) assertEquals("state of ${w.key}", states[e.getString("state")], p.state)
             if (e.has("fav")) assertEquals("fav of ${w.key}", e.getBoolean("fav"), p.fav)
+            if (e.has("seen")) assertEquals("times ${w.key} was shown", e.getInt("seen"), p.seen)
             if (e.has("dueInDays")) {
                 if (e.isNull("dueInDays")) assertEquals("no check for ${w.key}", 0L, p.due)
                 else assertEquals("days to check of ${w.key}", e.getLong("dueInDays"), ((p.due - clock) / DAY.toDouble()).roundToLong())

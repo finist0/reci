@@ -83,6 +83,7 @@ function run(sc) {
         fav: () => R.toggleFav(current()),
         advanceDays: st => (clock += st.days * DAY),
         set: st => S.setPrefs({ activeSize: st.activeSize }),
+        showAgain: () => R.markShown(current()),
         showArticlesAgain: st => R.showArticlesAgain(st.pos),
         pick: st => {
             const pool = R.words.filter(w => w.level === st.level);
@@ -130,6 +131,7 @@ function run(sc) {
             if ("streak" in e) assert.equal(p.streak, e.streak, `streak of ${w.key}`);
             if ("state" in e) assert.equal(p.state, states[e.state], `state of ${w.key}`);
             if ("fav" in e) assert.equal(p.fav, e.fav, `fav of ${w.key}`);
+            if ("seen" in e) assert.equal(p.seen, e.seen, `times ${w.key} was shown`);
             if ("dueInDays" in e) {
                 if (e.dueInDays === null) assert.equal(p.due, 0, `no check for ${w.key}`);
                 else assert.equal(Math.round((p.due - clock) / DAY), e.dueInDays, `days to check of ${w.key}`);

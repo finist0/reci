@@ -190,6 +190,16 @@
     ]
   },
   {
+    "name": "a card shown again in the same showing counts once",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "showAgain"},
+      {"expect": {"word": "a", "seen": 1}},
+      {"do": "next"}, {"do": "prev"}, {"do": "showAgain"},
+      {"expect": {"word": "a", "seen": 1}}
+    ]
+  },
+  {
     "name": "a smaller active set takes effect at once",
     "settings": {"activeSize": 20},
     "steps": [

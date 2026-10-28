@@ -101,6 +101,7 @@ final class LearningScenariosTests: XCTestCase {
                 p.activeSize = st["activeSize"] as! Int
                 repo.prefs = p
             case "showArticlesAgain": repo.showArticlesAgain(st["pos"] as! String)
+            case "showAgain": repo.markShown(try current())
             case "pick":
                 let pool = repo.words.filter { $0.level == st["level"] as! Int }
                 let w = st["by"] as? String == "alpha" ? pool.sorted { Repo.collate($0.cyr, $1.cyr) }[0] : pool[0]
@@ -147,6 +148,7 @@ final class LearningScenariosTests: XCTestCase {
                 if let v = e["streak"] as? Int { try check(p.streak == v, "streak of \(w.key): \(p.streak)") }
                 if let v = e["state"] as? String { try check(p.state == states[v], "state of \(w.key): \(p.state)") }
                 if let v = e["fav"] as? Bool { try check(p.fav == v, "fav of \(w.key)") }
+                if let v = e["seen"] as? Int { try check(p.seen == v, "times \(w.key) was shown: \(p.seen)") }
                 if e.keys.contains("dueInDays") {
                     if let days = e["dueInDays"] as? Int {
                         let got = Int((Double(p.due - clock) / Double(LearningScenariosTests.day)).rounded())
