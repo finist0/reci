@@ -83,6 +83,9 @@ targets:
       - UITests
     dependencies:
       - target: Reci
+    info:
+      path: UITests/Info.plist
+      properties: {}
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: org.kostja.reci.uitests

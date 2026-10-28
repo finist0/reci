@@ -4,6 +4,8 @@ App/Info.plist
 App/Reci.entitlements
 Widget/Info.plist
 Widget/ReciWidgets.entitlements
+UITests/Info.plist
+build/
 .build/
 .swiftpm/
 DerivedData/

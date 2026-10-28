@@ -59,7 +59,8 @@ final class ReciUITests: XCTestCase {
     func testKnowButtonsCanBeHidden() {
         XCTAssertTrue(mark("markKnow").exists)
         openSettings()
-        reach(app.switches["Кнопки «Не знаю / Знаю»"].firstMatch).tap()
+        // The label of a SwiftUI Toggle does not toggle it, so tap the switch itself at the right edge.
+        reach(app.switches["Кнопки «Не знаю / Знаю»"].firstMatch).coordinate(withNormalizedOffset: CGVector(dx: 0.95, dy: 0.5)).tap()
         back()
         XCTAssertFalse(mark("markKnow").waitForExistence(timeout: 2))
     }
