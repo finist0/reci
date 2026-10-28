@@ -12,7 +12,7 @@ on:
 jobs:
   core-linux:
     name: Learning logic on Linux
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     container: swift:6.1
     steps:
       - uses: actions/checkout@v5
