@@ -110,6 +110,11 @@ python3 -m venv /path/to/venv
 | `web/tests/backup.test.mjs` | файл прогресса |
 | `web/tests/ui/app.test.mjs` | карточка, поиск, справочник, тема, прогресс, запуск из кэша |
 | `web/tests/ui/settings.test.mjs` | каждая настройка на экране настроек |
+| `ios/ReciCore/Tests/…/LearningScenariosTests.swift` | правила обучения по сценариям |
+| `ios/ReciCore/Tests/…/BackupTests.swift` | файл прогресса |
+| `ios/ReciCore/Tests/…/SharedStoreTests.swift` | приложение и виджеты над общими файлами: подсчёт показов, история |
+| `ios/ReciCore/Tests/…/LockCardTests.swift` | что показывает карточка на экране блокировки |
+| `ios/UITests/ReciUITests.swift` | карточка и настройки в симуляторе iPhone |
 
 Не проверяются автоматически кнопки, которые открывают системные экраны Android:
 разрешения, голос, выбор файла для прогресса.
