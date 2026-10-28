@@ -15,7 +15,7 @@ jobs:
     runs-on: ubuntu-latest
     container: swift:6.1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: swift test
         working-directory: ios/ReciCore
 
@@ -44,7 +44,7 @@ jobs:
             experimental: true
             main: false
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - run: brew install xcodegen
       - run: xcodegen
         working-directory: ios
@@ -65,7 +65,7 @@ jobs:
           (cd build/ipa && zip -qry ../Reci-unsigned.ipa Payload)
       - name: Keep the .ipa
         if: matrix.main
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: reci-unsigned-ipa
           path: ios/build/Reci-unsigned.ipa
@@ -79,7 +79,7 @@ jobs:
             CODE_SIGNING_ALLOWED=NO
       - name: Keep the test results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: ios-test-results-${{ strategy.job-index }}
           path: ios/build/Reci.xcresult

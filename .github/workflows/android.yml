@@ -12,24 +12,24 @@ jobs:
     name: Unit tests and a debug APK
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       - name: Learning rules, progress file, lock screen settings
         working-directory: app
         run: ./gradlew testDebugUnitTest assembleDebug
       - name: Keep the test report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: android-unit-test-report
           path: app/app/build/reports/tests/testDebugUnitTest
           retention-days: 7
       - name: Keep the debug APK
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: reci-debug-apk
           path: app/app/build/outputs/apk/debug/*.apk
@@ -59,12 +59,12 @@ jobs:
             image: android-37.0
             device: pixel_6
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-java@v5
         with:
           distribution: temurin
           java-version: 21
-      - uses: gradle/actions/setup-gradle@v4
+      - uses: gradle/actions/setup-gradle@v6
       # The emulator needs hardware acceleration, which the runner gives only after this.
       - name: Enable KVM
         run: |
@@ -86,7 +86,7 @@ jobs:
         run: ./gradlew connectedDebugAndroidTest
       - name: Keep the test report
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: android-ui-test-report-${{ matrix.android }}
           path: |
