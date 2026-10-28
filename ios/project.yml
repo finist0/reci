@@ -76,9 +76,23 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: org.kostja.reci.widgets
         TARGETED_DEVICE_FAMILY: "1"
+  ReciUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources:
+      - UITests
+    dependencies:
+      - target: Reci
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.kostja.reci.uitests
+        TEST_TARGET_NAME: Reci
 schemes:
   Reci:
     build:
       targets:
         Reci: all
         ReciWidgets: all
+    test:
+      targets:
+        - ReciUITests
