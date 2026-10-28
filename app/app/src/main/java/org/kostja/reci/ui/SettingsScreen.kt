@@ -1,6 +1,7 @@
 package org.kostja.reci.ui
 
 import android.Manifest
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -54,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -62,6 +64,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.Dispatchers
@@ -74,6 +77,7 @@ import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.State
+import org.kostja.reci.lock.LockActivity
 import org.kostja.reci.lock.LockService
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -104,7 +108,18 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
     val overlay = Settings.canDrawOverlays(ctx)
     val notify = canNotify(ctx)
     val battery = ignoresBattery(ctx)
+    val calls = LockActivity.canReadCalls(ctx)
     val notifyLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { tick++ }
+    // After two refusals Android stops asking, so the row leads to the app's system page instead.
+    val callsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        tick++
+        val activity = ctx as? Activity
+        if (!granted && activity != null &&
+            !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_PHONE_STATE)
+        ) {
+            ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}")))
+        }
+    }
     val scope = rememberCoroutineScope()
     val toast = { text: String -> Toast.makeText(ctx, text, Toast.LENGTH_LONG).show() }
     val exportLauncher = rememberLauncherForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri ->
@@ -207,6 +222,13 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                         )
                     }
                     if (!battery) BatteryHint()
+                    if (Prefs.skipDuringCalls) {
+                        Line()
+                        Permission("Звонки", "Надёжнее понять, идёт ли звонок", calls) {
+                            callsLauncher.launch(Manifest.permission.READ_PHONE_STATE)
+                        }
+                        if (!calls) CallsHint()
+                    }
                 }
                 Line()
                 Pause()
@@ -384,15 +406,37 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                             "Тогда это поможет. Пока экран выключен, приложение ничего не делает и батарею не тратит.",
                     )
                     PermissionNote(
+                        "Звонки",
+                        "Необязательно. Без него звонок определяется по режиму звука, и мессенджер, который " +
+                            "после своего звонка забыл вернуть режим «звонит», выключает карточки. С ним о " +
+                            "телефонных звонках сообщает Android, а забытый режим «звонит» не мешает. Звонить " +
+                            "приложение не будет, номеров не видит.",
+                    )
+                    PermissionNote(
                         "Чего приложение не просит",
-                        "Телефон и звонки, контакты, микрофон, местоположение. " +
-                            "Звонок приложение узнаёт по режиму звука, без доступа к телефону.",
+                        "Контакты, микрофон, местоположение.",
                     )
                 }
             },
             confirmButton = { TextButton(onClick = { showPermissions = false }) { Text("Понятно") } },
         )
     }
+}
+
+@Composable
+private fun CallsHint() {
+    val p = LocalPalette.current
+    Text(
+        "Без этого разрешения звонок определяется по режиму звука. Некоторые мессенджеры после своего " +
+            "звонка забывают вернуть режим «звонит», и карточки перестают появляться. С разрешением о " +
+            "телефонных звонках сообщает сам Android, и забытый режим «звонит» не мешает. Разговор в " +
+            "мессенджере по-прежнему прячет карточку. Android назовёт разрешение «звонки», но звонить " +
+            "приложение не будет и номеров не видит.",
+        fontSize = 12.sp,
+        color = p.secondary,
+        lineHeight = 17.sp,
+        modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
+    )
 }
 
 @Composable
@@ -646,6 +690,7 @@ private fun Permission(title: String, hint: String, granted: Boolean, onGrant: (
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
             modifier = Modifier
+                .testTag("permission:$title")
                 .clip(RoundedCornerShape(50))
                 .background(if (granted) p.known.copy(alpha = 0.12f) else p.accent)
                 .padding(horizontal = 12.dp, vertical = 5.dp),
