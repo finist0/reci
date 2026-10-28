@@ -130,6 +130,20 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun withNothingLeftTheCardSaysSoAndOffersAChoice() {
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        click("Что учим")
+        for (t in listOf("Средний", "Выше среднего", "Выражения", "Похожие слова", "Заметки", "Избранное")) {
+            click(t, substring = true)
+        }
+        click("Учить", substring = true)
+        back()
+        compose.onNodeWithText("Здесь пока пусто").assertExists()
+        click("Выбрать слова")
+        compose.onNodeWithText("Что учим").assertExists()
+    }
+
+    @Test
     fun cardModesApplyToTheCardOnScreen() {
         settings("Перевод")
         assertTrue(exists("Показать слово"))
