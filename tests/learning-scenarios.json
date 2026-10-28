@@ -200,6 +200,19 @@
     ]
   },
   {
+    "name": "an answer changed after a restart replaces the first one",
+    "steps": [
+      {"do": "next"}, {"do": "remember", "as": "a"},
+      {"do": "answer", "a": "know"},
+      {"do": "until", "word": "a", "max": 40, "answer": "know"},
+      {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "recall", "streak": 1}},
+      {"do": "restart"},
+      {"do": "answer", "a": "know"},
+      {"expect": {"word": "a", "phase": "recall", "streak": 1}}
+    ]
+  },
+  {
     "name": "a smaller active set takes effect at once",
     "settings": {"activeSize": 20},
     "steps": [

@@ -26,7 +26,7 @@ final class LearningScenariosTests: XCTestCase {
 
     final class Runner {
         let sc: [String: Any]
-        let repo: Repo
+        var repo: Repo
         var clock = 1_767_225_600_000 // 2026-01-01
         var vars: [String: (key: String, n: Int)] = [:]
         var distance = -1
@@ -102,6 +102,9 @@ final class LearningScenariosTests: XCTestCase {
                 repo.prefs = p
             case "showArticlesAgain": repo.showArticlesAgain(st["pos"] as! String)
             case "showAgain": repo.markShown(try current())
+            case "restart":
+                repo = Repo(store: Store(dir: repo.store.dir), words: Fixtures.words)
+                repo.now = { [unowned self] in self.clock }
             case "pick":
                 let pool = repo.words.filter { $0.level == st["level"] as! Int }
                 let w = st["by"] as? String == "alpha" ? pool.sorted { Repo.collate($0.cyr, $1.cyr) }[0] : pool[0]

@@ -102,6 +102,7 @@ class LearningScenariosTest(private val name: String, private val index: Int) {
             "advanceDays" -> clock += step.getInt("days") * DAY
             "set" -> Prefs.activeSize = step.getInt("activeSize")
             "showAgain" -> Repo.markShown(current())
+            "restart" -> Repo.restart()
             "showArticlesAgain" -> Repo.showArticlesAgain(step.getString("pos"))
             "pick" -> {
                 val level = step.getInt("level")

@@ -84,6 +84,7 @@ function run(sc) {
         advanceDays: st => (clock += st.days * DAY),
         set: st => S.setPrefs({ activeSize: st.activeSize }),
         showAgain: () => R.markShown(current()),
+        restart: () => R.restart(),
         showArticlesAgain: st => R.showArticlesAgain(st.pos),
         pick: st => {
             const pool = R.words.filter(w => w.level === st.level);
