@@ -6,8 +6,9 @@
 |---|---|
 | `app/` | Android-приложение: Kotlin и Compose |
 | `web/` | веб-версия: HTML, CSS и JS без сборки |
+| `ios/` | приложение для iPhone: SwiftUI и виджеты, см. [ios.md](ios.md) |
 | `data/` | исходники словаря и скрипты, которые собирают его для приложения |
-| `tests/` | сценарии правил обучения и образец файла прогресса, общие для Android и веба |
+| `tests/` | сценарии правил обучения и образец файла прогресса, общие для Android, веба и iPhone |
 | `art/` | иконка приложения: `art/izba.py` рисует её для Android и веба |
 | `docs/` | описание правил обучения и эта инструкция |
 
@@ -79,11 +80,12 @@ python3 -m venv /path/to/venv
 
 ## Тесты
 
-Общие для Android и веба данные лежат в `tests/`, и каждый файл проверяет обе реализации:
+Общие для Android, веба и iPhone данные лежат в `tests/`, и каждый файл проверяет все три
+реализации:
 
 - `learning-scenarios.json`: правила обучения, описанные сценариями. Как устроены сами
   правила, рассказано в [learning.md](learning.md).
-- `progress-sample.json`: образец файла прогресса. Обе версии должны его загрузить и
+- `progress-sample.json`: образец файла прогресса. Все версии должны его загрузить и
   сохранить такой же, иначе файл с одного устройства не откроется на другом.
 
 | Что проверяется | Команда | Что нужно |
@@ -92,6 +94,8 @@ python3 -m venv /path/to/venv
 | Правила обучения и файл прогресса, веб | `node --test "web/tests/*.test.mjs"` | Node.js |
 | Интерфейс веб-версии | `node --test "web/tests/ui/*.test.mjs"` | Node.js и Google Chrome |
 | Интерфейс Android | `cd app && ./gradlew connectedDebugAndroidTest` | эмулятор или телефон |
+| Логика iPhone | `docker run --rm -v "$PWD":/src -w /src/ios/ReciCore swift:6.1 swift test` | Docker |
+| Приложение iPhone | GitHub Actions, сценарий `iOS` | Mac или GitHub |
 
 Что в каких файлах:
 
