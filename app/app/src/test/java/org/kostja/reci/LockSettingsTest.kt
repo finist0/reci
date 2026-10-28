@@ -20,6 +20,7 @@ import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.State
 import org.kostja.reci.lock.LockActivity
 import org.kostja.reci.lock.LockService
+import org.kostja.reci.ui.MainActivity
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
@@ -188,6 +189,17 @@ class LockSettingsTest {
         Robolectric.buildService(LockService::class.java, Intent().setAction("refresh")).create().startCommand(0, 1)
         waitIo()
         assertEquals(Prefs.primary(w.cyr), title())
+    }
+
+    @Test
+    fun theLockCardAndTheAppCountACardOnce() {
+        Robolectric.buildActivity(LockActivity::class.java).setup()
+        val w = Repo.current()!!
+        assertEquals(1, Repo.progress(w).seen)
+        Robolectric.buildActivity(MainActivity::class.java).setup()
+        assertEquals(w.key, Repo.current()!!.key)
+        assertEquals(1, Repo.progress(w).seen)
+        assertEquals(1, Prefs.todayCount)
     }
 
     @Test
