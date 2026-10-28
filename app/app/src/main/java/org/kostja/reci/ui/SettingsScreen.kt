@@ -89,6 +89,12 @@ private fun canNotify(ctx: Context) = Build.VERSION.SDK_INT < 33 ||
     ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) ==
     PackageManager.PERMISSION_GRANTED
 
+// After two refusals Android stops asking, so the row leads to the app's system page instead.
+internal fun afterCallsRequest(activity: Activity, granted: Boolean) {
+    if (granted || ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_PHONE_STATE)) return
+    activity.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${activity.packageName}")))
+}
+
 private fun ignoresBattery(ctx: Context) =
     ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
 
@@ -110,15 +116,9 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
     val battery = ignoresBattery(ctx)
     val calls = LockActivity.canReadCalls(ctx)
     val notifyLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { tick++ }
-    // After two refusals Android stops asking, so the row leads to the app's system page instead.
     val callsLauncher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
         tick++
-        val activity = ctx as? Activity
-        if (!granted && activity != null &&
-            !ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_PHONE_STATE)
-        ) {
-            ctx.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}")))
-        }
+        (ctx as? Activity)?.let { afterCallsRequest(it, granted) }
     }
     val scope = rememberCoroutineScope()
     val toast = { text: String -> Toast.makeText(ctx, text, Toast.LENGTH_LONG).show() }
