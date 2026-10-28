@@ -1,0 +1,84 @@
+# The Xcode project of the iPhone app. Generate it with XcodeGen: `xcodegen` in this directory.
+name: Reci
+options:
+  bundleIdPrefix: org.kostja
+  deploymentTarget:
+    iOS: "17.0"
+  createIntermediateGroups: true
+settings:
+  base:
+    SWIFT_VERSION: "5.0"
+    MARKETING_VERSION: "0.10"
+    CURRENT_PROJECT_VERSION: "10"
+    DEVELOPMENT_TEAM: ""
+    CODE_SIGN_STYLE: Automatic
+packages:
+  ReciCore:
+    path: ReciCore
+targets:
+  Reci:
+    type: application
+    platform: iOS
+    sources:
+      - App
+      - Shared
+      - path: ../app/app/src/main/assets/words.json
+        buildPhase: resources
+      - path: ../app/app/src/main/assets/grammar.json
+        buildPhase: resources
+      - path: ../app/app/src/main/res/font/literata.ttf
+        buildPhase: resources
+      - path: ../app/app/src/main/res/font/ruslan_display.ttf
+        buildPhase: resources
+    dependencies:
+      - package: ReciCore
+      - target: ReciWidgets
+    entitlements:
+      path: App/Reci.entitlements
+      properties:
+        com.apple.security.application-groups: [group.org.kostja.reci]
+    info:
+      path: App/Info.plist
+      properties:
+        CFBundleDisplayName: НЕРодная речь
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        UIAppFonts: [literata.ttf, ruslan_display.ttf]
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+        ITSAppUsesNonExemptEncryption: false
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.kostja.reci
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
+        TARGETED_DEVICE_FAMILY: "1"
+  ReciWidgets:
+    type: app-extension
+    platform: iOS
+    sources:
+      - Widget
+      - Shared
+    dependencies:
+      - package: ReciCore
+    entitlements:
+      path: Widget/ReciWidgets.entitlements
+      properties:
+        com.apple.security.application-groups: [group.org.kostja.reci]
+    info:
+      path: Widget/Info.plist
+      properties:
+        CFBundleDisplayName: НЕРодная речь
+        CFBundleShortVersionString: $(MARKETING_VERSION)
+        CFBundleVersion: $(CURRENT_PROJECT_VERSION)
+        NSExtension:
+          NSExtensionPointIdentifier: com.apple.widgetkit-extension
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: org.kostja.reci.widgets
+        TARGETED_DEVICE_FAMILY: "1"
+schemes:
+  Reci:
+    build:
+      targets:
+        Reci: all
+        ReciWidgets: all
