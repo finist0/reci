@@ -45,18 +45,18 @@ jobs:
         include:
           # The oldest Android the app supports, on a smaller screen.
           - android: 9
-            image: android-28
+            api: 28
             device: pixel_3a
           # Notifications became a runtime permission here.
           - android: 13
-            image: android-33
+            api: 33
             device: pixel_6
           - android: 15
-            image: android-35
+            api: 35
             device: pixel_6
           # The Android the app is built for.
           - android: 17
-            image: android-37.0
+            api: "37.0"
             device: pixel_6
     steps:
       - uses: actions/checkout@v5
@@ -71,25 +71,19 @@ jobs:
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules
           sudo udevadm trigger --name-match=kvm
-      - name: Start an emulator
-        run: |
-          SDK="$ANDROID_HOME"
-          IMG="system-images;${{ matrix.image }};google_apis;x86_64"
-          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --install "$IMG" emulator platform-tools > /dev/null
-          echo no | "$SDK/cmdline-tools/latest/bin/avdmanager" create avd -n test -k "$IMG" -d ${{ matrix.device }}
-          "$SDK/emulator/emulator" -avd test -no-window -no-audio -no-boot-anim -no-snapshot \
-            -gpu swiftshader_indirect > emulator.log 2>&1 &
-          "$SDK/platform-tools/adb" wait-for-device
-          until [ "$("$SDK/platform-tools/adb" shell getprop sys.boot_completed | tr -d '\r')" = 1 ]; do sleep 5; done
       - name: UI tests
-        working-directory: app
-        run: ./gradlew connectedDebugAndroidTest
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          target: google_apis
+          arch: x86_64
+          profile: ${{ matrix.device }}
+          working-directory: app
+          script: ./gradlew connectedDebugAndroidTest
       - name: Keep the test report
         if: failure()
         uses: actions/upload-artifact@v6
         with:
           name: android-ui-test-report-${{ matrix.android }}
-          path: |
-            app/app/build/reports/androidTests/connected
-            emulator.log
+          path: app/app/build/reports/androidTests/connected
           retention-days: 7
