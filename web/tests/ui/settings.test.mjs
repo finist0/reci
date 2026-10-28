@@ -45,6 +45,18 @@ test("What to learn: one level in alphabetical order", async t => {
     assert.equal(w.cyr, first);
 });
 
+test("What to learn: with nothing left the card says so and offers a choice", async t => {
+    const page = await app(t);
+    await page.tap('[data-act="settings"]');
+    await page.tap('[data-act="categories"]');
+    for (const id of ["L3", "L4", "X:phrase", "X:compare", "X:note", "M:fav"]) await page.tap(`[data-act="toggle"][data-arg="${id}"]`);
+    await page.tap('[data-act="learn"]');
+    await page.tap('[data-act="back"]');
+    assert.match(await page.text(), /Здесь пока пусто/);
+    await page.tap(".primary", "Выбрать слова");
+    assert.match(await page.text(), /Что учим/);
+});
+
 test("Cards: translation only hides the word, word only covers the translation", async t => {
     const page = await app(t);
     await settings(page, '[data-act="cardmode"][data-arg="1"]');
