@@ -2,6 +2,7 @@ package org.kostja.reci
 
 import android.Manifest
 import android.content.Context
+import android.os.Build
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
@@ -76,6 +77,13 @@ class SettingsScreenTest {
         Prefs.lockEnabled = false
         LockService.sync(InstrumentationRegistry.getInstrumentation().targetContext)
         activity.close()
+    }
+
+    // Notifications became a runtime permission in Android 13; before it there is nothing to grant.
+    private fun grant(permission: String) {
+        if (permission == Manifest.permission.POST_NOTIFICATIONS && Build.VERSION.SDK_INT < 33) return
+        val inst = InstrumentationRegistry.getInstrumentation()
+        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName, permission)
     }
 
     private fun shell(cmd: String) {
@@ -305,8 +313,8 @@ class SettingsScreenTest {
     @Test
     fun theCallsRowShowsTheGrantedPermission() {
         val inst = InstrumentationRegistry.getInstrumentation()
-        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName, Manifest.permission.POST_NOTIFICATIONS)
-        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName, Manifest.permission.READ_PHONE_STATE)
+        grant(Manifest.permission.POST_NOTIFICATIONS)
+        grant(Manifest.permission.READ_PHONE_STATE)
         compose.onNodeWithContentDescription("Настройки").performClick()
         click("Карточка при включении экрана")
         compose.onNodeWithTag("permission:Звонки", useUnmergedTree = true).assertTextEquals("есть")
@@ -319,7 +327,7 @@ class SettingsScreenTest {
     fun theLockCardAppearsWhenTheScreenTurnsBackOn() {
         val inst = InstrumentationRegistry.getInstrumentation()
         val pkg = inst.targetContext.packageName
-        inst.uiAutomation.grantRuntimePermission(pkg, Manifest.permission.POST_NOTIFICATIONS)
+        grant(Manifest.permission.POST_NOTIFICATIONS)
         shell("appops set $pkg SYSTEM_ALERT_WINDOW allow")
         compose.onNodeWithContentDescription("Настройки").performClick()
         click("Карточка при включении экрана")
