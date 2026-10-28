@@ -157,6 +157,15 @@ test("a reload does not count the card on screen again", async t => {
     assert.deepEqual(await shown(), before);
 });
 
+test("an answer survives a reload and can still be changed", async t => {
+    const page = await app(t);
+    await page.tap(".mark", "Знаю");
+    await page.reload();
+    assert.equal(await page.eval("document.querySelector('.mark.on')?.textContent.trim()"), "Знаю");
+    await page.tap(".mark", "Не знаю");
+    assert.equal(await page.eval("import('./js/repo.js').then(R => R.progress(R.current()).phase)"), 1);
+});
+
 test("article cards ask whether to show them again", async t => {
     const page = await app(t);
     for (let i = 0; i < 6 && !(await page.eval("!!document.querySelector('.article-title')")); i++) {
