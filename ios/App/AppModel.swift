@@ -1,6 +1,8 @@
 import Foundation
 import ReciCore
 import SwiftUI
+import UIKit
+import WidgetKit
 
 // One showing of a card. Answering moves the word to its next stage, but the card on screen keeps
 // the layout it was shown with; a later answer replaces the earlier one.
@@ -45,6 +47,8 @@ final class AppModel: ObservableObject {
 
     func changed() {
         version += 1
+        // Reloads asked for while the app is in front do not count against the widgets' budget.
+        if UIApplication.shared.applicationState == .active { WidgetCenter.shared.reloadAllTimelines() }
     }
 
     func set(_ f: (inout Prefs) -> Void) {

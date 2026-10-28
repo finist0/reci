@@ -1,6 +1,5 @@
 import ReciCore
 import SwiftUI
-import WidgetKit
 
 @main
 struct ReciApp: App {
@@ -34,8 +33,6 @@ struct ReciApp: App {
         }
         .onChange(of: phase) { _, now in
             if now == .active { model.reload() }
-            // Widgets are seen only outside the app; iOS limits how often an app may refresh them.
-            if now == .background { WidgetCenter.shared.reloadAllTimelines() }
         }
     }
 }
