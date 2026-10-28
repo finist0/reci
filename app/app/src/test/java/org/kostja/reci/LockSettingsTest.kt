@@ -5,6 +5,7 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent
 import android.media.AudioManager
+import android.telecom.TelecomManager
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -81,12 +82,73 @@ class LockSettingsTest {
         assertTrue(cardStarts())
     }
 
+    private fun audioMode(mode: Int) {
+        app.getSystemService(AudioManager::class.java).mode = mode
+    }
+
+    private fun telecomInCall(on: Boolean) = shadowOf(app.getSystemService(TelecomManager::class.java)).setIsInCall(on)
+
+    private fun grantPhone() = shadowOf(app).grantPermissions(Manifest.permission.READ_PHONE_STATE)
+
     @Test
     fun noCardDuringACallUnlessAllowed() {
-        app.getSystemService(AudioManager::class.java).mode = AudioManager.MODE_IN_CALL
+        audioMode(AudioManager.MODE_IN_CALL)
         assertFalse(cardStarts())
         Prefs.skipDuringCalls = false
         assertTrue(cardStarts())
+    }
+
+    @Test
+    fun withoutThePhonePermissionTheAudioModeTellsACall() {
+        audioMode(AudioManager.MODE_IN_CALL)
+        assertFalse(cardStarts())
+        audioMode(AudioManager.MODE_NORMAL)
+        assertTrue(cardStarts())
+    }
+
+    @Test
+    fun withoutThePhonePermissionAModeLeftByAnAppKeepsTheCardAway() {
+        // A messenger set the ringing mode for its call and never reset it; no call is going on.
+        audioMode(AudioManager.MODE_RINGTONE)
+        telecomInCall(false)
+        assertFalse(cardStarts())
+    }
+
+    @Test
+    fun withThePhonePermissionAPhoneCallKeepsTheCardAway() {
+        grantPhone()
+        telecomInCall(true)
+        audioMode(AudioManager.MODE_IN_CALL)
+        assertFalse(cardStarts())
+        audioMode(AudioManager.MODE_RINGTONE)
+        assertFalse(cardStarts())
+        telecomInCall(false)
+        audioMode(AudioManager.MODE_NORMAL)
+        assertTrue(cardStarts())
+    }
+
+    @Test
+    fun withThePhonePermissionTelecomAloneTellsACall() {
+        grantPhone()
+        telecomInCall(true)
+        audioMode(AudioManager.MODE_NORMAL)
+        assertFalse(cardStarts())
+    }
+
+    @Test
+    fun withThePhonePermissionAModeLeftByAnAppDoesNotKeepTheCardAway() {
+        grantPhone()
+        audioMode(AudioManager.MODE_RINGTONE)
+        telecomInCall(false)
+        assertTrue(cardStarts())
+    }
+
+    @Test
+    fun withThePhonePermissionATalkInAMessengerStillKeepsTheCardAway() {
+        grantPhone()
+        audioMode(AudioManager.MODE_IN_COMMUNICATION)
+        telecomInCall(false)
+        assertFalse(cardStarts())
     }
 
     @Test

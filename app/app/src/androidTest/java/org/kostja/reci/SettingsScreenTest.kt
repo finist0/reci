@@ -5,9 +5,11 @@ import android.content.Context
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
@@ -88,7 +90,8 @@ class SettingsScreenTest {
         compose.waitForIdle()
     }
 
-    private fun exists(text: String) = runCatching { compose.onNodeWithText(text).assertExists() }.isSuccess
+    private fun exists(text: String, substring: Boolean = false) =
+        runCatching { compose.onNodeWithText(text, substring = substring).assertExists() }.isSuccess
 
     private fun next() {
         compose.onNodeWithText("Дальше").performClick()
@@ -283,6 +286,19 @@ class SettingsScreenTest {
         assertTrue(Prefs.newWordEachTime)
         click("Слова на повторение в шторке")
         assertTrue(Prefs.reviewNotification)
+    }
+
+    @Test
+    fun theCallsRowShowsTheGrantedPermission() {
+        val inst = InstrumentationRegistry.getInstrumentation()
+        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName, Manifest.permission.POST_NOTIFICATIONS)
+        inst.uiAutomation.grantRuntimePermission(inst.targetContext.packageName, Manifest.permission.READ_PHONE_STATE)
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        click("Карточка при включении экрана")
+        compose.onNodeWithTag("permission:Звонки", useUnmergedTree = true).assertTextEquals("есть")
+        assertFalse(exists("Без этого разрешения звонок определяется по режиму звука", substring = true))
+        click("Не показывать во время звонков")
+        assertFalse(exists("Надёжнее понять, идёт ли звонок"))
     }
 
     @Test
