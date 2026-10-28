@@ -30,6 +30,21 @@ jobs:
       - name: Learning logic on macOS
         run: swift test
         working-directory: ios/ReciCore
+      - name: Build an unsigned .ipa for a phone
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild build -project Reci.xcodeproj -scheme Reci -configuration Release \
+            -sdk iphoneos -destination "generic/platform=iOS" -derivedDataPath build/device \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO CODE_SIGN_IDENTITY=""
+          mkdir -p build/ipa/Payload
+          cp -R build/device/Build/Products/Release-iphoneos/Reci.app build/ipa/Payload/
+          (cd build/ipa && zip -qry ../Reci-unsigned.ipa Payload)
+      - name: Keep the .ipa
+        uses: actions/upload-artifact@v4
+        with:
+          name: reci-unsigned-ipa
+          path: ios/build/Reci-unsigned.ipa
       - name: Build the app with its widgets and run the UI tests
         working-directory: ios
         run: |
