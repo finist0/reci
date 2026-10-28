@@ -1,0 +1,47 @@
+# The iPhone app needs a Mac to build; GitHub's macOS runners provide one with Xcode and the
+# iOS simulator. The learning logic also runs on Linux, which is quicker and cheaper.
+name: iOS
+
+on:
+  push:
+    paths: ["ios/**", "tests/**", "app/app/src/main/assets/**", ".github/workflows/ios.yml"]
+  pull_request:
+    paths: ["ios/**", "tests/**", "app/app/src/main/assets/**", ".github/workflows/ios.yml"]
+  workflow_dispatch:
+
+jobs:
+  core-linux:
+    name: Learning logic on Linux
+    runs-on: ubuntu-latest
+    container: swift:6.1
+    steps:
+      - uses: actions/checkout@v4
+      - run: swift test
+        working-directory: ios/ReciCore
+
+  app-simulator:
+    name: App and UI tests in the iOS simulator
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - run: brew install xcodegen
+      - run: xcodegen
+        working-directory: ios
+      - name: Learning logic on macOS
+        run: swift test
+        working-directory: ios/ReciCore
+      - name: Build the app with its widgets and run the UI tests
+        working-directory: ios
+        run: |
+          set -o pipefail
+          xcodebuild test -project Reci.xcodeproj -scheme Reci \
+            -destination "platform=iOS Simulator,name=iPhone 16" \
+            -resultBundlePath build/Reci.xcresult \
+            CODE_SIGNING_ALLOWED=NO
+      - name: Keep the test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-test-results
+          path: ios/build/Reci.xcresult
+          if-no-files-found: ignore
