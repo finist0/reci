@@ -55,8 +55,9 @@ extension Font {
     static func serif(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
         let wght: Double = weight == .bold ? 700 : weight == .semibold ? 600 : weight == .medium ? 500 : 400
         guard let base = UIFont(name: "Literata-Regular", size: size) else { return .system(size: size, weight: weight, design: .serif) }
-        let axis = 0x7767_6874 // "wght"
-        let desc = base.fontDescriptor.addingAttributes([UIFontDescriptor.AttributeName(rawValue: kCTFontVariationAttribute as String): [axis: wght]])
+        // "wght" and "opsz": the large headwords want Literata's large-size drawing.
+        let axes: [Int: Double] = [0x7767_6874: wght, 0x6F70_737A: min(max(Double(size), 7), 72)]
+        let desc = base.fontDescriptor.addingAttributes([UIFontDescriptor.AttributeName(rawValue: kCTFontVariationAttribute as String): axes])
         return Font(UIFont(descriptor: desc, size: size))
     }
 
