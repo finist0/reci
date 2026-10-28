@@ -1,16 +1,21 @@
 package org.kostja.reci.lock
 
+import android.Manifest
+import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.media.AudioManager
 import android.os.Build
 import android.os.Bundle
 import android.os.PowerManager
 import android.provider.Settings
+import android.telecom.TelecomManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.core.content.ContextCompat
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
@@ -97,9 +102,20 @@ class LockActivity : ComponentActivity() {
     }
 
     companion object {
-        // Every mode above NORMAL is call related: ringing, a phone or VoIP call, call screening.
-        fun isInCall(ctx: Context) =
-            Prefs.skipDuringCalls && ctx.getSystemService(AudioManager::class.java).mode > AudioManager.MODE_NORMAL
+        fun canReadCalls(ctx: Context) =
+            ContextCompat.checkSelfPermission(ctx, Manifest.permission.READ_PHONE_STATE) == PackageManager.PERMISSION_GRANTED
+
+        @SuppressLint("MissingPermission")
+        fun isInCall(ctx: Context): Boolean {
+            if (!Prefs.skipDuringCalls) return false
+            val mode = ctx.getSystemService(AudioManager::class.java).mode
+            // Without the phone permission every mode above NORMAL counts: ringing, a phone or
+            // VoIP call, call screening. An app may leave such a mode set after its call ends.
+            if (!canReadCalls(ctx)) return mode > AudioManager.MODE_NORMAL
+            // Telecom knows phone calls and their ringing; a talk in an app that does not report
+            // to Telecom shows only as the communication mode.
+            return ctx.getSystemService(TelecomManager::class.java).isInCall || mode == AudioManager.MODE_IN_COMMUNICATION
+        }
 
         fun show(ctx: Context) {
             // Without the overlay permission Android blocks activity starts from the background.
