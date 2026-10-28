@@ -1,6 +1,6 @@
-[Русский](README.md) · **English**
+[Russian](README.md) · **English**
 
-# НЕРОДНАЯ РЕЧЬ
+# Nerodnaya Rech
 
 **Serbian for Russian speakers. One word every time you pick up your phone.**
 
@@ -8,8 +8,8 @@ You turn your screen on dozens of times a day. Now each of those moments brings 
 word to the lock screen: with its stress, gender, examples and translation. Ten seconds,
 and you go on with your day, but the word stays with you.
 
-The app's interface and translations are in Russian. The name, «Неродная речь» ("non-native
-speech"), plays on «Родная речь», a classic Russian school textbook.
+The app's interface and translations are in Russian. The name, Nerodnaya Rech ("non-native
+speech"), plays on Rodnaya Rech ("native speech"), a classic Russian school textbook.
 
 <p align="center">
   <img src="screenshots/1-card.png" width="250" alt="A new word card">
@@ -33,15 +33,16 @@ speech"), plays on «Родная речь», a classic Russian school textbook.
   half a year and a year.
 - **Made for Russian speakers.** Russian translations, and a warning wherever Serbian trips a
   Russian speaker up:
-  - a different gender than in Russian: *проблем* is masculine, while «проблема» is feminine;
-  - false friends: *празан* means "empty", not "idle" (Russian «праздный»).
+  - a different gender than in Russian: Serbian *problem* is masculine, while Russian
+    *problema* is feminine;
+  - false friends: Serbian *prazan* means "empty", not "idle" like the Russian *prazdny*.
 
 ## What is inside
 
 - **Over 10,000 cards:**
   - 7,300 words with stress, forms and examples;
   - 2,000 phrases and idioms;
-  - 345 comparisons of similar words: «уговор или договор?»;
+  - 345 comparisons of similar words, such as *ugovor* or *dogovor*;
   - 600 short notes on the language.
 - **18,000 examples** with translations, synonyms, antonyms, related words.
 - **Grammar reference:** 26 topics with tables.
@@ -68,16 +69,16 @@ How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/lea
 1. Download `reci-release.apk` from the Releases page and open it on the phone. Android asks
    to allow installs from this source.
 
-2. Open the app's settings, section «Экран блокировки» (lock screen):
-   - turn on «Карточка при включении экрана» (card when the screen turns on);
-   - grant «Поверх других окон» (display over other apps); without it Android shows no card.
+2. Open the app's settings, the lock screen section:
+   - turn on the card when the screen turns on;
+   - grant "Display over other apps"; without it Android shows no card.
 
    Android also asks for permission to post notifications. The background service needs it,
    and it shows words to review in the notification shade.
 
 3. If the "Display over other apps" switch does not turn on, Android has restricted the
    settings. This happens to apps installed outside Google Play. Lift the restriction:
-   1. Settings → Apps → НЕРодная речь.
+   1. Settings → Apps → the app; its name is written in Cyrillic.
    2. ⋮ at the top right → Allow restricted settings.
    3. Confirm with your PIN or fingerprint.
    4. Go back to the app and grant the permission again.
@@ -87,8 +88,9 @@ How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/lea
 
 4. If cards stop appearing, in the same section:
    - lift the battery restrictions;
-   - grant «Звонки» (calls). Without it a call is told by the audio mode, and a messenger
-     that forgets to reset the mode after its call turns the cards off. The app makes no
+   - grant the calls permission. Without it a call is told by the audio mode, and a messenger
+     that forgets to reset the ringing mode after its call turns the cards off. With it,
+     Android itself reports phone calls and such a mode no longer matters. The app makes no
      calls and sees no numbers.
 
 Android 9 or later is required.
@@ -113,10 +115,9 @@ There is no lock screen card there: iOS and browsers do not allow it.
 Progress is kept on the device: in the app or in the browser. It can be moved to another
 device, including between Android, iPhone and a computer:
 
-1. Settings → «Сохранить прогресс в файл» (save progress to a file).
+1. Settings → "Save progress to a file".
 2. Get the file to the other device: cloud storage, email, a messenger.
-3. On the other device: Settings → «Загрузить прогресс из файла» (load progress from a
-   file).
+3. On the other device: Settings → "Load progress from a file".
 
 Favourites and the learning and appearance settings move along with the progress. Lock
 screen settings stay on the phone.
