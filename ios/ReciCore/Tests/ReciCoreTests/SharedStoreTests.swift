@@ -21,6 +21,20 @@ final class SharedStoreTests: XCTestCase {
         XCTAssertEqual(app.todayCount, 2)
     }
 
+    func testBackReachesTheCardAWidgetAnswered() {
+        let app = Repo(store: Fixtures.tempStore(), words: Fixtures.words)
+        app.step(1)
+        let first = app.current()!
+        let widget = Repo(store: Store(dir: app.store.dir), words: Fixtures.words)
+        widget.answer(first, Mark.dontKnow)
+        widget.step(1)
+
+        app.reloadFromStore()
+        XCTAssertNotEqual(app.current()?.key, first.key)
+        app.step(-1)
+        XCTAssertEqual(app.current()?.key, first.key)
+    }
+
     func testARestartDoesNotCountTheCardAgain() {
         let first = Repo(store: Fixtures.tempStore(), words: Fixtures.words)
         first.step(1)
