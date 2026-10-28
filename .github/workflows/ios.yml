@@ -69,6 +69,25 @@ jobs:
         with:
           name: reci-unsigned-ipa
           path: ios/build/Reci-unsigned.ipa
+      # Some runners start without simulators: actions/runner-images#12948.
+      - name: Create the simulator if the runner has none
+        env:
+          NAME: ${{ matrix.device }}
+          OS: ${{ matrix.os }}
+        run: |
+          RUNTIME=$(xcrun simctl list runtimes available -j | jq -r --arg v "$OS" \
+            '[.runtimes[] | select(.platform == "iOS" and ($v == "latest" or .version == $v))] | last | .identifier // empty')
+          if [ -z "$RUNTIME" ]; then
+            xcrun simctl list runtimes
+            echo "No iOS $OS runtime on this runner"
+            exit 1
+          fi
+          if xcrun simctl list devices available -j |
+              jq -e --arg r "$RUNTIME" --arg n "$NAME" '.devices[$r] // [] | any(.name == $n)' > /dev/null; then
+            exit 0
+          fi
+          TYPE=$(xcrun simctl list devicetypes -j | jq -r --arg n "$NAME" '.devicetypes[] | select(.name == $n) | .identifier')
+          xcrun simctl create "$NAME" "$TYPE" "$RUNTIME"
       - name: Build the app with its widgets and run the UI tests
         working-directory: ios
         run: |
