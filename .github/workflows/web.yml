@@ -1,0 +1,24 @@
+# Tests of the web version on every push: the learning rules in Node, the UI in headless Chrome.
+name: Web
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  tests:
+    name: Learning rules and UI tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Learning rules and the progress file
+        run: node --test "web/tests/*.test.mjs"
+      # The runner image comes with Google Chrome, but Ubuntu 24.04 keeps its sandbox from starting.
+      - name: Let Chrome start its sandbox
+        run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
+      - name: UI tests in headless Chrome
+        run: node --test "web/tests/ui/*.test.mjs"
