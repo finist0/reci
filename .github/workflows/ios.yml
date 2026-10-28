@@ -20,17 +20,40 @@ jobs:
         working-directory: ios/ReciCore
 
   app-simulator:
-    name: App and UI tests in the iOS simulator
-    runs-on: macos-15
+    name: App and UI tests on ${{ matrix.device }}, iOS ${{ matrix.ios }}
+    runs-on: ${{ matrix.runner }}
+    # GitHub may not offer the newest macOS image to every account yet.
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: macos-15
+            device: iPhone 16
+            ios: "18"
+            experimental: false
+            main: true
+          - runner: macos-15
+            device: iPhone SE (3rd generation)
+            ios: "18"
+            experimental: false
+            main: false
+          - runner: macos-26
+            device: iPhone 17 Pro
+            ios: "26"
+            experimental: true
+            main: false
     steps:
       - uses: actions/checkout@v4
       - run: brew install xcodegen
       - run: xcodegen
         working-directory: ios
       - name: Learning logic on macOS
+        if: matrix.main
         run: swift test
         working-directory: ios/ReciCore
       - name: Build an unsigned .ipa for a phone
+        if: matrix.main
         working-directory: ios
         run: |
           set -o pipefail
@@ -41,6 +64,7 @@ jobs:
           cp -R build/device/Build/Products/Release-iphoneos/Reci.app build/ipa/Payload/
           (cd build/ipa && zip -qry ../Reci-unsigned.ipa Payload)
       - name: Keep the .ipa
+        if: matrix.main
         uses: actions/upload-artifact@v4
         with:
           name: reci-unsigned-ipa
@@ -50,13 +74,13 @@ jobs:
         run: |
           set -o pipefail
           xcodebuild test -project Reci.xcodeproj -scheme Reci \
-            -destination "platform=iOS Simulator,name=iPhone 16" \
+            -destination "platform=iOS Simulator,name=${{ matrix.device }},OS=latest" \
             -resultBundlePath build/Reci.xcresult \
             CODE_SIGNING_ALLOWED=NO
       - name: Keep the test results
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: ios-test-results
+          name: ios-test-results-${{ strategy.job-index }}
           path: ios/build/Reci.xcresult
           if-no-files-found: ignore

@@ -134,7 +134,7 @@ python3 -m venv /path/to/venv
 |---|---|---|---|
 | `android.yml` | каждый push | тесты на JVM, отладочный APK; тесты интерфейса на эмуляторе | `reci-debug-apk`, отчёты при ошибке |
 | `web.yml` | каждый push | правила обучения и файл прогресса в Node, интерфейс в Chrome | — |
-| `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторе | `reci-unsigned-ipa`, `ios-test-results` |
+| `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах трёх iPhone | `reci-unsigned-ipa`, `ios-test-results-N` |
 
 Любой сценарий можно запустить и вручную: Actions → сценарий → Run workflow.
 
