@@ -149,6 +149,14 @@ test("progress survives a reload and a file export and import", async t => {
     assert.match(await page.text(), /\n1\s*\nиз \d+ слов знаю/);
 });
 
+test("a reload does not count the card on screen again", async t => {
+    const page = await app(t);
+    const shown = () => page.eval("import('./js/repo.js').then(R => [R.current().key, R.progress(R.current()).seen, R.todayCount()])");
+    const before = await shown();
+    await page.reload();
+    assert.deepEqual(await shown(), before);
+});
+
 test("article cards ask whether to show them again", async t => {
     const page = await app(t);
     for (let i = 0; i < 6 && !(await page.eval("!!document.querySelector('.article-title')")); i++) {
