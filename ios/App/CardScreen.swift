@@ -4,6 +4,7 @@ import SwiftUI
 struct CardScreen: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var router: Router
+    @State private var reporting: Word?
 
     var body: some View {
         let p = model.palette
@@ -21,13 +22,16 @@ struct CardScreen: View {
                             WordBody(w: w, covered: s.covered, hideWord: s.recall && !s.revealed,
                                      onUncover: { model.uncover() }, onReveal: { model.reveal() })
                         }
-                        .padding(.horizontal, 24).padding(.vertical, 22)
+                        .padding(.horizontal, 24).padding(.top, 22).padding(.bottom, 56)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .id(s.id)
                     Star(w: w).padding(10)
+                    FlagButton { reporting = w }.padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     if model.learnedToast {
                         LearnedToast().frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
+                    } else if let t = model.sentToast {
+                        SentToast(text: t).frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
                     }
                 } else if model.repo.exhausted {
                     Empty().frame(maxWidth: .infinity, maxHeight: .infinity)
@@ -45,6 +49,7 @@ struct CardScreen: View {
         }
         .background(p.bg.ignoresSafeArea())
         .onAppear { model.syncShowing() }
+        .sheet(item: $reporting) { w in ReportSheet(w: w).environmentObject(model) }
     }
 }
 

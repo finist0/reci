@@ -37,8 +37,33 @@ public struct Ping: Codable, Equatable {
     public var opened: [String: Int]?
 }
 
+public struct CardInfo: Codable, Equatable {
+    public var key: String
+    public var word: String
+    public var problem: String
+    public var latin: Bool
+    public var stress: Int
+
+    public init(key: String, word: String, problem: String, latin: Bool, stress: Int) {
+        (self.key, self.word, self.problem, self.latin, self.stress) = (key, word, problem, latin, stress)
+    }
+}
+
+// A message to the developer: an error in a card ("card") or anything else ("app").
+public struct Message: Codable, Equatable {
+    public var id: String
+    public var kind: String
+    public var platform: String
+    public var app: String
+    public var os: String
+    public var text: String?
+    public var email: String?
+    public var card: CardInfo?
+}
+
 public struct TelemetryState: Codable {
     public var id = UUID().uuidString.lowercased()
+    public var feedbackId = UUID().uuidString.lowercased()
     public var enabled = true
     public var noticeShown = false
     public var noticeClosed = false
@@ -46,17 +71,20 @@ public struct TelemetryState: Codable {
     public var triedAt: Double = 0
     public var counts = Counts()
     public var last: Ping? = nil
+    public var email = ""
+    public var queue: [Message] = []
 
     public init() {}
 
     enum CodingKeys: String, CodingKey {
-        case id, enabled, noticeShown, noticeClosed, sentDay, triedAt, counts, last
+        case id, feedbackId, enabled, noticeShown, noticeClosed, sentDay, triedAt, counts, last, email, queue
     }
 
     public init(from decoder: Decoder) throws {
         let d = TelemetryState()
         let c = try decoder.container(keyedBy: CodingKeys.self)
         id = try c.decodeIfPresent(String.self, forKey: .id) ?? d.id
+        feedbackId = try c.decodeIfPresent(String.self, forKey: .feedbackId) ?? d.feedbackId
         enabled = try c.decodeIfPresent(Bool.self, forKey: .enabled) ?? d.enabled
         noticeShown = try c.decodeIfPresent(Bool.self, forKey: .noticeShown) ?? d.noticeShown
         noticeClosed = try c.decodeIfPresent(Bool.self, forKey: .noticeClosed) ?? d.noticeClosed
@@ -64,10 +92,13 @@ public struct TelemetryState: Codable {
         triedAt = try c.decodeIfPresent(Double.self, forKey: .triedAt) ?? d.triedAt
         counts = try c.decodeIfPresent(Counts.self, forKey: .counts) ?? d.counts
         last = try c.decodeIfPresent(Ping.self, forKey: .last)
+        email = try c.decodeIfPresent(String.self, forKey: .email) ?? d.email
+        queue = try c.decodeIfPresent([Message].self, forKey: .queue) ?? d.queue
     }
 }
 
-// Anonymous daily statistics, sent to the project's server. Kept in a file of its own, out of the progress file and the shared App Group, so that a progress file
+// Anonymous daily statistics and messages to the developer, sent to the project's server. Kept in
+// a file of its own, out of the progress file and the shared App Group, so that a progress file
 // or a restored install never carries the same id.
 // On the main actor, so that the checks before a request and the changes after its answer
 // cannot interleave with another call.
@@ -174,4 +205,52 @@ public final class Telemetry {
         return (200..<300).contains(status)
     }
 
+    // The server's check, so that a mistyped address is caught before the message is queued.
+    public static func isEmail(_ s: String) -> Bool {
+        matches(s, #"^[^\s@<>"]{1,64}@[^\s@<>"]{1,128}\.[^\s@<>"]{2,32}$"#)
+    }
+
+    private var flushing: Task<Void, Never>?
+
+    // Sends the waiting messages in order. One that the server rejects is dropped; one that hit a
+    // limit or no network waits for the next try. A call during a running flush waits for it and
+    // then sends what is still waiting.
+    public func flush() async {
+        while let running = flushing { await running.value }
+        guard !state.queue.isEmpty else { return }
+        let task = Task {
+            await drain()
+            flushing = nil
+        }
+        flushing = task
+        await task.value
+    }
+
+    private func drain() async {
+        while let m = state.queue.first, let body = try? JSONEncoder().encode(m) {
+            let status = await post(Self.server + "/feedback", body)
+            if status == -1 || status == 429 || status >= 500 { return }
+            state.queue.removeFirst()
+            save()
+        }
+    }
+
+    // Queues a message and tries to send it; true when it went out at once. It carries its own
+    // id, so that it cannot be tied to the statistics of the same install.
+    @discardableResult
+    public func sendFeedback(kind: String, text: String, card: CardInfo?, email: String, app: String, os: String) async -> Bool {
+        state.email = email
+        // The server refuses control characters; pasted text may carry some.
+        let clean = String(String.UnicodeScalarView(text.unicodeScalars.filter {
+            !(0...8 ~= $0.value || $0.value == 0x0B || $0.value == 0x0C || 0x0E...0x1F ~= $0.value || $0.value == 0x7F)
+        }))
+        let m = Message(
+            id: state.feedbackId, kind: kind, platform: "ios", app: app, os: os,
+            text: clean.isEmpty ? nil : clean, email: email.isEmpty ? nil : email, card: card
+        )
+        state.queue.append(m)
+        save()
+        await flush()
+        return !state.queue.contains(m)
+    }
 }

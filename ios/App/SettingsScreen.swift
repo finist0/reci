@@ -24,6 +24,7 @@ struct SettingsScreen: View {
     @State private var message: String?
     @State private var confirmReset = false
     @State private var confirmArticles: String?
+    @State private var writing = false
     @State private var whatSent = false
 
     private let sizes = [10, 15, 20, 30]
@@ -118,6 +119,9 @@ struct SettingsScreen: View {
                     Group {
                         GroupTitle(text: "Обратная связь")
                         Panel {
+                            let waiting = model.telemetry.state.queue.count
+                            navRow("Написать разработчику", waiting > 0 ? "Ждут отправки: \(waiting)" : "Идея, ошибка или вопрос") { writing = true }
+                            Line()
                             toggle("Анонимная статистика", "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки",
                                    model.telemetry.state.enabled) { v in model.setStatsEnabled(v) }
                             Line()
@@ -125,6 +129,7 @@ struct SettingsScreen: View {
                                 whatSent = true
                             }
                         }
+                        if let t = model.sentToast { SentToast(text: t).padding(.top, 10) }
                     }
                     Group {
                         GroupTitle(text: "О приложении")
@@ -135,6 +140,7 @@ struct SettingsScreen: View {
             }
         }
         .background(p.bg.ignoresSafeArea())
+        .sheet(isPresented: $writing) { WriteSheet().environmentObject(model) }
         .sheet(isPresented: $whatSent) { WhatSentSheet().environmentObject(model) }
         .fileExporter(isPresented: $exporting, document: exportFile, contentType: .json, defaultFilename: "reci-progress-\(today()).json") { _ in }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .data, .plainText]) { result in

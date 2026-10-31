@@ -28,6 +28,8 @@ final class AppModel: ObservableObject {
     @Published private(set) var version = 0
     @Published private(set) var showing: Showing?
     @Published var learnedToast = false
+    @Published var sentToast: String?
+    private var toastShown = 0
     let speech = Speech()
     let telemetry: Telemetry
 
@@ -78,11 +80,12 @@ final class AppModel: ObservableObject {
     private var appVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown" }
     private var osName: String { "iOS " + UIDevice.current.systemVersion }
 
-    // Sends the ping when it is time; cheap to call on every start.
+    // Sends the ping and the waiting messages when it is time; cheap to call on every start.
     func sendStats() {
         let learned = repo.words.reduce(0) { $0 + (repo.progress($1).state == Mark.known ? 1 : 0) }
         Task { @MainActor in
             await telemetry.sendPing(app: appVersion, os: osName, locale: Locale.current.identifier(.bcp47), prefs: prefs, learned: learned)
+            await telemetry.flush()
             version += 1
         }
     }
@@ -105,6 +108,19 @@ final class AppModel: ObservableObject {
     func countAnswer(_ w: Word, _ a: Int, learned: Bool) {
         let what = w.isArticle ? (a == Mark.known ? "hide" : "later") : learned ? "long" : a == Mark.known ? "know" : "dontknow"
         telemetry.count("answers", what)
+    }
+
+    func sendFeedback(kind: String, text: String, card: CardInfo?, email: String) {
+        Task { @MainActor in
+            let sent = await telemetry.sendFeedback(kind: kind, text: text, card: card, email: email, app: appVersion, os: osName)
+            sentToast = sent ? "Спасибо! Сообщение отправлено" : "Сообщение уйдёт, когда появится интернет"
+            toastShown += 1
+            let shown = toastShown
+            changed()
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            // A later toast keeps its own three seconds.
+            if shown == toastShown { sentToast = nil }
+        }
     }
 
     var prefs: Prefs { repo.prefs }
