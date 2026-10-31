@@ -136,6 +136,24 @@ python3 -m venv /path/to/venv
 - Тест карточки на экране блокировки выключает и включает экран эмулятора. На телефоне с
   PIN-кодом после него экран останется заблокированным.
 
+### Снимки экранов
+
+`StoreScreenshots.kt` снимает экраны для Google Play и README: карточку, выражение на
+экране блокировки, разбор, тёмную тему, справочник, настройки, форму жалобы и раздел
+«Обратная связь». В обычном прогоне тестов он пропускается.
+
+1. Запустите эмулятор, например Pixel 6 Pro с Android 17.
+2. Снимите экраны:
+   ```sh
+   cd app && ./gradlew connectedDebugAndroidTest \
+     -Pandroid.testInstrumentationRunnerArguments.class=org.kostja.reci.StoreScreenshots \
+     -Pandroid.testInstrumentationRunnerArguments.screenshots=true
+   ```
+3. Заберите их: `adb pull /data/local/tmp/reci-shots` и скопируйте в `screenshots/`.
+
+Тест сам ставит экрану размер 1080×2160 и чистую строку состояния, а после работы
+возвращает всё как было.
+
 ### Проверки на GitHub
 
 Сценарии GitHub Actions лежат в `.github/workflows/`. Результаты — во вкладке Actions
