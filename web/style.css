@@ -650,9 +650,39 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px;
 .dialog-text { font-size: 15px; color: var(--secondary); }
 .dialog-buttons { display: flex; justify-content: flex-end; gap: 20px; margin-top: 20px; color: var(--accent); font-weight: 600; }
 
-/* The statistics notice and what it sends. */
+/* Report a card, write to the developer, the statistics notice. */
+.flag {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: grid;
+    place-items: center;
+    color: var(--faint);
+}
+
+.flag .ic { width: 22px; height: 22px; }
+.card-wrap .card-scroll { padding-bottom: 56px; }
+
 .dialog.form { display: flex; flex-direction: column; gap: 12px; max-height: 100%; overflow-y: auto; }
 .dialog.form .dialog-title, .dialog.form .dialog-buttons { margin: 0; }
 
+.dialog textarea, .dialog input[type="email"] {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid var(--divider);
+    border-radius: 12px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: inherit;
+    font-size: 15px;
+    line-height: 20px;
+    resize: vertical;
+}
+
+.dialog-buttons button[disabled] { opacity: .4; }
+.form-error { color: var(--red); font-size: 14px; }
 .packet { margin: 0; padding: 10px; border-radius: 12px; background: var(--panel); font-size: 12px; white-space: pre-wrap; word-break: break-all; }
 .policy { color: var(--accent); font-size: 14px; }

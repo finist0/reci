@@ -1,4 +1,4 @@
-// Anonymous daily statistics, sent to the project's server.
+// Anonymous daily statistics and messages to the developer, sent to the project's server.
 // Kept apart from the settings, so that a progress file never carries the install id.
 
 import { prefs } from "./store.js";
@@ -22,8 +22,8 @@ function uuid() {
 const timeout = ms => (AbortSignal.timeout ? AbortSignal.timeout(ms) : undefined);
 
 const fresh = () => ({
-    id: uuid(), enabled: true, noticeShown: false, noticeClosed: false, sentDay: "", triedAt: 0, counts: {},
-    last: null,
+    id: uuid(), feedbackId: uuid(), enabled: true, noticeShown: false,
+    noticeClosed: false, sentDay: "", triedAt: 0, counts: {}, last: null, email: "", queue: [],
 });
 
 function read() {
@@ -174,4 +174,54 @@ export function noticeShown() {
 export function closeNotice() {
     state.noticeClosed = true;
     save();
+}
+
+// --- Messages to the developer ---
+
+let flushing = null;
+
+// Sends the waiting messages in order. One that the server rejects is dropped; one that hit a
+// limit or no network waits for the next try. A call during a running flush waits for it.
+export function flush() {
+    flushing ??= drain().finally(() => (flushing = null));
+    return flushing;
+}
+
+async function drain() {
+    while (state.queue.length) {
+        let res;
+        try {
+            res = await fetch(server() + "/feedback", {
+                method: "POST", body: JSON.stringify(state.queue[0]), keepalive: true, signal: timeout(10000),
+            });
+        } catch {
+            return;
+        }
+        if (res.status === 429 || res.status >= 500) return;
+        state.queue.shift();
+        save();
+    }
+}
+
+// The server's check, so that a mistyped address is caught before the message is queued.
+export const isEmail = s => /^[^\s@<>"]{1,64}@[^\s@<>"]{1,128}\.[^\s@<>"]{2,32}$/.test(s);
+
+// Queues a message ({kind, text, card}) and tries to send it; true when it went out at once.
+// It carries its own id, so that it cannot be tied to the statistics of the same install.
+export async function sendFeedback(message, email, app) {
+    state.email = email;
+    const m = { id: state.feedbackId, platform: platform(), app: app || "unknown", os: await osName(), ...message };
+    // The server refuses control characters; pasted text may carry some.
+    m.text = (m.text ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
+    if (!m.text) delete m.text;
+    if (email) m.email = email;
+    state.queue.push(m);
+    save();
+    // A flush already running may have passed the end of the queue before this message came.
+    // Compared as text: another tab may have reloaded the queue meanwhile.
+    const waiting = () => state.queue.some(q => JSON.stringify(q) === JSON.stringify(m));
+    const running = flushing !== null;
+    await flush();
+    if (running && waiting()) await flush();
+    return !waiting();
 }

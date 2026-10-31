@@ -54,6 +54,7 @@ const ICONS = {
     chevron_left: "M15.41,7.41L14,6l-6,6 6,6 1.41,-1.41L10.83,12z",
     chevron_right: "M10,6L8.59,7.41 13.17,12l-4.58,4.59L10,18l6,-6z",
     expand_more: "M16.59,8.59L12,13.17 7.41,8.59 6,10l6,6 6,-6z",
+    flag: "M14,6l-1,-2H5v17h2v-7h5l1,2h7V6h-6zM18,14h-4l-1,-2H7V6h5l1,2h5v6z",
     search: "M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z",
     settings: "M19.14,12.94c0.04,-0.3 0.06,-0.61 0.06,-0.94c0,-0.32 -0.02,-0.64 -0.07,-0.94l2.03,-1.58c0.18,-0.14 0.23,-0.41 0.12,-0.61l-1.92,-3.32c-0.12,-0.22 -0.37,-0.29 -0.59,-0.22l-2.39,0.96c-0.5,-0.38 -1.03,-0.7 -1.62,-0.94L14.4,2.81c-0.04,-0.24 -0.24,-0.41 -0.48,-0.41h-3.84c-0.24,0 -0.43,0.17 -0.47,0.41L9.25,5.35C8.66,5.59 8.12,5.92 7.63,6.29L5.24,5.33c-0.22,-0.08 -0.47,0 -0.59,0.22L2.74,8.87C2.62,9.08 2.66,9.34 2.86,9.48l2.03,1.58C4.84,11.36 4.8,11.69 4.8,12s0.02,0.64 0.07,0.94l-2.03,1.58c-0.18,0.14 -0.23,0.41 -0.12,0.61l1.92,3.32c0.12,0.22 0.37,0.29 0.59,0.22l2.39,-0.96c0.5,0.38 1.03,0.7 1.62,0.94l0.36,2.54c0.05,0.24 0.24,0.41 0.48,0.41h3.84c0.24,0 0.44,-0.17 0.47,-0.41l0.36,-2.54c0.59,-0.24 1.13,-0.56 1.62,-0.94l2.39,0.96c0.22,0.08 0.47,0 0.59,-0.22l1.92,-3.32c0.12,-0.22 0.07,-0.47 -0.12,-0.61L19.14,12.94zM12,15.6c-1.98,0 -3.6,-1.62 -3.6,-3.6s1.62,-3.6 3.6,-3.6s3.6,1.62 3.6,3.6S13.98,15.6 12,15.6z",
     star: "M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z",
@@ -389,15 +390,17 @@ function cardScreen() {
                 ${wordBody(w, { slide: prefs.cardMode === 2 && !R.isArticle(w), covered: s.covered, hideWord: s.recall && !s.revealed })}
             </div>
             <button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>
-            ${learnedToast ? toast("Слово отмечено выученным") : ""}
+            ${flagButton(w)}
+            ${learnedToast ? toast("Слово отмечено выученным") : sentToast ? toast(sentToast) : ""}
         </div>
         ${statsNotice()}
         ${prefs.useMarks && s.hint ? longPressHint : ""}
         ${prefs.useMarks ? marksRow(s.answered, R.isArticle(w)) : ""}
-        ${bottomNav()}`;
+        ${bottomNav()}
+        ${reportDialog(top())}`;
 }
 
-// --- Statistics notice ---
+// --- Statistics notice and messages to the developer ---
 
 const STATS_SUMMARY = "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки";
 
@@ -408,6 +411,46 @@ const statsNotice = () => {
         показано, какие разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика».</span>
         <button ${act("closenotice")} aria-label="Понятно">✕</button></div>`;
 };
+
+const WORD_PROBLEMS = [["translation", "Перевод"], ["stress", "Ударение"], ["example", "Пример"], ["forms", "Род или формы"], ["other", "Другое"]];
+const ARTICLE_PROBLEMS = [["text", "Ошибка в тексте"], ["other", "Другое"]];
+
+const flagButton = w => `<button class="flag" ${act("report", w.key)} aria-label="Сообщить об ошибке">${icon("flag")}</button>`;
+
+const emailField = (name, value) =>
+    `<input type="email" inputmode="email" autocomplete="email" data-input="${name}" placeholder="Почта для ответа, если нужен ответ" value="${esc(value)}">`;
+
+const formError = f => (f.error ? `<div class="form-error">${esc(f.error)}</div>` : "");
+
+function reportDialog(e) {
+    const r = e.report;
+    if (!r) return "";
+    const w = R.word(r.key);
+    const problems = R.isArticle(w) ? ARTICLE_PROBLEMS : WORD_PROBLEMS;
+    return `<div class="modal"><div class="dialog form">
+        <div class="dialog-title">Что не так с карточкой?</div>
+        <div class="dialog-text">${esc(primary(w.cyr))}</div>
+        <div class="chips">${problems.map(([k, t]) => chip(t, r.problem === k, "problem", k)).join("")}</div>
+        <textarea data-input="reporttext" rows="3" maxlength="2000" placeholder="Что именно не так, если хотите">${esc(r.text)}</textarea>
+        ${emailField("reportemail", r.email)}
+        ${formError(r)}
+        <div class="dialog-buttons"><button ${act("closeform")}>Отмена</button>
+            <button ${act("sendreport")} ${r.problem ? "" : "disabled"}>Отправить</button></div>
+    </div></div>`;
+}
+
+function writeDialog(e) {
+    const f = e.write;
+    if (!f) return "";
+    return `<div class="modal"><div class="dialog form">
+        <div class="dialog-title">Написать разработчику</div>
+        <div class="dialog-text">Идея, ошибка, вопрос — что угодно.</div>
+        <textarea data-input="writetext" rows="6" maxlength="4000" placeholder="Сообщение" autofocus>${esc(f.text)}</textarea>
+        ${emailField("writeemail", f.email)}
+        ${formError(f)}
+        <div class="dialog-buttons"><button ${act("closeform")}>Отмена</button><button ${act("sendwrite")}>Отправить</button></div>
+    </div></div>`;
+}
 
 function whatSentDialog(e) {
     if (!e.whatSent) return "";
@@ -451,6 +494,20 @@ function showLearnedToast() {
         learnedToast = false;
         schedule();
     }, 2500);
+}
+
+// What became of a message to the developer, shown for a few seconds on any screen.
+let sentToast = "";
+let sentTimer = 0;
+
+function showSentToast(text) {
+    sentToast = text;
+    clearTimeout(sentTimer);
+    sentTimer = setTimeout(() => {
+        sentToast = "";
+        schedule();
+    }, 3000);
+    schedule();
 }
 
 const bottomNav = () => `
@@ -541,8 +598,10 @@ function detailScreen(e) {
     e.answered ??= R.answerOf(w);
     return `<div class="screen-col">${header("")}
         <div class="card-wrap detail"><div class="card-scroll" data-scroll="detail">${wordBody(w)}</div>
-            ${e.learned ? toast("Слово отмечено выученным") : ""}</div>
+            ${flagButton(w)}
+            ${e.learned ? toast("Слово отмечено выученным") : sentToast ? toast(sentToast) : ""}</div>
         ${marksRow(e.answered, R.isArticle(w))}
+        ${reportDialog(e)}
     </div>`;
 }
 
@@ -702,7 +761,8 @@ function settingsScreen(e) {
                 (e.msg ? `<div class="note">${esc(e.msg)}</div>` : ""))}
             <input type="file" accept="application/json,.json" data-input="importfile" hidden>
             ${groupTitle("Обратная связь")}
-            ${panel(toggle("Анонимная статистика", STATS_SUMMARY, T.state.enabled, "stats") + line +
+            ${panel(navRow("Написать разработчику", T.state.queue.length ? `Ждут отправки: ${T.state.queue.length}` : "Идея, ошибка или вопрос", "write") + line +
+                toggle("Анонимная статистика", STATS_SUMMARY, T.state.enabled, "stats") + line +
                 navRow("Что отправляется", T.state.last ? `Последний раз: ${T.state.last.day}` : "Ещё ничего не отправлялось", "whatsent"))}
             ${groupTitle("О приложении")}
             ${panel(`<div class="about">
@@ -717,6 +777,8 @@ function settingsScreen(e) {
                     Иконки: Material Icons, Apache 2.0.</div></div>`)}
             <div class="spacer"></div>
         </div>
+        ${sentToast ? toast(sentToast) : ""}
+        ${writeDialog(e)}
         ${whatSentDialog(e)}
         ${e.articles ? `<div class="modal"><div class="dialog">
             <div class="dialog-title">Снова показывать ${e.articles === "compare" ? "разборы похожих слов" : "заметки"}?</div>
@@ -899,8 +961,38 @@ const actions = {
         T.closeNotice();
         schedule();
     },
+    report: arg => {
+        top().report = { key: arg, problem: null, text: "", email: T.state.email, error: "" };
+        schedule();
+    },
+    problem: arg => {
+        top().report.problem = arg;
+        schedule();
+    },
+    sendreport: () => {
+        const r = top().report;
+        const w = R.word(r.key);
+        if (!r.problem || !checkEmail(r)) return;
+        const card = { key: w.key.slice(0, 120), word: w.cyr.slice(0, 120), problem: r.problem, latin: prefs.latinFirst, stress: prefs.accentMode };
+        top().report = null;
+        send({ kind: "card", text: r.text.trim(), card }, r.email.trim());
+    },
+    write: () => {
+        top().write = { text: "", email: T.state.email, error: "" };
+        schedule();
+    },
+    sendwrite: () => {
+        const f = top().write;
+        if (!f.text.trim()) {
+            f.error = "Напишите сообщение";
+            return schedule();
+        }
+        if (!checkEmail(f)) return;
+        top().write = null;
+        send({ kind: "app", text: f.text.trim() }, f.email.trim());
+    },
     closeform: () => {
-        top().whatSent = false;
+        Object.assign(top(), { report: null, write: null, whatSent: false });
         schedule();
     },
     stats: () => {
@@ -991,6 +1083,10 @@ root.addEventListener("click", ev => {
 });
 
 const inputs = {
+    reporttext: v => (top().report.text = v),
+    reportemail: v => (top().report.email = v),
+    writetext: v => (top().write.text = v),
+    writeemail: v => (top().write.email = v),
     search: v => (top().q = v),
     list: v => (top().q = v),
     grammar: v => (top().q = v),
@@ -1033,16 +1129,34 @@ root.addEventListener("change", async ev => {
     }
 });
 
+function checkEmail(f) {
+    const email = f.email.trim();
+    if (!email || T.isEmail(email)) return true;
+    f.error = "Проверьте адрес почты";
+    schedule();
+    return false;
+}
+
+async function send(message, email) {
+    schedule();
+    const sent = await T.sendFeedback(message, email, appVersion);
+    showSentToast(sent ? "Спасибо! Сообщение отправлено" : "Сообщение уйдёт, когда появится интернет");
+}
+
 const learnedCount = () => R.words.reduce((n, w) => n + (R.progress(w).state === KNOWN ? 1 : 0), 0);
 
 function sendStats() {
     T.sendPing(appVersion, learnedCount()).then(sent => sent && top().name === "settings" && schedule());
+    T.flush().then(() => top().name === "settings" && schedule());
 }
 
 document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && sendStats());
+window.addEventListener("online", () => T.flush());
 
 export async function start() {
     history.replaceState({ depth: 1 }, "");
+    // Messages need no app version, so they do not wait for it.
+    T.flush();
     fetch("../app/app/build.gradle.kts").then(r => r.text()).then(t => {
         appVersion = t.match(/versionName\s*=\s*"([^"]+)"/)?.[1] ?? "";
         sendStats();
