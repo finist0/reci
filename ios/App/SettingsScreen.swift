@@ -26,6 +26,7 @@ struct SettingsScreen: View {
     @State private var confirmArticles: String?
     @State private var writing = false
     @State private var whatSent = false
+    @State private var helping = false
 
     private let sizes = [10, 15, 20, 30]
 
@@ -128,6 +129,8 @@ struct SettingsScreen: View {
                             navRow("Что отправляется", model.telemetry.state.last.map { "Последний раз: \($0.day)" } ?? "Ещё ничего не отправлялось") {
                                 whatSent = true
                             }
+                            Line()
+                            navRow("Помочь автору", "Поделиться, поставить звезду") { helping = true }
                         }
                         if let t = model.sentToast { SentToast(text: t).padding(.top, 10) }
                     }
@@ -142,6 +145,7 @@ struct SettingsScreen: View {
         .background(p.bg.ignoresSafeArea())
         .sheet(isPresented: $writing) { WriteSheet().environmentObject(model) }
         .sheet(isPresented: $whatSent) { WhatSentSheet().environmentObject(model) }
+        .sheet(isPresented: $helping) { HelpSheet().environmentObject(model) }
         .fileExporter(isPresented: $exporting, document: exportFile, contentType: .json, defaultFilename: "reci-progress-\(today()).json") { _ in }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .data, .plainText]) { result in
             guard case .success(let url) = result else { return }

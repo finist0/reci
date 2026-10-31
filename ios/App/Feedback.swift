@@ -231,3 +231,58 @@ struct WhatSentSheet: View {
         return (try? enc.encode(ping)).map { String(decoding: $0, as: UTF8.self) } ?? ""
     }
 }
+
+let shareText = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно и без рекламы.\nAndroid: https://play.google.com/store/apps/details?id=org.kostja.reci\niPhone и компьютер: https://finist0.github.io/reci/web/"
+
+// No App Store page yet, so there is nothing to rate on the iPhone.
+struct HelpSheet: View {
+    @EnvironmentObject var model: AppModel
+    @Environment(\.dismiss) private var dismiss
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        let p = model.palette
+        NavigationStack {
+            VStack(alignment: .leading, spacing: 14) {
+                Text("Приложение бесплатное и без рекламы. Вот чем можно помочь:").foregroundStyle(p.secondary)
+                VStack(alignment: .leading, spacing: 0) {
+                    ShareLink(item: shareText) {
+                        row("Поделиться с другом", "Ссылки на Android, iPhone и компьютер")
+                    }
+                    .simultaneousGesture(TapGesture().onEnded { model.telemetry.count("opened", "share") })
+                    .accessibilityIdentifier("share")
+                    Line()
+                    Button {
+                        model.telemetry.count("opened", "star")
+                        openURL(URL(string: "https://github.com/finist0/reci")!)
+                    } label: {
+                        row("Поставить звезду на GitHub", "Там лежит код приложения")
+                    }
+                    .accessibilityIdentifier("star")
+                }
+                .background(RoundedRectangle(cornerRadius: 20).fill(p.bg))
+                Spacer()
+            }
+            .padding(20)
+            .background(p.card.ignoresSafeArea())
+            .navigationTitle("Помочь автору")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Закрыть") { dismiss() } } }
+        }
+        .tint(p.accent)
+    }
+
+    private func row(_ title: String, _ summary: String) -> some View {
+        let p = model.palette
+        return HStack {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(title).font(.system(size: 16)).foregroundStyle(p.text)
+                Text(summary).font(.system(size: 13)).foregroundStyle(p.secondary)
+            }
+            Spacer()
+            Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(p.faint)
+        }
+        .padding(.horizontal, 18).padding(.vertical, 13)
+        .contentShape(Rectangle())
+    }
+}
