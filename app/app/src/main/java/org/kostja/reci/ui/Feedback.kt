@@ -1,5 +1,7 @@
 package org.kostja.reci.ui
 
+import android.content.ActivityNotFoundException
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -51,6 +53,15 @@ import org.kostja.reci.data.Word
 fun sendStats() {
     Telemetry.sendPing({ Repo.allProgress().values.count { it.state == State.KNOWN } })
     Telemetry.flush()
+}
+
+// A phone without a browser has nothing to open a link with.
+fun openLink(ctx: Context, url: String) {
+    try {
+        ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
+    } catch (e: ActivityNotFoundException) {
+        Toast.makeText(ctx, "Нет приложения, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
+    }
 }
 
 fun countAnswer(w: Word, a: State, learnedNow: Boolean) {
@@ -245,10 +256,54 @@ fun WhatSentDialog(onDismiss: () -> Unit) {
                 Text(
                     "Политика конфиденциальности",
                     color = p.accent,
-                    modifier = Modifier.clickable {
-                        ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Telemetry.PRIVACY)))
-                    },
+                    modifier = Modifier.clickable { openLink(ctx, Telemetry.PRIVACY) },
                 )
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } },
+    )
+}
+
+private const val PLAY = "https://play.google.com/store/apps/details?id=org.kostja.reci"
+private const val GITHUB = "https://github.com/finist0/reci"
+const val SHARE_TEXT = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, " +
+    "примерами и грамматикой. Бесплатно и без рекламы.\nAndroid: $PLAY\niPhone и компьютер: https://finist0.github.io/reci/web/"
+
+@Composable
+fun HelpDialog(onDismiss: () -> Unit) {
+    val p = LocalPalette.current
+    val ctx = LocalContext.current
+    @Composable
+    fun HelpRow(title: String, summary: String, onClick: () -> Unit) {
+        Column(Modifier.fillMaxWidth().clickable(onClick = onClick).padding(vertical = 10.dp)) {
+            Text(title, fontSize = 16.sp, color = p.text)
+            Text(summary, fontSize = 13.sp, color = p.secondary)
+        }
+    }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Помочь автору") },
+        text = {
+            Column {
+                Text("Приложение бесплатное и без рекламы. Вот чем можно помочь:", color = p.secondary)
+                HelpRow("Поделиться с другом", "Ссылки на Android, iPhone и компьютер") {
+                    Telemetry.count("opened", "share")
+                    val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, SHARE_TEXT)
+                    ctx.startActivity(Intent.createChooser(send, "Поделиться"))
+                }
+                HelpRow("Оценить приложение", "В Google Play") {
+                    Telemetry.count("opened", "rate")
+                    // The Play Store app where it is installed, the web page elsewhere.
+                    try {
+                        ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=org.kostja.reci")))
+                    } catch (e: ActivityNotFoundException) {
+                        openLink(ctx, PLAY)
+                    }
+                }
+                HelpRow("Поставить звезду на GitHub", "Там лежит код приложения") {
+                    Telemetry.count("opened", "star")
+                    openLink(ctx, GITHUB)
+                }
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } },

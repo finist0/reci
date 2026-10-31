@@ -150,6 +150,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
     var confirmReset by remember { mutableStateOf(false) }
     var writing by remember { mutableStateOf(false) }
     var whatSent by remember { mutableStateOf(false) }
+    var helping by remember { mutableStateOf(false) }
     var confirmArticles by remember { mutableStateOf<String?>(null) }
     var showPermissions by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { Speaker.connect() }
@@ -347,6 +348,8 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                     NavRow("Что отправляется", if (last != null) "Последний раз: ${last.optString("day")}" else "Ещё ничего не отправлялось") {
                         whatSent = true
                     }
+                    Line()
+                    NavRow("Помочь автору", "Поделиться, оценить, поставить звезду") { helping = true }
                 }
             }
 
@@ -399,6 +402,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
 
     if (writing) WriteDialog { writing = false }
     if (whatSent) WhatSentDialog { whatSent = false }
+    if (helping) HelpDialog { helping = false }
 
     if (confirmReset) {
         AlertDialog(
