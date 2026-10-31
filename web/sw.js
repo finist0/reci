@@ -4,8 +4,8 @@
 const CACHE = "reci";
 const ASSETS = "../app/app/src/main/";
 const CORE = [
-    "./", "index.html", "style.css", "manifest.webmanifest", "icon-180.png", "icon-192.png",
-    "js/app.js", "js/data.js", "js/repo.js", "js/speech.js", "js/store.js", "js/ui.js",
+    "./", "index.html", "privacy.html", "style.css", "manifest.webmanifest", "icon-180.png", "icon-192.png",
+    "js/app.js", "js/data.js", "js/repo.js", "js/speech.js", "js/store.js", "js/telemetry.js", "js/ui.js",
     ASSETS + "assets/words.json", ASSETS + "assets/grammar.json",
     ASSETS + "res/font/literata.ttf", ASSETS + "res/font/ruslan_display.ttf",
     "../app/app/build.gradle.kts",

@@ -5,6 +5,7 @@ import * as D from "./data.js";
 import * as R from "./repo.js";
 import { prefs, setPref, setPrefs, onChange, exportData, importData, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
 import { speak, voiceName, onVoices, canSpeak } from "./speech.js";
+import * as T from "./telemetry.js";
 
 const esc = D.esc;
 
@@ -122,6 +123,7 @@ function saveScroll(entry) {
 }
 
 function go(name, arg) {
+    T.count("opened", name);
     saveScroll(top());
     stack.push({ name, arg });
     history.pushState({ depth: stack.length }, "");
@@ -321,7 +323,7 @@ function cardShow(w) {
             covered: prefs.cardMode === 2 && !R.isArticle(w), mode: prefs.cardMode,
             fresh: !R.isArticle(w) && p.phase <= R.INTRO && p.streak === 0, hintCounted: false, hint: false,
         };
-        R.markShown(w);
+        if (R.markShown(w)) T.count("cards");
     } else if (show.mode !== prefs.cardMode) {
         // A card mode chosen in the settings applies to the card on screen as well.
         Object.assign(show, {
@@ -389,9 +391,38 @@ function cardScreen() {
             <button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>
             ${learnedToast ? toast("Слово отмечено выученным") : ""}
         </div>
+        ${statsNotice()}
         ${prefs.useMarks && s.hint ? longPressHint : ""}
         ${prefs.useMarks ? marksRow(s.answered, R.isArticle(w)) : ""}
         ${bottomNav()}`;
+}
+
+// --- Statistics notice ---
+
+const STATS_SUMMARY = "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки";
+
+const statsNotice = () => {
+    if (T.state.noticeClosed) return "";
+    T.noticeShown();
+    return `<div class="tip notice"><span>Приложение раз в день отправляет анонимную статистику: сколько карточек
+        показано, какие разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика».</span>
+        <button ${act("closenotice")} aria-label="Понятно">✕</button></div>`;
+};
+
+function whatSentDialog(e) {
+    if (!e.whatSent) return "";
+    const last = T.state.last;
+    return `<div class="modal"><div class="dialog form">
+        <div class="dialog-title">Анонимная статистика</div>
+        <div class="dialog-text">Раз в день уходит: случайный номер этой установки, платформа, версии приложения и
+            системы, язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы и
+            настройки, какие экраны открывали.<br><br>Не уходит: слова и ответы по отдельным словам, имя, почта,
+            точное местоположение. Адрес IP сервер не сохраняет.</div>
+        <div class="setting-title">${last ? `Последний пакет, ${esc(last.day)}` : "Пока ничего не отправлялось"}</div>
+        ${last ? `<pre class="packet">${esc(JSON.stringify(last, null, 1))}</pre>` : ""}
+        <a class="policy" href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
+        <div class="dialog-buttons"><button ${act("closeform")}>Закрыть</button></div>
+    </div></div>`;
 }
 
 const longPressHint = `
@@ -670,6 +701,9 @@ function settingsScreen(e) {
                 `<button class="setting danger" ${act("reset")}>Сбросить прогресс</button>` +
                 (e.msg ? `<div class="note">${esc(e.msg)}</div>` : ""))}
             <input type="file" accept="application/json,.json" data-input="importfile" hidden>
+            ${groupTitle("Обратная связь")}
+            ${panel(toggle("Анонимная статистика", STATS_SUMMARY, T.state.enabled, "stats") + line +
+                navRow("Что отправляется", T.state.last ? `Последний раз: ${T.state.last.day}` : "Ещё ничего не отправлялось", "whatsent"))}
             ${groupTitle("О приложении")}
             ${panel(`<div class="about">
                 <div class="app-title"><span>НЕ</span>РОДНАЯ РЕЧЬ</div>
@@ -683,6 +717,7 @@ function settingsScreen(e) {
                     Иконки: Material Icons, Apache 2.0.</div></div>`)}
             <div class="spacer"></div>
         </div>
+        ${whatSentDialog(e)}
         ${e.articles ? `<div class="modal"><div class="dialog">
             <div class="dialog-title">Снова показывать ${e.articles === "compare" ? "разборы похожих слов" : "заметки"}?</div>
             <div class="dialog-text">Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.</div>
@@ -860,6 +895,22 @@ const actions = {
         R.showArticlesAgain(e.articles);
         e.articles = null;
     },
+    closenotice: () => {
+        T.closeNotice();
+        schedule();
+    },
+    closeform: () => {
+        top().whatSent = false;
+        schedule();
+    },
+    stats: () => {
+        T.setEnabled(!T.state.enabled);
+        schedule();
+    },
+    whatsent: () => {
+        top().whatSent = true;
+        schedule();
+    },
     doreset: () => {
         Object.assign(top(), { confirm: false, msg: "Прогресс сброшен." });
         R.resetAll();
@@ -867,14 +918,21 @@ const actions = {
     },
 };
 
+function countAnswer(w, a, learnedNow) {
+    if (R.isArticle(w)) T.count("answers", a === KNOWN ? "hide" : "later");
+    else T.count("answers", learnedNow ? "long" : a === KNOWN ? "know" : "dontknow");
+}
+
 function answer(a, learnedNow) {
     const e = top();
     if (e.name === "detail") {
-        R.answer(R.word(e.arg), a, learnedNow);
+        const w = R.word(e.arg);
+        if (R.answer(w, a, learnedNow)) countAnswer(w, a, learnedNow);
         e.answered = a;
         e.learned = learnedNow;
     } else if (show) {
-        R.answer(R.word(show.key), a, learnedNow);
+        const w = R.word(show.key);
+        if (R.answer(w, a, learnedNow)) countAnswer(w, a, learnedNow);
         show.answered = a;
         show.revealed = true;
         if (learnedNow) {
@@ -975,10 +1033,19 @@ root.addEventListener("change", async ev => {
     }
 });
 
+const learnedCount = () => R.words.reduce((n, w) => n + (R.progress(w).state === KNOWN ? 1 : 0), 0);
+
+function sendStats() {
+    T.sendPing(appVersion, learnedCount()).then(sent => sent && top().name === "settings" && schedule());
+}
+
+document.addEventListener("visibilitychange", () => document.visibilityState === "visible" && sendStats());
+
 export async function start() {
     history.replaceState({ depth: 1 }, "");
     fetch("../app/app/build.gradle.kts").then(r => r.text()).then(t => {
         appVersion = t.match(/versionName\s*=\s*"([^"]+)"/)?.[1] ?? "";
+        sendStats();
     }).catch(() => {});
     render();
 }

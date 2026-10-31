@@ -125,9 +125,10 @@ export const shownProgress = w => answers.get(w.key)?.before ?? progress(w);
 
 // KNOWN or DONT_KNOW; learnedNow skips the stages for a word the user already knows. A new
 // answer to the same card replaces the previous one.
+// False when it repeats the last answer.
 export function answer(w, a, learnedNow = false) {
     const old = answers.get(w.key);
-    if (old && old.state === a && old.learned === learnedNow) return;
+    if (old && old.state === a && old.learned === learnedNow) return false;
     update(w, cur => {
         const before = old?.before ?? cur;
         answers.set(w.key, { before, state: a, learned: learnedNow });
@@ -139,6 +140,7 @@ export function answer(w, a, learnedNow = false) {
         return p.phase === LEARNED ? p : learned(p);
     });
     setPref("pendingAnswer", { key: w.key, ...answers.get(w.key) });
+    return true;
 }
 
 // The answer to the card on screen outlives a reload, so that a changed answer still replaces
@@ -191,13 +193,14 @@ function today() {
 
 export const todayCount = () => (prefs.todayDate === today() ? prefs.todayCount : 0);
 
-// A reload shows the same card again, and a showing must count once.
+// A reload shows the same card again, and a showing must count once. True when it counted.
 export function markShown(w) {
     const showing = `${w.key}#${prefs.cardCount}`;
-    if (revisit || prefs.lastShown === showing) return;
+    if (revisit || prefs.lastShown === showing) return false;
     update(w, p => ({ ...p, seen: p.seen + 1, last: clock.now(), showAt: 0 }));
     const t = today();
     setPrefs({ todayDate: t, todayCount: prefs.todayDate === t ? prefs.todayCount + 1 : 1, lastShown: showing });
+    return true;
 }
 
 export function resetAll() {
