@@ -122,13 +122,26 @@ device, including between Android, iPhone and a computer:
 Favourites and the learning and appearance settings move along with the progress. Lock
 screen settings stay on the phone.
 
+## Statistics and feedback
+
+- **Anonymous statistics.** Once a day the app sends how many cards were shown and answers
+  given, how many words are learned, and which sections and settings are chosen. No words,
+  no answers about single words and no personal data.
+  - To turn them off: Settings, "Anonymous statistics".
+  - To see what is sent: Settings, "What is sent".
+  - [Privacy policy](https://finist0.github.io/reci/web/privacy.html) (in Russian).
+- **A mistake in a card:** the flag in the bottom right corner of the card.
+- **Anything else:** Settings, "Write to the developer". Leave an email if you want a reply.
+- **Help the author:** Settings, "Help the author": share the app, rate it, star it on
+  GitHub.
+
 ## For developers
 
 Building, signing, the dictionary, the web version and tests (in Russian):
 [docs/development.md](docs/development.md).
 
 The cards were written with the help of a language model and spot-checked. Mistakes are
-possible; corrections are welcome.
+possible; corrections are welcome, most easily through the flag on the card.
 
 ## Licenses
 

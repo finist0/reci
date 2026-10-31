@@ -87,6 +87,8 @@ python3 -m venv /path/to/venv
   правила, рассказано в [learning.md](learning.md).
 - `progress-sample.json`: образец файла прогресса. Все версии должны его загрузить и
   сохранить такой же, иначе файл с одного устройства не откроется на другом.
+- `telemetry.json`: поля, которые принимает сервер статистики. Сервер отбрасывает пакет
+  с любым другим полем, поэтому каждая версия проверяет свои пакеты по этому списку.
 
 | Что проверяется | Команда | Что нужно |
 |---|---|---|
@@ -106,19 +108,28 @@ python3 -m venv /path/to/venv
 | `app/app/src/test/…/LockSettingsTest.kt` | настройки экрана блокировки: пауза, звонки с разрешением «Звонки» и без него, новое слово, шторка, озвучка |
 | `app/app/src/androidTest/…/CardScreenTest.kt` | карточка: долгое нажатие, смена ответа, подсказка, статьи |
 | `app/app/src/androidTest/…/SettingsScreenTest.kt` | каждая настройка на экране настроек и карточка на экране блокировки |
+| `app/app/src/test/…/TelemetryTest.kt` | статистика и очередь сообщений: поля, раз в день, без сети |
+| `app/app/src/androidTest/…/FeedbackTest.kt` | уведомление о статистике, флажок, сообщения, «Помочь автору» |
 | `web/tests/learning.test.mjs` | правила обучения по сценариям |
 | `web/tests/backup.test.mjs` | файл прогресса |
 | `web/tests/ui/app.test.mjs` | карточка, поиск, справочник, тема, прогресс, запуск из кэша |
 | `web/tests/ui/settings.test.mjs` | каждая настройка на экране настроек |
+| `web/tests/telemetry.test.mjs` | статистика и очередь сообщений: поля, раз в день, без сети |
+| `web/tests/ui/feedback.test.mjs` | уведомление о статистике, флажок, сообщения, «Помочь автору» |
 | `ios/ReciCore/Tests/…/LearningScenariosTests.swift` | правила обучения по сценариям |
 | `ios/ReciCore/Tests/…/BackupTests.swift` | файл прогресса |
 | `ios/ReciCore/Tests/…/SharedStoreTests.swift` | приложение и виджеты над общими файлами: подсчёт показов, история |
 | `ios/ReciCore/Tests/…/LockCardTests.swift` | что показывает карточка на экране блокировки |
-| `ios/UITests/ReciUITests.swift` | карточка и настройки в симуляторе iPhone |
+| `ios/ReciCore/Tests/…/TelemetryTests.swift` | статистика и очередь сообщений: поля, раз в день, без сети |
+| `ios/UITests/ReciUITests.swift` | карточка и настройки в симуляторе iPhone; уведомление о статистике, флажок, сообщения, «Помочь автору»; снимки экранов |
 
 Не проверяются автоматически кнопки, которые открывают системные экраны Android:
 разрешения, голос, выбор файла для прогресса.
 
+- Ни один тест не обращается к настоящему серверу статистики:
+  - в вебе запросы принимает сам тестовый сервер, по адресу `/srv`;
+  - в Android их принимает `FakeServer`;
+  - на iPhone приложение, запущенное с `-uitest` или `-uitest-reset`, отвечает на них само.
 - Если Chrome называется не `google-chrome`, укажите путь: `CHROME=/path/to/chrome`.
 - Тесты интерфейса Android ставят отладочную сборку отдельным пакетом
   `org.kostja.reci.debug`, поэтому установленное приложение и его прогресс не трогают.
@@ -134,7 +145,7 @@ python3 -m venv /path/to/venv
 |---|---|---|---|
 | `android.yml` | каждый push | тесты на JVM, отладочный APK; тесты интерфейса на эмуляторах Android 9, 13, 15 и 17 | `reci-debug-apk`, отчёты при ошибке |
 | `web.yml` | каждый push | правила обучения и файл прогресса в Node, интерфейс в Chrome | — |
-| `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах трёх iPhone | `reci-unsigned-ipa`, `ios-test-results-N` |
+| `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах трёх iPhone | `reci-unsigned-ipa`, `ios-test-results-N`, снимки экранов `ios-screenshots-N` |
 
 Любой сценарий можно запустить и вручную: Actions → сценарий → Run workflow.
 
