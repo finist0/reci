@@ -134,10 +134,11 @@ public final class Repo {
     public func shownProgress(_ w: Word) -> Progress { answers[w.key]?.before ?? progress(w) }
 
     // Mark.known or Mark.dontKnow; learned skips the stages for a word the user already knows.
-    // A new answer to the same card replaces the previous one.
-    public func answer(_ w: Word, _ a: Int, learned: Bool = false) {
+    // A new answer to the same card replaces the previous one. False when it repeats the last one.
+    @discardableResult
+    public func answer(_ w: Word, _ a: Int, learned: Bool = false) -> Bool {
         let old = answers[w.key]
-        if let old, old.state == a, old.learned == learned { return }
+        if let old, old.state == a, old.learned == learned { return false }
         let cur = progress(w)
         let before = old?.before ?? cur
         answers[w.key] = Answer(before: before, state: a, learned: learned)
@@ -150,6 +151,7 @@ public final class Repo {
             store.put(w.key, p.phase == Repo.learned ? p : learnedNow(p))
         }
         prefs.pendingAnswer = PendingAnswer(key: w.key, state: a, learned: learned, before: before)
+        return true
     }
 
     // The answer to the card on screen outlives the process and reaches the widgets, so that a
@@ -228,10 +230,11 @@ public final class Repo {
     public var todayCount: Int { prefs.todayDate == today() ? prefs.todayCount : 0 }
 
     // The app and the widgets, or the app before and after a restart, show the same card, and a
-    // showing must count once.
-    public func markShown(_ w: Word) {
+    // showing must count once. True when it counted.
+    @discardableResult
+    public func markShown(_ w: Word) -> Bool {
         let showing = "\(w.key)#\(prefs.cardCount)"
-        if revisit || prefs.lastShown == showing { return }
+        if revisit || prefs.lastShown == showing { return false }
         let t = now()
         update(w) { var p = $0; p.seen += 1; p.last = t; p.showAt = 0; return p }
         var pr = prefs
@@ -240,6 +243,7 @@ public final class Repo {
         pr.todayDate = d
         pr.lastShown = showing
         prefs = pr
+        return true
     }
 
     public func resetAll() {

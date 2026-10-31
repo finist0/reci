@@ -23,7 +23,7 @@ struct DetailScreen: View {
                 .padding(.horizontal, 14)
                 if learned { LearnedToast().padding(.top, 10) }
                 MarksRow(answered: answered, article: w.isArticle) { a, l in
-                    model.repo.answer(w, a, learned: l)
+                    if model.repo.answer(w, a, learned: l) { model.countAnswer(w, a, learned: l) }
                     answered = a
                     learned = l
                     model.changed()

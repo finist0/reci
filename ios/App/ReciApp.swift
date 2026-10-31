@@ -29,6 +29,7 @@ struct ReciApp: App {
             }
             .environmentObject(model)
             .environmentObject(router)
+            .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
             .preferredColorScheme(model.palette.dark ? .dark : .light)
         }
         .onChange(of: phase) { _, now in

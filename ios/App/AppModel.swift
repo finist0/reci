@@ -29,6 +29,7 @@ final class AppModel: ObservableObject {
     @Published private(set) var showing: Showing?
     @Published var learnedToast = false
     let speech = Speech()
+    let telemetry: Telemetry
 
     init() {
         let dec = JSONDecoder()
@@ -40,6 +41,70 @@ final class AppModel: ObservableObject {
         if ProcessInfo.processInfo.arguments.contains("-uitest-reset") { try? FileManager.default.removeItem(at: LockDeck.dir) }
         repo = Repo(store: Store(dir: LockDeck.dir), words: words, topics: topics)
         LockDeck.writeDeck(words)
+        telemetry = Telemetry(file: Self.telemetryFile(), post: Self.transport())
+    }
+
+    // Outside the App Group the widgets share and outside the backup, so that the statistics id
+    // never moves to another phone with a restored backup.
+    private static func telemetryFile() -> URL {
+        var dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        if ProcessInfo.processInfo.arguments.contains("-uitest-reset") {
+            try? FileManager.default.removeItem(at: dir.appendingPathComponent("telemetry"))
+        }
+        try? FileManager.default.createDirectory(at: dir.appendingPathComponent("telemetry"), withIntermediateDirectories: true)
+        var values = URLResourceValues()
+        values.isExcludedFromBackup = true
+        dir.appendPathComponent("telemetry")
+        try? dir.setResourceValues(values)
+        return dir.appendingPathComponent("telemetry.json")
+    }
+
+    // UI tests never reach the real server: "-uitest" or "-uitest-reset" answer every request at
+    // once, "-uitest-offline" as if there was no network.
+    private static func transport() -> @MainActor (String, Data) async -> Int {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains("-uitest-offline") { return { _, _ in -1 } }
+        if args.contains("-uitest") || args.contains("-uitest-reset") { return { _, _ in 204 } }
+        return { url, body in
+            var req = URLRequest(url: URL(string: url)!, timeoutInterval: 5)
+            req.httpMethod = "POST"
+            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+            req.httpBody = body
+            guard let answer = try? await URLSession.shared.data(for: req) else { return -1 }
+            return (answer.1 as? HTTPURLResponse)?.statusCode ?? -1
+        }
+    }
+
+    private var appVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown" }
+    private var osName: String { "iOS " + UIDevice.current.systemVersion }
+
+    // Sends the ping when it is time; cheap to call on every start.
+    func sendStats() {
+        let learned = repo.words.reduce(0) { $0 + (repo.progress($1).state == Mark.known ? 1 : 0) }
+        Task { @MainActor in
+            await telemetry.sendPing(app: appVersion, os: osName, locale: Locale.current.identifier(.bcp47), prefs: prefs, learned: learned)
+            version += 1
+        }
+    }
+
+    func noticeShown() {
+        telemetry.markNoticeShown()
+        sendStats()
+    }
+
+    func closeNotice() {
+        telemetry.closeNotice()
+        changed()
+    }
+
+    func setStatsEnabled(_ on: Bool) {
+        telemetry.setEnabled(on)
+        changed()
+    }
+
+    func countAnswer(_ w: Word, _ a: Int, learned: Bool) {
+        let what = w.isArticle ? (a == Mark.known ? "hide" : "later") : learned ? "long" : a == Mark.known ? "know" : "dontknow"
+        telemetry.count("answers", what)
     }
 
     var prefs: Prefs { repo.prefs }
@@ -64,6 +129,7 @@ final class AppModel: ObservableObject {
         repo.reloadFromStore()
         syncShowing()
         changed()
+        sendStats()
     }
 
     // MARK: The card screen
@@ -95,7 +161,7 @@ final class AppModel: ObservableObject {
                 revealed: answered != nil, covered: prefs.cardMode == 2 && !w.isArticle,
                 fresh: !w.isArticle && p.phase <= Repo.intro && p.streak == 0, mode: prefs.cardMode
             )
-            repo.markShown(w)
+            if repo.markShown(w) { telemetry.count("cards") }
         } else if var s = showing, s.mode != prefs.cardMode {
             // A card mode chosen in the settings applies to the card on screen as well.
             s.mode = prefs.cardMode
@@ -133,7 +199,7 @@ final class AppModel: ObservableObject {
 
     func answer(_ a: Int, learned: Bool) {
         guard var s = showing, let w = repo.word(s.key) else { return }
-        repo.answer(w, a, learned: learned)
+        if repo.answer(w, a, learned: learned) { countAnswer(w, a, learned: learned) }
         s.answered = a
         s.revealed = true
         if learned {

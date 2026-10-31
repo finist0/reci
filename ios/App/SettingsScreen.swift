@@ -24,6 +24,7 @@ struct SettingsScreen: View {
     @State private var message: String?
     @State private var confirmReset = false
     @State private var confirmArticles: String?
+    @State private var whatSent = false
 
     private let sizes = [10, 15, 20, 30]
 
@@ -115,6 +116,17 @@ struct SettingsScreen: View {
                         }
                     }
                     Group {
+                        GroupTitle(text: "Обратная связь")
+                        Panel {
+                            toggle("Анонимная статистика", "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки",
+                                   model.telemetry.state.enabled) { v in model.setStatsEnabled(v) }
+                            Line()
+                            navRow("Что отправляется", model.telemetry.state.last.map { "Последний раз: \($0.day)" } ?? "Ещё ничего не отправлялось") {
+                                whatSent = true
+                            }
+                        }
+                    }
+                    Group {
                         GroupTitle(text: "О приложении")
                         Panel { about }
                     }
@@ -123,6 +135,7 @@ struct SettingsScreen: View {
             }
         }
         .background(p.bg.ignoresSafeArea())
+        .sheet(isPresented: $whatSent) { WhatSentSheet().environmentObject(model) }
         .fileExporter(isPresented: $exporting, document: exportFile, contentType: .json, defaultFilename: "reci-progress-\(today()).json") { _ in }
         .fileImporter(isPresented: $importing, allowedContentTypes: [.json, .data, .plainText]) { result in
             guard case .success(let url) = result else { return }

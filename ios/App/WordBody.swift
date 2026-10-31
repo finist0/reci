@@ -11,10 +11,30 @@ enum Route: Hashable {
     case list(String)
 }
 
+// The screen's name in the statistics of opened screens.
+extension Route {
+    var statName: String {
+        switch self {
+        case .detail: "detail"
+        case .topic: "topic"
+        case .grammar: "grammar"
+        case .categories: "categories"
+        case .search: "search"
+        case .settings: "settings"
+        case .list: "list"
+        }
+    }
+}
+
+@MainActor
 final class Router: ObservableObject {
     @Published var path: [Route] = []
+    var onGo: ((Route) -> Void)?
 
-    func go(_ r: Route) { path.append(r) }
+    func go(_ r: Route) {
+        onGo?(r)
+        path.append(r)
+    }
 
     // Grammar topics, comparison cards ("cmp:") and word cards ("w:") share one link format.
     func openRef(_ id: String?) {

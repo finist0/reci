@@ -35,6 +35,7 @@ struct CardScreen: View {
             }
             .clipShape(RoundedRectangle(cornerRadius: 28))
             .padding(.horizontal, 14).padding(.vertical, 8)
+            if model.showing != nil && !model.telemetry.state.noticeClosed { StatsNotice() }
             if model.prefs.useMarks, let s = model.showing, let w = model.repo.word(s.key) {
                 if s.hint { LongPressHint() }
                 MarksRow(answered: s.answered, article: w.isArticle) { a, learned in model.answer(a, learned: learned) }
