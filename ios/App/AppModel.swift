@@ -77,6 +77,11 @@ final class AppModel: ObservableObject {
         }
     }
 
+    // UI tests on a slow simulator wait out the closing sheet and keyboard before they look,
+    // and a toast of three seconds is gone by then.
+    private static let toastTime: UInt64 =
+        ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("-uitest") } ? 15_000_000_000 : 3_000_000_000
+
     private var appVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown" }
     private var osName: String { "iOS " + UIDevice.current.systemVersion }
 
@@ -117,7 +122,7 @@ final class AppModel: ObservableObject {
             toastShown += 1
             let shown = toastShown
             changed()
-            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            try? await Task.sleep(nanoseconds: Self.toastTime)
             // A later toast keeps its own three seconds.
             if shown == toastShown { sentToast = nil }
         }
