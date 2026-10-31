@@ -46,6 +46,7 @@ class CardScreenTest {
 
     @Before
     fun freshStart() {
+        FakeServer.install(closeNotice = true)
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
         ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().commit()
         waitIo()

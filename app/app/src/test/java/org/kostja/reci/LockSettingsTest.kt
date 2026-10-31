@@ -21,6 +21,7 @@ import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.State
+import org.kostja.reci.data.Telemetry
 import org.kostja.reci.lock.LockActivity
 import org.kostja.reci.lock.LockService
 import org.kostja.reci.ui.MainActivity
@@ -49,6 +50,7 @@ class LockSettingsTest {
 
     @Before
     fun freshStart() {
+        Telemetry.post = { _, _ -> 204 }
         waitIo()
         Repo.resetAll()
         waitIo()
