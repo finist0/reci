@@ -1,0 +1,64 @@
+import AppIntents
+import SwiftUI
+import WidgetKit
+
+// The widget views, shared with the app, which draws them on its lock screen preview for the
+// screenshots.
+struct CardEntry: TimelineEntry {
+    let date: Date
+    let title: String?
+    let subtitle: String
+    let recall: Bool
+}
+
+struct CardWidgetView: View {
+    @Environment(\.widgetFamily) private var family
+    let entry: CardEntry
+
+    var body: some View {
+        switch family {
+        case .accessoryInline:
+            Text(entry.title.map { "\($0) · \(entry.subtitle)" } ?? entry.subtitle)
+        case .systemMedium:
+            VStack(alignment: .leading, spacing: 6) {
+                card
+                Spacer(minLength: 0)
+                HStack {
+                    Button(intent: AnswerIntent(know: false)) { Label("Не знаю", systemImage: "xmark") }.tint(.red)
+                    Button(intent: AnswerIntent(know: true)) { Label("Знаю", systemImage: "checkmark") }.tint(.green)
+                }
+                .font(.system(size: 14, weight: .semibold))
+            }
+        default:
+            card
+        }
+    }
+
+    private var card: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            if let title = entry.title {
+                Text(title).font(.system(size: entry.recall ? 15 : 20, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.6)
+            }
+            Text(entry.subtitle).font(.system(size: 13)).lineLimit(2).opacity(0.8)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .widgetAccentable()
+    }
+}
+
+struct AnswerButtonView: View {
+    let know: Bool
+    var body: some View {
+        Button(intent: AnswerIntent(know: know)) {
+            ZStack {
+                AccessoryWidgetBackground()
+                VStack(spacing: 0) {
+                    Image(systemName: know ? "checkmark" : "xmark").font(.system(size: 18, weight: .bold))
+                    Text(know ? "Знаю" : "Не знаю").font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                }
+            }
+        }
+        .buttonStyle(.plain)
+        .widgetAccentable()
+    }
+}
