@@ -175,3 +175,29 @@ test("statistics count shown cards and answers", async t => {
     assert.equal(counts.cards, 1);
     assert.deepEqual(counts.opened, { search: 1 });
 });
+
+test("help the author: share, rate and star", async t => {
+    const page = await app(t);
+    await page.tap('[data-act="settings"]');
+    await page.tap('[data-act="help"]');
+    assert.match(await page.text(), /Помочь автору[\s\S]*Поделиться с другом[\s\S]*Оценить приложение[\s\S]*Поставить звезду на GitHub/);
+    assert.equal(await page.eval("document.querySelector('a[data-act=rate]').href"), "https://play.google.com/store/apps/details?id=org.kostja.reci");
+    assert.equal(await page.eval("document.querySelector('a[data-act=star]').href"), "https://github.com/finist0/reci");
+    await page.eval("navigator.share = d => { window.shared = d; return Promise.resolve(); }");
+    await page.tap('[data-act="share"]');
+    const text = await page.eval("window.shared.text");
+    assert.match(text, /play\.google\.com\/store\/apps\/details\?id=org\.kostja\.reci/);
+    assert.match(text, /finist0\.github\.io\/reci\/web\//);
+    assert.deepEqual((await telemetry(page)).counts.opened.share, 1);
+});
+
+test("help the author: without a share sheet the text is copied", async t => {
+    const page = await app(t);
+    await page.send("Browser.grantPermissions", { permissions: ["clipboardReadWrite", "clipboardSanitizedWrite"] });
+    await page.tap('[data-act="settings"]');
+    await page.tap('[data-act="help"]');
+    await page.eval("delete navigator.share; Navigator.prototype.share = undefined");
+    await page.tap('[data-act="share"]');
+    await page.waitFor("document.querySelector('.toast')?.textContent.includes('скопирован')");
+    assert.match(await page.eval("navigator.clipboard.readText()"), /НЕРодная речь/);
+});
