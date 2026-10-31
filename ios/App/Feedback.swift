@@ -38,6 +38,9 @@ struct SentToast: View {
             .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
             .padding(.horizontal, 16).padding(.vertical, 9)
             .background(Capsule().fill(model.palette.known))
+            // One element read as its text; left alone, VoiceOver and UI tests get the icon's name.
+            .accessibilityElement(children: .ignore)
+            .accessibilityLabel(text)
             .accessibilityIdentifier("sentToast")
     }
 }
