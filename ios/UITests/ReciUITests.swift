@@ -166,6 +166,18 @@ final class FeedbackUITests: XCTestCase {
         XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.waitForExistence(timeout: 5))
     }
 
+    func testHelpTheAuthor() {
+        launch()
+        openSettings()
+        reach(app.buttons["Помочь автору"]).tap()
+        XCTAssertTrue(app.navigationBars["Помочь автору"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.buttons["share"].exists)
+        XCTAssertTrue(app.buttons["star"].exists)
+        app.buttons["share"].tap()
+        // The system share sheet comes up over the app.
+        XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 5) || app.collectionViews.firstMatch.waitForExistence(timeout: 1))
+    }
+
     func testTheStatisticsSwitchAndWhatIsSent() {
         launch()
         openSettings()
@@ -220,5 +232,9 @@ final class ScreenshotUITests: XCTestCase {
         app.buttons["Что отправляется"].tap()
         _ = app.staticTexts["packet"].waitForExistence(timeout: 5)
         shot("8-what-is-sent")
+        app.buttons["Закрыть"].tap()
+        app.buttons["Помочь автору"].tap()
+        _ = app.navigationBars["Помочь автору"].waitForExistence(timeout: 5)
+        shot("9-help-the-author")
     }
 }
