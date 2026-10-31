@@ -22,6 +22,7 @@ import org.kostja.reci.data.Speaker
 import org.kostja.reci.ui.CardScreen
 import org.kostja.reci.ui.MainActivity
 import org.kostja.reci.ui.ReciTheme
+import org.kostja.reci.ui.sendStats
 
 class LockActivity : ComponentActivity() {
     private var spokenKey: String? = null
@@ -56,7 +57,7 @@ class LockActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (isInCall(this)) finish()
+        if (isInCall(this)) finish() else sendStats()
     }
 
     override fun onDestroy() {

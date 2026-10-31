@@ -14,6 +14,7 @@ import org.kostja.reci.R
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
+import org.kostja.reci.data.Telemetry
 import org.kostja.reci.lock.LockService
 
 sealed interface Screen {
@@ -25,6 +26,19 @@ sealed interface Screen {
     data class Words(val category: String) : Screen
     data object GrammarIndex : Screen
     data class GrammarTopic(val id: String) : Screen
+
+    // The screen's name in the statistics of opened screens.
+    val statName: String
+        get() = when (this) {
+            Card -> "card"
+            Categories -> "categories"
+            Search -> "search"
+            Settings -> "settings"
+            is Detail -> "detail"
+            is Words -> "list"
+            GrammarIndex -> "grammar"
+            is GrammarTopic -> "topic"
+        }
 
     companion object {
         fun fromRoute(route: String?): Screen? = when (route) {
@@ -60,7 +74,11 @@ class MainActivity : ComponentActivity() {
                 // until it is popped, so coming back from a card restores it.
                 val holder = rememberSaveableStateHolder()
                 val stateKey = { i: Int -> "$i:${stack[i]}" }
-                val go = { s: Screen -> stack.add(s); Unit }
+                val go = { s: Screen ->
+                    Telemetry.count("opened", s.statName)
+                    stack.add(s)
+                    Unit
+                }
                 val back = {
                     if (stack.size > 1) {
                         holder.removeState(stateKey(stack.lastIndex))
@@ -115,6 +133,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStart() {
+        super.onStart()
+        sendStats()
     }
 
     override fun onNewIntent(intent: Intent) {

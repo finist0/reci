@@ -412,7 +412,7 @@ fun DetailScreen(key: String, back: () -> Unit, onGrammar: ((String) -> Unit)? =
         var learned by remember(w.key) { mutableStateOf(false) }
         if (learned) LearnedToast(Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
         MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 12.dp)) { a, learnedNow ->
-            Repo.answer(w, a, learnedNow)
+            if (Repo.answer(w, a, learnedNow)) countAnswer(w, a, learnedNow)
             answered = a
             learned = learnedNow
         }

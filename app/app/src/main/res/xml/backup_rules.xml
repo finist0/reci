@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The statistics id must not move to another phone or survive a reinstall. -->
+<full-backup-content>
+    <exclude domain="sharedpref" path="telemetry.xml" />
+</full-backup-content>

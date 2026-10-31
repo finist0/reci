@@ -7,12 +7,14 @@ import org.kostja.reci.data.Grammar
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
+import org.kostja.reci.data.Telemetry
 import org.kostja.reci.lock.LockService
 
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
         Prefs.init(this)
+        Telemetry.init(this)
         Repo.init(this)
         Grammar.init(this)
         Speaker.init(this)

@@ -154,10 +154,10 @@ object Repo {
     fun shownProgress(w: Word): Progress = answers[w.key]?.before ?: progress(w)
 
     // KNOWN or DONT_KNOW; learned skips the stages for a word the user already knows. A new
-    // answer to the same card replaces the previous one.
-    fun answer(w: Word, a: State, learned: Boolean = false) {
+    // answer to the same card replaces the previous one. False when it repeats the last answer.
+    fun answer(w: Word, a: State, learned: Boolean = false): Boolean {
         val old = answers[w.key]
-        if (old != null && old.state == a && old.learned == learned) return
+        if (old != null && old.state == a && old.learned == learned) return false
         update(w) { cur ->
             val before = answers[w.key]?.before ?: cur
             answers[w.key] = Answer(before, a, learned)
@@ -172,6 +172,7 @@ object Repo {
             }
         }
         savePending(w.key)
+        return true
     }
 
     // The answer to the card on screen outlives the process, so that a changed answer after a
@@ -232,12 +233,13 @@ object Repo {
 
     fun toggleFav(w: Word) = update(w) { it.copy(fav = !it.fav) }
 
-    fun markShown(w: Word) {
+    fun markShown(w: Word): Boolean {
         val showing = "${w.key}#${Prefs.cardCount}"
-        if (revisit || Prefs.lastShown == showing) return
+        if (revisit || Prefs.lastShown == showing) return false
         update(w) { it.copy(seen = it.seen + 1, last = now(), showAt = 0) }
         val c = Calendar.getInstance()
         Prefs.countShown(c.get(Calendar.YEAR) * 1000 + c.get(Calendar.DAY_OF_YEAR), showing)
+        return true
     }
 
     // Waits for the dictionary and for pending writes, so call it off the main thread.

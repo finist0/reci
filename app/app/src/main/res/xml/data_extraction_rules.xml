@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The statistics id must not move to another phone or survive a reinstall. -->
+<data-extraction-rules>
+    <cloud-backup>
+        <exclude domain="sharedpref" path="telemetry.xml" />
+    </cloud-backup>
+    <device-transfer>
+        <exclude domain="sharedpref" path="telemetry.xml" />
+    </device-transfer>
+</data-extraction-rules>

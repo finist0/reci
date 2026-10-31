@@ -77,6 +77,7 @@ import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.State
+import org.kostja.reci.data.Telemetry
 import org.kostja.reci.lock.LockActivity
 import org.kostja.reci.lock.LockService
 import java.text.SimpleDateFormat
@@ -147,6 +148,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
         }
     }
     var confirmReset by remember { mutableStateOf(false) }
+    var whatSent by remember { mutableStateOf(false) }
     var confirmArticles by remember { mutableStateOf<String?>(null) }
     var showPermissions by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { Speaker.connect() }
@@ -326,6 +328,22 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                 )
             }
 
+            GroupTitle("Обратная связь")
+            Panel {
+                Column {
+                    Toggle(
+                        "Анонимная статистика",
+                        "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки",
+                        Telemetry.enabled,
+                    ) { Telemetry.enabled = it }
+                    Line()
+                    val last = Telemetry.last
+                    NavRow("Что отправляется", if (last != null) "Последний раз: ${last.optString("day")}" else "Ещё ничего не отправлялось") {
+                        whatSent = true
+                    }
+                }
+            }
+
             GroupTitle("О приложении")
             Panel {
                 val version = remember {
@@ -372,6 +390,8 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
             dismissButton = { TextButton(onClick = { confirmArticles = null }) { Text("Отмена") } },
         )
     }
+
+    if (whatSent) WhatSentDialog { whatSent = false }
 
     if (confirmReset) {
         AlertDialog(

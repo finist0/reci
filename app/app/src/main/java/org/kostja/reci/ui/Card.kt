@@ -56,6 +56,7 @@ import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.State
+import org.kostja.reci.data.Telemetry
 import org.kostja.reci.data.Word
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -98,7 +99,7 @@ fun CardScreen(
     }
     val onAnswer = { a: State, learnedNow: Boolean ->
         if (w != null) {
-            Repo.answer(w, a, learnedNow)
+            if (Repo.answer(w, a, learnedNow)) countAnswer(w, a, learnedNow)
             answered = a
         }
         revealed = true
@@ -142,7 +143,7 @@ fun CardScreen(
             LifecycleResumeEffect(w.key, showId) {
                 if (!counted && ctx.getSystemService(PowerManager::class.java).isInteractive) {
                     counted = true
-                    Repo.markShown(w)
+                    if (Repo.markShown(w)) Telemetry.count("cards")
                 }
                 onPauseOrDispose {}
             }
@@ -169,6 +170,7 @@ fun CardScreen(
             Star(w, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp))
             if (learnedToast > 0) LearnedToast(Modifier.align(Alignment.BottomCenter))
         }
+        if (onDone == null && w != null && !Telemetry.noticeClosed) StatsNotice()
         if (Prefs.useMarks && w != null) {
             if (hint) LongPressHint { hint = false; Prefs.hintDone = true }
             MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer)
