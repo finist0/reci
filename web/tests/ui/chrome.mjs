@@ -15,8 +15,22 @@ const TYPES = {
     ".svg": "image/svg+xml", ".ttf": "font/ttf", ".kts": "text/plain",
 };
 
+// The statistics server is faked at /srv: it keeps what it gets and answers with `status`.
 export function serve() {
+    const posts = [];
+    const status = { ping: 204, feedback: 204 };
     const server = createServer((req, res) => {
+        const srv = req.url.match(/^\/srv\/(ping|feedback)$/);
+        if (srv && req.method === "POST") {
+            let body = "";
+            req.on("data", c => (body += c));
+            req.on("end", () => {
+                posts.push({ kind: srv[1], body: JSON.parse(body) });
+                res.writeHead(status[srv[1]]);
+                res.end();
+            });
+            return;
+        }
         let path = normalize(decodeURIComponent(new URL(req.url, "http://x").pathname));
         if (path.endsWith("/")) path += "index.html";
         const file = join(ROOT, path);
@@ -31,13 +45,17 @@ export function serve() {
     });
     return new Promise(ok => server.listen(0, "127.0.0.1", () => ok({
         url: `http://127.0.0.1:${server.address().port}/web/`,
+        posts,
+        status,
         close: () => server.close(),
     })));
 }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 
-export async function launch() {
+// `telemetry` is the stored statistics state the page starts with; by default the notice about
+// statistics was already shown and closed, so that it does not get in the way of other tests.
+export async function launch({ telemetry = { noticeShown: true, noticeClosed: true } } = {}) {
     const profile = mkdtempSync(join(tmpdir(), "reci-ui-"));
     const chrome = spawn(process.env.CHROME ?? "google-chrome", ["--headless=new", "--disable-gpu", "--no-first-run",
         "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--lang=ru", "about:blank"],
@@ -79,6 +97,11 @@ export async function launch() {
     await send("Network.enable");
     await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
     await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+    await send("Page.addScriptToEvaluateOnNewDocument", { source: `
+        window.reciServer = location.origin + "/srv";
+        try {
+            if (!localStorage.getItem("reci.telemetry")) localStorage.setItem("reci.telemetry", ${JSON.stringify(JSON.stringify(telemetry))});
+        } catch {}` });
 
     const page = {
         errors,
