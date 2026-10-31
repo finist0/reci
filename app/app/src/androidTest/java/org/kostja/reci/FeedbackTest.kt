@@ -1,6 +1,7 @@
 package org.kostja.reci
 
 import android.content.Context
+import android.app.Instrumentation
 import android.content.Intent
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assert
@@ -254,5 +255,44 @@ class FeedbackTest {
         assertEquals(1, c.getJSONObject("answers").getInt("dontknow"))
         assertTrue(c.getInt("cards") >= 1)
         assertEquals(1, c.getJSONObject("opened").getInt("search"))
+    }
+
+    // Catches the activity a tap would start, without starting it.
+    private fun catchStart(tap: () -> Unit): Intent {
+        var caught: Intent? = null
+        val inst = InstrumentationRegistry.getInstrumentation()
+        val monitor = object : Instrumentation.ActivityMonitor() {
+            override fun onStartActivity(intent: Intent): Instrumentation.ActivityResult {
+                caught = intent
+                return Instrumentation.ActivityResult(0, null)
+            }
+        }
+        inst.addMonitor(monitor)
+        try {
+            tap()
+            compose.waitUntil(5_000) { caught != null }
+        } finally {
+            inst.removeMonitor(monitor)
+        }
+        return caught!!
+    }
+
+    @Test
+    fun helpTheAuthorSharesRatesAndStars() {
+        launch()
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        compose.waitForIdle()
+        click("Помочь автору")
+        val chooser = catchStart { click("Поделиться с другом") }
+        assertEquals(Intent.ACTION_CHOOSER, chooser.action)
+        @Suppress("DEPRECATION")
+        val text = (chooser.getParcelableExtra<Intent>(Intent.EXTRA_INTENT))!!.getStringExtra(Intent.EXTRA_TEXT)!!
+        assertTrue(text.contains("play.google.com/store/apps/details?id=org.kostja.reci"))
+        assertTrue(text.contains("finist0.github.io/reci/web/"))
+        val rate = catchStart { click("Оценить приложение") }
+        assertTrue(rate.dataString!!.endsWith("details?id=org.kostja.reci"))
+        assertEquals("https://github.com/finist0/reci", catchStart { click("Поставить звезду на GitHub") }.dataString)
+        val opened = Telemetry.counts().getJSONObject("opened")
+        assertEquals(listOf(1, 1, 1), listOf("share", "rate", "star").map { opened.getInt(it) })
     }
 }
