@@ -9,32 +9,42 @@ struct ReciApp: App {
 
     var body: some Scene {
         WindowGroup {
-            NavigationStack(path: $router.path) {
-                CardScreen()
-                    .toolbar(.hidden, for: .navigationBar)
-                    .navigationDestination(for: Route.self) { route in
-                        Group {
-                            switch route {
-                            case .detail(let key): DetailScreen(key: key)
-                            case .topic(let id): TopicScreen(id: id)
-                            case .grammar: GrammarScreen()
-                            case .categories: CategoriesScreen()
-                            case .search: SearchScreen()
-                            case .settings: SettingsScreen()
-                            case .list(let id): ListScreen(id: id)
-                            }
-                        }
-                        .toolbar(.hidden, for: .navigationBar)
-                    }
+            if let i = CommandLine.arguments.firstIndex(of: "-uitest-lockpreview"), i + 1 < CommandLine.arguments.count {
+                LockPreview(wallpaper: CommandLine.arguments[i + 1] == "wallpaper")
+                    .environmentObject(model)
+                    .onAppear { model.syncShowing() }
+            } else {
+                main
             }
-            .environmentObject(model)
-            .environmentObject(router)
-            .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
-            .preferredColorScheme(model.palette.dark ? .dark : .light)
         }
         .onChange(of: phase) { _, now in
             if now == .active { model.reload() }
         }
+    }
+
+    private var main: some View {
+        NavigationStack(path: $router.path) {
+            CardScreen()
+                .toolbar(.hidden, for: .navigationBar)
+                .navigationDestination(for: Route.self) { route in
+                    Group {
+                        switch route {
+                        case .detail(let key): DetailScreen(key: key)
+                        case .topic(let id): TopicScreen(id: id)
+                        case .grammar: GrammarScreen()
+                        case .categories: CategoriesScreen()
+                        case .search: SearchScreen()
+                        case .settings: SettingsScreen()
+                        case .list(let id): ListScreen(id: id)
+                        }
+                    }
+                    .toolbar(.hidden, for: .navigationBar)
+                }
+        }
+        .environmentObject(model)
+        .environmentObject(router)
+        .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
+        .preferredColorScheme(model.palette.dark ? .dark : .light)
     }
 }
 

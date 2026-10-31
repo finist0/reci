@@ -237,4 +237,20 @@ final class ScreenshotUITests: XCTestCase {
         _ = app.navigationBars["Помочь автору"].waitForExistence(timeout: 5)
         shot("9-help-the-author")
     }
+
+    // The real widgets and wallpaper on a stand-in lock screen, see LockPreview.swift.
+    func testLockScreen() {
+        continueAfterFailure = false
+        for mode in ["widgets", "wallpaper"] {
+            let app = XCUIApplication()
+            app.launchArguments = ["-uitest-reset", "-uitest-lockpreview", mode]
+            app.launch()
+            XCTAssertTrue(app.descendants(matching: .any)["lockPreview"].firstMatch.waitForExistence(timeout: 20))
+            let a = XCTAttachment(screenshot: app.screenshot())
+            a.name = "10-lock-\(mode)"
+            a.lifetime = .keepAlways
+            add(a)
+            app.terminate()
+        }
+    }
 }
