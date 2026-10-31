@@ -242,9 +242,9 @@ final class TelemetryTests: XCTestCase {
             return 204
         }
         async let first = t.sendFeedback(kind: "app", text: "первое", card: nil, email: "", app: "0.12", os: "iOS 18.6")
-        await Task.yield()
+        while release == nil { await Task.yield() }
         async let second = t.sendFeedback(kind: "app", text: "второе", card: nil, email: "", app: "0.12", os: "iOS 18.6")
-        await Task.yield()
+        while t.state.queue.count < 2 { await Task.yield() }
         release?.resume()
         let both = await [first, second]
         XCTAssertEqual(both, [true, true])
