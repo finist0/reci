@@ -13,6 +13,7 @@ jobs:
   core-linux:
     name: Learning logic on Linux
     runs-on: ubuntu-24.04
+    timeout-minutes: 20
     container: swift:6.1
     steps:
       - uses: actions/checkout@v5
@@ -22,6 +23,7 @@ jobs:
   app-simulator:
     name: App and UI tests on ${{ matrix.device }}, iOS ${{ matrix.os }}
     runs-on: ${{ matrix.runner }}
+    timeout-minutes: 90
     # GitHub may not offer the newest macOS image to every account yet.
     continue-on-error: ${{ matrix.experimental }}
     strategy:
