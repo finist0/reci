@@ -180,3 +180,45 @@ final class FeedbackUITests: XCTestCase {
         XCTAssertEqual(toggle.value as? String, "0")
     }
 }
+
+// Screens of the app for the store pages and for looking at the app without an iPhone. They
+// are kept in the test results; the iOS workflow exports them as PNG files.
+final class ScreenshotUITests: XCTestCase {
+    func testScreens() {
+        continueAfterFailure = false
+        let app = XCUIApplication()
+        app.launchArguments = ["-uitest-reset"]
+        app.launch()
+        XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 20))
+        let shot = { (name: String) in
+            let a = XCTAttachment(screenshot: app.screenshot())
+            a.name = name
+            a.lifetime = .keepAlways
+            self.add(a)
+        }
+        shot("1-card-with-notice")
+        app.buttons["Сообщить об ошибке"].firstMatch.tap()
+        _ = app.navigationBars["Что не так с карточкой?"].waitForExistence(timeout: 5)
+        app.buttons["problem:stress"].tap()
+        shot("2-report")
+        app.buttons["Отмена"].tap()
+        app.buttons["Понятно"].tap()
+        app.buttons["next"].tap()
+        shot("3-card")
+        app.buttons["Поиск"].tap()
+        app.textFields.firstMatch.tap()
+        app.textFields.firstMatch.typeText("кућ")
+        shot("4-search")
+        app.buttons["Назад"].firstMatch.tap()
+        app.buttons["Грамматика"].tap()
+        shot("5-grammar")
+        app.buttons["Назад"].firstMatch.tap()
+        app.buttons["Настройки"].tap()
+        shot("6-settings")
+        for _ in 0..<15 where !app.buttons["Написать разработчику"].isHittable { app.swipeUp() }
+        shot("7-settings-feedback")
+        app.buttons["Что отправляется"].tap()
+        _ = app.staticTexts["packet"].waitForExistence(timeout: 5)
+        shot("8-what-is-sent")
+    }
+}

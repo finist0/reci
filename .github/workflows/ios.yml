@@ -96,6 +96,24 @@ jobs:
             -destination "platform=iOS Simulator,name=${{ matrix.device }},OS=${{ matrix.os }}" \
             -resultBundlePath build/Reci.xcresult \
             CODE_SIGNING_ALLOWED=NO
+      # The screens ScreenshotUITests took, as PNG files whose names start with the shot names.
+      - name: Export the screenshots
+        if: always()
+        continue-on-error: true
+        working-directory: ios
+        run: |
+          [ -d build/Reci.xcresult ] || exit 0
+          xcrun xcresulttool export attachments --path build/Reci.xcresult --output-path build/shots
+          cd build/shots
+          jq -r '.[].attachments[] | [.exportedFileName, .suggestedHumanReadableName] | @tsv' manifest.json |
+            while IFS=$'\t' read -r file name; do mv "$file" "$name"; done
+      - name: Keep the screenshots
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ios-screenshots-${{ strategy.job-index }}
+          path: ios/build/shots/*.png
+          if-no-files-found: ignore
       - name: Keep the test results
         if: always()
         uses: actions/upload-artifact@v6
