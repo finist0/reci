@@ -452,6 +452,29 @@ function writeDialog(e) {
     </div></div>`;
 }
 
+const PLAY = "https://play.google.com/store/apps/details?id=org.kostja.reci";
+const GITHUB = "https://github.com/finist0/reci";
+const SHARE_TEXT = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, " +
+    `примерами и грамматикой. Бесплатно и без рекламы.\nAndroid: ${PLAY}\niPhone и компьютер: https://finist0.github.io/reci/web/`;
+
+const linkRow = (title, summary, a, href) => `
+    <a class="setting" href="${href}" target="_blank" rel="noopener" ${act(a)}>
+        <span class="setting-main"><span class="setting-title">${esc(title)}</span><span class="setting-sub">${esc(summary)}</span></span>
+        ${icon("arrow_forward", "faint")}
+    </a>`;
+
+function helpDialog(e) {
+    if (!e.help) return "";
+    return `<div class="modal"><div class="dialog form">
+        <div class="dialog-title">Помочь автору</div>
+        <div class="dialog-text">Приложение бесплатное и без рекламы. Вот чем можно помочь:</div>
+        ${panel(navRow("Поделиться с другом", "Ссылки на Android, iPhone и компьютер", "share") + line +
+            linkRow("Оценить приложение", "В Google Play, для Android", "rate", PLAY) + line +
+            linkRow("Поставить звезду на GitHub", "Там лежит код приложения", "star", GITHUB))}
+        <div class="dialog-buttons"><button ${act("closeform")}>Закрыть</button></div>
+    </div></div>`;
+}
+
 function whatSentDialog(e) {
     if (!e.whatSent) return "";
     const last = T.state.last;
@@ -763,7 +786,8 @@ function settingsScreen(e) {
             ${groupTitle("Обратная связь")}
             ${panel(navRow("Написать разработчику", T.state.queue.length ? `Ждут отправки: ${T.state.queue.length}` : "Идея, ошибка или вопрос", "write") + line +
                 toggle("Анонимная статистика", STATS_SUMMARY, T.state.enabled, "stats") + line +
-                navRow("Что отправляется", T.state.last ? `Последний раз: ${T.state.last.day}` : "Ещё ничего не отправлялось", "whatsent"))}
+                navRow("Что отправляется", T.state.last ? `Последний раз: ${T.state.last.day}` : "Ещё ничего не отправлялось", "whatsent") + line +
+                navRow("Помочь автору", "Поделиться, оценить, поставить звезду", "help"))}
             ${groupTitle("О приложении")}
             ${panel(`<div class="about">
                 <div class="app-title"><span>НЕ</span>РОДНАЯ РЕЧЬ</div>
@@ -780,6 +804,7 @@ function settingsScreen(e) {
         ${sentToast ? toast(sentToast) : ""}
         ${writeDialog(e)}
         ${whatSentDialog(e)}
+        ${helpDialog(e)}
         ${e.articles ? `<div class="modal"><div class="dialog">
             <div class="dialog-title">Снова показывать ${e.articles === "compare" ? "разборы похожих слов" : "заметки"}?</div>
             <div class="dialog-text">Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.</div>
@@ -992,7 +1017,7 @@ const actions = {
         send({ kind: "app", text: f.text.trim() }, f.email.trim());
     },
     closeform: () => {
-        Object.assign(top(), { report: null, write: null, whatSent: false });
+        Object.assign(top(), { report: null, write: null, whatSent: false, help: false });
         schedule();
     },
     stats: () => {
@@ -1003,6 +1028,26 @@ const actions = {
         top().whatSent = true;
         schedule();
     },
+    help: () => {
+        top().help = true;
+        schedule();
+    },
+    // The share sheet where the browser has one; elsewhere the text goes to the clipboard.
+    share: async () => {
+        T.count("opened", "share");
+        if (navigator.share) {
+            navigator.share({ title: "НЕРодная речь", text: SHARE_TEXT }).catch(() => {});
+            return;
+        }
+        try {
+            await navigator.clipboard.writeText(SHARE_TEXT);
+            showSentToast("Текст со ссылками скопирован");
+        } catch {
+            showSentToast("Не получилось скопировать");
+        }
+    },
+    rate: () => T.count("opened", "rate"),
+    star: () => T.count("opened", "star"),
     doreset: () => {
         Object.assign(top(), { confirm: false, msg: "Прогресс сброшен." });
         R.resetAll();

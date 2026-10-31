@@ -686,3 +686,4 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px;
 .form-error { color: var(--red); font-size: 14px; }
 .packet { margin: 0; padding: 10px; border-radius: 12px; background: var(--panel); font-size: 12px; white-space: pre-wrap; word-break: break-all; }
 .policy { color: var(--accent); font-size: 14px; }
+a.setting { color: inherit; text-decoration: none; }
