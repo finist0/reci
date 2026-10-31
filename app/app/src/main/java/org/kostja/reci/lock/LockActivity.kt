@@ -50,6 +50,7 @@ class LockActivity : ComponentActivity() {
                     onSettings = { openApp("settings") },
                     onCategories = { openApp("categories") },
                     onGrammar = { id -> openApp(if (id == null) "grammar" else "grammar:$id") },
+                    onReport = { key -> openApp("report:$key") },
                 )
             }
         }

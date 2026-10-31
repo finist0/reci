@@ -2,11 +2,13 @@ package org.kostja.reci.ui
 
 import android.content.Intent
 import android.net.Uri
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,28 +16,41 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Icon
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.json.JSONObject
+import org.kostja.reci.R
+import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.State
 import org.kostja.reci.data.Telemetry
 import org.kostja.reci.data.Word
 
-// Sends the ping when it is time; cheap to call on every start.
+// Sends the ping and the waiting messages when it is time; cheap to call on every start.
 fun sendStats() {
     Telemetry.sendPing({ Repo.allProgress().values.count { it.state == State.KNOWN } })
+    Telemetry.flush()
 }
 
 fun countAnswer(w: Word, a: State, learnedNow: Boolean) {
@@ -80,6 +95,124 @@ fun StatsNotice() {
             Text("✕", fontSize = 15.sp, color = p.secondary)
         }
     }
+}
+
+@Composable
+fun ReportFlag(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(R.drawable.ic_flag), "Сообщить об ошибке", tint = LocalPalette.current.faint, modifier = Modifier.size(22.dp))
+    }
+}
+
+private val WORD_PROBLEMS = listOf("translation" to "Перевод", "stress" to "Ударение", "example" to "Пример", "forms" to "Род или формы", "other" to "Другое")
+private val ARTICLE_PROBLEMS = listOf("text" to "Ошибка в тексте", "other" to "Другое")
+
+@Composable
+private fun sentToast(): (Boolean) -> Unit {
+    val ctx = LocalContext.current
+    return { sent ->
+        Toast.makeText(ctx, if (sent) "Спасибо! Сообщение отправлено" else "Сообщение уйдёт, когда появится интернет", Toast.LENGTH_LONG).show()
+    }
+}
+
+@Composable
+private fun EmailField(value: String, onChange: (String) -> Unit) {
+    OutlinedTextField(
+        value, onChange,
+        placeholder = { Text("Почта для ответа, если нужен ответ") },
+        singleLine = true,
+        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
+        modifier = Modifier.fillMaxWidth().testTag("email"),
+    )
+}
+
+@Composable
+fun ReportDialog(w: Word, onDismiss: () -> Unit) {
+    val p = LocalPalette.current
+    val toast = sentToast()
+    var problem by remember { mutableStateOf<String?>(null) }
+    var text by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(Telemetry.email) }
+    var error by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Что не так с карточкой?") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text(Prefs.primary(w.cyr), color = p.secondary)
+                FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    for ((k, t) in if (Repo.isArticle(w)) ARTICLE_PROBLEMS else WORD_PROBLEMS) {
+                        SelectChip(t, problem == k) { problem = k }
+                    }
+                }
+                OutlinedTextField(
+                    text, { if (it.length <= 2000) text = it },
+                    placeholder = { Text("Что именно не так, если хотите") },
+                    minLines = 2,
+                    modifier = Modifier.fillMaxWidth().testTag("comment"),
+                )
+                EmailField(email) { email = it }
+                if (error.isNotEmpty()) Text(error, color = MarkDontKnow, fontSize = 14.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(enabled = problem != null, onClick = {
+                val mail = email.trim()
+                if (mail.isNotEmpty() && !Telemetry.isEmail(mail)) {
+                    error = "Проверьте адрес почты"
+                    return@TextButton
+                }
+                val card = JSONObject()
+                    .put("key", w.key.take(120)).put("word", w.cyr.take(120)).put("problem", problem)
+                    .put("latin", Prefs.latinFirst).put("stress", Prefs.accentMode)
+                Telemetry.sendFeedback("card", text.trim(), card, mail, toast)
+                onDismiss()
+            }) { Text("Отправить") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+    )
+}
+
+@Composable
+fun WriteDialog(onDismiss: () -> Unit) {
+    val toast = sentToast()
+    var text by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf(Telemetry.email) }
+    var error by remember { mutableStateOf("") }
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Написать разработчику") },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                Text("Идея, ошибка, вопрос — что угодно.", color = LocalPalette.current.secondary)
+                OutlinedTextField(
+                    text, { if (it.length <= 4000) text = it },
+                    placeholder = { Text("Сообщение") },
+                    minLines = 4,
+                    modifier = Modifier.fillMaxWidth().testTag("message"),
+                )
+                EmailField(email) { email = it }
+                if (error.isNotEmpty()) Text(error, color = MarkDontKnow, fontSize = 14.sp)
+            }
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                val mail = email.trim()
+                error = when {
+                    text.isBlank() -> "Напишите сообщение"
+                    mail.isNotEmpty() && !Telemetry.isEmail(mail) -> "Проверьте адрес почты"
+                    else -> ""
+                }
+                if (error.isNotEmpty()) return@TextButton
+                Telemetry.sendFeedback("app", text.trim(), null, mail, toast)
+                onDismiss()
+            }) { Text("Отправить") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+    )
 }
 
 @Composable

@@ -148,6 +148,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
         }
     }
     var confirmReset by remember { mutableStateOf(false) }
+    var writing by remember { mutableStateOf(false) }
     var whatSent by remember { mutableStateOf(false) }
     var confirmArticles by remember { mutableStateOf<String?>(null) }
     var showPermissions by remember { mutableStateOf(false) }
@@ -331,6 +332,11 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
             GroupTitle("Обратная связь")
             Panel {
                 Column {
+                    val waiting = Telemetry.waiting
+                    NavRow("Написать разработчику", if (waiting > 0) "Ждут отправки: $waiting" else "Идея, ошибка или вопрос") {
+                        writing = true
+                    }
+                    Line()
                     Toggle(
                         "Анонимная статистика",
                         "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки",
@@ -391,6 +397,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
         )
     }
 
+    if (writing) WriteDialog { writing = false }
     if (whatSent) WhatSentDialog { whatSent = false }
 
     if (confirmReset) {

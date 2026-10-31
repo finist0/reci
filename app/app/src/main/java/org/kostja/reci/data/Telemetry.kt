@@ -16,13 +16,18 @@ import java.util.Locale
 import java.util.UUID
 import java.util.concurrent.Executors
 
-// Anonymous daily statistics, sent to the project's server.
+// Anonymous daily statistics and messages to the developer, sent to the project's server.
 // Kept in a file of their own, out of the progress file and the Android backup, so that a
 // restored or copied install never carries the same id.
 object Telemetry {
     const val SERVER = "https://reci.finist.workers.dev"
     const val PRIVACY = "https://finist0.github.io/reci/web/privacy.html"
     private const val RETRY = 60 * 60 * 1000L
+    // The spaces \s matches in JavaScript, where the server checks the address.
+    private const val SPACE = "\\s\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff"
+    private val EMAIL = Regex("^[^$SPACE@<>\"]{1,64}@[^$SPACE@<>\"]{1,128}\\.[^$SPACE@<>\"]{2,32}$")
+    // Control characters the server refuses in a message; line breaks and tabs are kept.
+    private val CONTROL = Regex("[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]")
     private val LOCALE = Regex("""^[\w-]{1,40}$""")
     private val CAT = Regex("""^[\w:.-]{1,32}$""")
     // Everything the server's check lets through in app and system names.
@@ -47,6 +52,7 @@ object Telemetry {
         appVersion = clean(ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName)
         sp.edit {
             if (!sp.contains("id")) putString("id", UUID.randomUUID().toString())
+            if (!sp.contains("feedback_id")) putString("feedback_id", UUID.randomUUID().toString())
         }
     }
 
@@ -60,6 +66,7 @@ object Telemetry {
     }
 
     val id get() = str("id")
+    val feedbackId get() = str("feedback_id")
 
     var enabled: Boolean
         get() {
@@ -97,6 +104,12 @@ object Telemetry {
     // The last ping sent, shown in the settings as it went out.
     val last: JSONObject?
         get() = str("last").takeIf { it.isNotEmpty() }?.let { JSONObject(it) }
+
+    var email: String
+        get() = str("email")
+        set(v) = sp.edit { putString("email", v) }
+
+    fun isEmail(s: String) = EMAIL.matches(s)
 
     // --- What the app does, summed since the last ping ---
 
@@ -191,6 +204,67 @@ object Telemetry {
                 done(status in 200..299)
             }
         }
+    }
+
+    // --- Messages to the developer ---
+
+    private fun queue() = JSONArray(sp.getString("queue", "[]")!!)
+
+    val waiting: Int
+        get() {
+            version.intValue
+            return queue().length()
+        }
+
+    private var flushing = false
+    private val flushWaiters = mutableListOf<(Int) -> Unit>()
+
+    // Sends the waiting messages in order. One that the server rejects is dropped; one that hit a
+    // limit or no network waits for the next try. `done` gets the number still waiting, also when
+    // a flush was already running.
+    fun flush(done: (Int) -> Unit = {}) {
+        flushWaiters.add(done)
+        if (flushing) return
+        flushing = true
+        io.execute {
+            while (true) {
+                val q = queue()
+                if (q.length() == 0) break
+                val status = post("$SERVER/feedback", q.getJSONObject(0).toString())
+                if (status == -1 || status == 429 || status >= 500) break
+                synchronized(this) {
+                    val left = queue()
+                    left.remove(0)
+                    sp.edit(commit = true) { putString("queue", left.toString()) }
+                }
+            }
+            main.post {
+                flushing = false
+                changed()
+                val left = queue().length()
+                val callbacks = flushWaiters.toList()
+                flushWaiters.clear()
+                callbacks.forEach { it(left) }
+            }
+        }
+    }
+
+    // Queues a message (kind, text, card) and tries to send it; `done` gets true when it went out.
+    // It carries its own id, so that it cannot be tied to the statistics of the same install.
+    fun sendFeedback(kind: String, text: String, card: JSONObject?, mail: String, done: (Boolean) -> Unit = {}) {
+        email = mail
+        val m = JSONObject()
+            .put("id", feedbackId).put("kind", kind).put("platform", "android").put("app", appVersion)
+            .put("os", osName)
+        val clean = text.replace(CONTROL, "")
+        if (clean.isNotEmpty()) m.put("text", clean)
+        if (card != null) m.put("card", card)
+        if (mail.isNotEmpty()) m.put("email", mail)
+        synchronized(this) {
+            sp.edit(commit = true) { putString("queue", queue().put(m).toString()) }
+        }
+        changed()
+        flush { done(it == 0) }
     }
 
     private fun httpPost(url: String, body: String): Int {

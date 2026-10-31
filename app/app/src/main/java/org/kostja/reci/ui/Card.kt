@@ -71,6 +71,8 @@ fun CardScreen(
     onSettings: () -> Unit,
     onCategories: () -> Unit,
     onGrammar: (String?) -> Unit,
+    // Set on the lock screen, where a report is written in the app after unlocking.
+    onReport: ((String) -> Unit)? = null,
 ) {
     Repo.version.intValue
     Prefs.version.intValue
@@ -97,6 +99,7 @@ fun CardScreen(
             learnedToast = 0
         }
     }
+    var reporting by remember { mutableStateOf<Word?>(null) }
     val onAnswer = { a: State, learnedNow: Boolean ->
         if (w != null) {
             if (Repo.answer(w, a, learnedNow)) countAnswer(w, a, learnedNow)
@@ -152,7 +155,7 @@ fun CardScreen(
                     Modifier
                         .fillMaxSize()
                         .verticalScroll(rememberScrollState())
-                        .padding(start = 24.dp, end = 24.dp, top = 22.dp, bottom = 20.dp)
+                        .padding(start = 24.dp, end = 24.dp, top = 22.dp, bottom = 56.dp)
                 ) {
                     if (stage != null) {
                         Text(stage, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = p.accent)
@@ -168,6 +171,9 @@ fun CardScreen(
                 }
             }
             Star(w, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp))
+            ReportFlag(Modifier.align(Alignment.BottomEnd).padding(8.dp)) {
+                if (onReport != null) onReport(w.key) else reporting = w
+            }
             if (learnedToast > 0) LearnedToast(Modifier.align(Alignment.BottomCenter))
         }
         if (onDone == null && w != null && !Telemetry.noticeClosed) StatsNotice()
@@ -177,6 +183,7 @@ fun CardScreen(
         }
         BottomNav(onPrev = { Repo.step(-1) }, onNext = onNext, onDone = onDone)
     }
+    reporting?.let { ReportDialog(it) { reporting = null } }
 }
 
 // What the user is asked to do with this card, shown above it.

@@ -391,23 +391,31 @@ fun SearchScreen(open: (String) -> Unit, back: () -> Unit) {
 }
 
 @Composable
-fun DetailScreen(key: String, back: () -> Unit, onGrammar: ((String) -> Unit)? = null) {
+fun DetailScreen(key: String, back: () -> Unit, report: Boolean = false, onGrammar: ((String) -> Unit)? = null) {
     Repo.version.intValue
     Prefs.version.intValue
     val p = LocalPalette.current
     val w = Repo.word(key)
+    // Opened from the flag on the lock card: the report form is up at once.
+    var reporting by rememberSaveable(key) { mutableStateOf(report) }
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
         Header("", back)
         if (w == null) return@Column
-        Column(
+        Box(
             Modifier
                 .weight(1f)
                 .padding(horizontal = 14.dp)
                 .clip(RoundedCornerShape(28.dp))
                 .background(p.card)
-                .verticalScroll(rememberScrollState())
-                .padding(24.dp)
-        ) { WordBody(w, slide = false, onGrammar = onGrammar) }
+        ) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .verticalScroll(rememberScrollState())
+                    .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 56.dp)
+            ) { WordBody(w, slide = false, onGrammar = onGrammar) }
+            ReportFlag(Modifier.align(Alignment.BottomEnd).padding(8.dp)) { reporting = true }
+        }
         var answered by remember(w.key) { mutableStateOf(Repo.answerOf(w)) }
         var learned by remember(w.key) { mutableStateOf(false) }
         if (learned) LearnedToast(Modifier.align(Alignment.CenterHorizontally).padding(top = 10.dp))
@@ -417,6 +425,7 @@ fun DetailScreen(key: String, back: () -> Unit, onGrammar: ((String) -> Unit)? =
             learned = learnedNow
         }
     }
+    if (reporting && w != null) ReportDialog(w) { reporting = false }
 }
 
 @Composable

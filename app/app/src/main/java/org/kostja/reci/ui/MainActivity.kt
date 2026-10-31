@@ -22,7 +22,7 @@ sealed interface Screen {
     data object Categories : Screen
     data object Search : Screen
     data object Settings : Screen
-    data class Detail(val key: String) : Screen
+    data class Detail(val key: String, val report: Boolean = false) : Screen
     data class Words(val category: String) : Screen
     data object GrammarIndex : Screen
     data class GrammarTopic(val id: String) : Screen
@@ -47,6 +47,7 @@ sealed interface Screen {
             "settings" -> Settings
             "grammar" -> GrammarIndex
             else -> when {
+                route?.startsWith("report:") == true -> Detail(route.removePrefix("report:"), report = true)
                 route == null || !route.startsWith("grammar:") -> null
                 route.startsWith("grammar:cmp:") -> Detail(route.substringAfter(':'))
                 route.startsWith("grammar:w:") -> Detail(route.removePrefix("grammar:w:"))
@@ -114,7 +115,7 @@ class MainActivity : ComponentActivity() {
                     is Screen.Words -> WordListScreen(s.category, open = { go(Screen.Detail(it)) }, back = back)
                     Screen.Search -> SearchScreen(open = { go(Screen.Detail(it)) }, back = back)
                     Screen.Settings -> SettingsScreen(openCategories = { go(Screen.Categories) }, back = back)
-                    is Screen.Detail -> DetailScreen(s.key, back) { id ->
+                    is Screen.Detail -> DetailScreen(s.key, back, s.report) { id ->
                         go(
                             when {
                                 id.startsWith("cmp:") -> Screen.Detail(id)
@@ -147,7 +148,8 @@ class MainActivity : ComponentActivity() {
 
     private fun handle(intent: Intent?) {
         val s = Screen.fromRoute(intent?.getStringExtra(EXTRA_ROUTE)) ?: return
-        if (stack.last() != s) stack.add(s)
+        // The same word reported again from the lock card needs its form up again.
+        if (stack.last() != s || (s is Screen.Detail && s.report)) stack.add(s)
     }
 
     companion object {
