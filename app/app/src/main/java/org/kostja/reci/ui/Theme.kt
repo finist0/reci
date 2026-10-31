@@ -78,6 +78,8 @@ val LocalPalette =staticCompositionLocalOf { Palettes[2] }
 @Composable
 fun ReciTheme(content: @Composable () -> Unit) {
     val p = Palettes.getOrElse(Prefs.theme) { Palettes[2] }
+    // Dialogs, fields and menus take the surface containers and outlines; left out, they come
+    // in the default lavender of Material 3.
     val scheme = if (p.dark) {
         darkColorScheme(
             primary = p.accent,
@@ -87,6 +89,13 @@ fun ReciTheme(content: @Composable () -> Unit) {
             onSurface = p.text,
             onSurfaceVariant = p.secondary,
             surfaceVariant = p.panel,
+            surfaceContainerLowest = p.card,
+            surfaceContainerLow = p.card,
+            surfaceContainer = p.card,
+            surfaceContainerHigh = p.card,
+            surfaceContainerHighest = p.panel,
+            outline = p.faint,
+            outlineVariant = p.divider,
         )
     } else {
         lightColorScheme(
@@ -97,6 +106,13 @@ fun ReciTheme(content: @Composable () -> Unit) {
             onSurface = p.text,
             onSurfaceVariant = p.secondary,
             surfaceVariant = p.panel,
+            surfaceContainerLowest = p.card,
+            surfaceContainerLow = p.card,
+            surfaceContainer = p.card,
+            surfaceContainerHigh = p.card,
+            surfaceContainerHighest = p.panel,
+            outline = p.faint,
+            outlineVariant = p.divider,
         )
     }
     // enableEdgeToEdge() follows the system theme; the bar icons must follow ours.
