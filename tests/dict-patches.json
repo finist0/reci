@@ -1,0 +1,390 @@
+{
+ "comment": "Dictionary patches applied to a small built-in dictionary (data/scripts/build_patches.py). Every app applies them and must get these keys in this order, the changed meanings and the grammar text.",
+ "base": [
+  {
+   "key": "кућа",
+   "cyr": "кућа",
+   "pos": "noun",
+   "gram": "ж. р.",
+   "meanings": [
+    "дом"
+   ],
+   "level": 1,
+   "topic": "basic",
+   "rank": 10,
+   "examples": [
+    {
+     "sr": "[кућа]",
+     "ru": "дом"
+    }
+   ]
+  },
+  {
+   "key": "вода",
+   "cyr": "вода",
+   "pos": "noun",
+   "gram": "ж. р.",
+   "meanings": [
+    "вода"
+   ],
+   "level": 1,
+   "topic": "basic",
+   "rank": 20,
+   "examples": [
+    {
+     "sr": "[вода]",
+     "ru": "вода"
+    }
+   ]
+  },
+  {
+   "key": "хлеб",
+   "cyr": "хлеб",
+   "pos": "noun",
+   "gram": "ж. р.",
+   "meanings": [
+    "хлеб"
+   ],
+   "level": 2,
+   "topic": "basic",
+   "rank": 30,
+   "examples": [
+    {
+     "sr": "[хлеб]",
+     "ru": "хлеб"
+    }
+   ]
+  },
+  {
+   "key": "сир",
+   "cyr": "сир",
+   "pos": "noun",
+   "gram": "ж. р.",
+   "meanings": [
+    "сыр"
+   ],
+   "level": 2,
+   "topic": "basic",
+   "rank": 40,
+   "examples": [
+    {
+     "sr": "[сир]",
+     "ru": "сыр"
+    }
+   ]
+  },
+  {
+   "key": "со",
+   "cyr": "со",
+   "pos": "noun",
+   "gram": "ж. р.",
+   "meanings": [
+    "соль"
+   ],
+   "level": 2,
+   "topic": "basic",
+   "rank": 50,
+   "examples": [
+    {
+     "sr": "[со]",
+     "ru": "соль"
+    }
+   ]
+  }
+ ],
+ "grammar": [
+  {
+   "id": "nouns",
+   "group": "Основы",
+   "title": "Род",
+   "blocks": [
+    {
+     "type": "p",
+     "text": "старый текст"
+    }
+   ]
+  }
+ ],
+ "cases": [
+  {
+   "name": "a fixed card replaces the old one in place",
+   "patch": {
+    "format": 1,
+    "words": [
+     {
+      "key": "вода",
+      "cyr": "вода",
+      "pos": "noun",
+      "gram": "ж. р.",
+      "meanings": [
+       "вода",
+       "водица"
+      ],
+      "level": 1,
+      "topic": "basic",
+      "rank": 20,
+      "examples": [
+       {
+        "sr": "[вода]",
+        "ru": "вода"
+       }
+      ]
+     }
+    ],
+    "removed": [],
+    "grammar": null
+   },
+   "keys": [
+    "кућа",
+    "вода",
+    "хлеб",
+    "сир",
+    "со"
+   ],
+   "changed": {
+    "вода": [
+     "вода",
+     "водица"
+    ]
+   },
+   "grammar": "старый текст"
+  },
+  {
+   "name": "a removed card is gone",
+   "patch": {
+    "format": 1,
+    "words": [],
+    "removed": [
+     "сир"
+    ],
+    "grammar": null
+   },
+   "keys": [
+    "кућа",
+    "вода",
+    "хлеб",
+    "со"
+   ],
+   "changed": {},
+   "grammar": "старый текст"
+  },
+  {
+   "name": "a new frequent card goes by rank and moves a neighbour to the next level",
+   "patch": {
+    "format": 1,
+    "words": [
+     {
+      "key": "млеко",
+      "cyr": "млеко",
+      "pos": "noun",
+      "gram": "ж. р.",
+      "meanings": [
+       "молоко"
+      ],
+      "level": 1,
+      "topic": "basic",
+      "rank": 25,
+      "examples": [
+       {
+        "sr": "[млеко]",
+        "ru": "молоко"
+       }
+      ]
+     },
+     {
+      "key": "хлеб",
+      "cyr": "хлеб",
+      "pos": "noun",
+      "gram": "ж. р.",
+      "meanings": [
+       "хлеб"
+      ],
+      "level": 2,
+      "topic": "basic",
+      "rank": 30,
+      "examples": [
+       {
+        "sr": "[хлеб]",
+        "ru": "хлеб"
+       }
+      ]
+     },
+     {
+      "key": "вода",
+      "cyr": "вода",
+      "pos": "noun",
+      "gram": "ж. р.",
+      "meanings": [
+       "вода"
+      ],
+      "level": 1,
+      "topic": "basic",
+      "rank": 20,
+      "examples": [
+       {
+        "sr": "[вода]",
+        "ru": "вода"
+       }
+      ]
+     }
+    ],
+    "removed": [],
+    "grammar": null
+   },
+   "keys": [
+    "кућа",
+    "вода",
+    "млеко",
+    "хлеб",
+    "сир",
+    "со"
+   ],
+   "changed": {
+    "млеко": [
+     "молоко"
+    ]
+   },
+   "grammar": "старый текст"
+  },
+  {
+   "name": "cards of the same rank go by key",
+   "patch": {
+    "format": 1,
+    "words": [
+     {
+      "key": "јаје",
+      "cyr": "јаје",
+      "pos": "noun",
+      "gram": "ж. р.",
+      "meanings": [
+       "яйцо"
+      ],
+      "level": 1,
+      "topic": "basic",
+      "rank": 20,
+      "examples": [
+       {
+        "sr": "[јаје]",
+        "ru": "яйцо"
+       }
+      ]
+     }
+    ],
+    "removed": [],
+    "grammar": null
+   },
+   "keys": [
+    "кућа",
+    "вода",
+    "јаје",
+    "хлеб",
+    "сир",
+    "со"
+   ],
+   "changed": {
+    "јаје": [
+     "яйцо"
+    ]
+   },
+   "grammar": "старый текст"
+  },
+  {
+   "name": "a new grammar reference replaces the old one",
+   "patch": {
+    "format": 1,
+    "words": [],
+    "removed": [],
+    "grammar": [
+     {
+      "id": "nouns",
+      "group": "Основы",
+      "title": "Род",
+      "blocks": [
+       {
+        "type": "p",
+        "text": "новый текст"
+       }
+      ]
+     }
+    ]
+   },
+   "keys": [
+    "кућа",
+    "вода",
+    "хлеб",
+    "сир",
+    "со"
+   ],
+   "changed": {},
+   "grammar": "новый текст"
+  },
+  {
+   "name": "an empty patch leaves the built-in dictionary as it is",
+   "patch": {
+    "format": 1,
+    "words": [],
+    "removed": [],
+    "grammar": null
+   },
+   "keys": [
+    "кућа",
+    "вода",
+    "хлеб",
+    "сир",
+    "со"
+   ],
+   "changed": {},
+   "grammar": "старый текст"
+  },
+  {
+   "name": "removing an unknown key and re-adding a card change nothing else",
+   "patch": {
+    "format": 1,
+    "words": [
+     {
+      "key": "кућа",
+      "cyr": "кућа",
+      "pos": "noun",
+      "gram": "ж. р.",
+      "meanings": [
+       "дом",
+       "здание"
+      ],
+      "level": 1,
+      "topic": "basic",
+      "rank": 10,
+      "examples": [
+       {
+        "sr": "[кућа]",
+        "ru": "дом"
+       }
+      ]
+     }
+    ],
+    "removed": [
+     "нема"
+    ],
+    "grammar": null
+   },
+   "keys": [
+    "кућа",
+    "вода",
+    "хлеб",
+    "сир",
+    "со"
+   ],
+   "changed": {
+    "кућа": [
+     "дом",
+     "здание"
+    ]
+   },
+   "grammar": "старый текст"
+  }
+ ],
+ "baseId": {
+  "words": "[{\"key\":\"кућа\",\"rank\":1}]",
+  "grammar": "[{\"id\":\"g\"}]",
+  "id": "12d2dbc1829082e2f4ee96d7a72ea00d"
+ }
+}
