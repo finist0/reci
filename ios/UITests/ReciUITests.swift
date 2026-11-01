@@ -104,7 +104,7 @@ final class FeedbackUITests: XCTestCase {
 
     private func report(problem: String) {
         app.buttons["Сообщить об ошибке"].firstMatch.tap()
-        XCTAssertTrue(app.navigationBars["Что не так с карточкой?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Что не так?"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["send"].isEnabled)
         app.buttons["problem:\(problem)"].tap()
     }
@@ -142,7 +142,7 @@ final class FeedbackUITests: XCTestCase {
         type("email", "me@example")
         app.buttons["send"].tap()
         XCTAssertTrue(app.staticTexts["Проверьте адрес почты"].waitForExistence(timeout: 3))
-        XCTAssertTrue(app.navigationBars["Что не так с карточкой?"].exists)
+        XCTAssertTrue(app.navigationBars["Что не так?"].exists)
     }
 
     func testWithoutNetworkAMessageWaits() {
@@ -160,7 +160,7 @@ final class FeedbackUITests: XCTestCase {
         launch()
         openSettings()
         reach(app.buttons["Написать разработчику"]).tap()
-        XCTAssertTrue(app.navigationBars["Написать разработчику"].waitForExistence(timeout: 5))
+        XCTAssertTrue(app.navigationBars["Сообщение"].waitForExistence(timeout: 5))
         app.buttons["send"].tap()
         XCTAssertTrue(app.staticTexts["Напишите сообщение"].waitForExistence(timeout: 3))
         type("message", "Добавьте глаголы движения")
@@ -214,7 +214,7 @@ final class ScreenshotUITests: XCTestCase {
         }
         shot("1-card-with-notice")
         app.buttons["Сообщить об ошибке"].firstMatch.tap()
-        _ = app.navigationBars["Что не так с карточкой?"].waitForExistence(timeout: 5)
+        _ = app.navigationBars["Что не так?"].waitForExistence(timeout: 5)
         app.buttons["problem:stress"].tap()
         shot("2-report")
         app.buttons["Отмена"].tap()

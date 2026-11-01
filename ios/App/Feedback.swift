@@ -120,7 +120,7 @@ struct ReportSheet: View {
 
     var body: some View {
         let p = model.palette
-        FormFrame(title: "Что не так с карточкой?", sendTitle: "Отправить", canSend: problem != nil, onSend: send) {
+        FormFrame(title: "Что не так?", sendTitle: "Отправить", canSend: problem != nil, onSend: send) {
             Text(model.prefs.latinFirst ? Translit.toLatin(w.cyr) : w.cyr).foregroundStyle(p.secondary)
             FlowLayout(spacing: 8) {
                 ForEach(w.isArticle ? articleProblems : wordProblems, id: \.0) { k, title in
@@ -167,7 +167,7 @@ struct WriteSheet: View {
     @State private var started = false
 
     var body: some View {
-        FormFrame(title: "Написать разработчику", sendTitle: "Отправить", canSend: true, onSend: send) {
+        FormFrame(title: "Сообщение", sendTitle: "Отправить", canSend: true, onSend: send) {
             Text("Идея, ошибка, вопрос — что угодно.").foregroundStyle(model.palette.secondary)
             Field(placeholder: "Сообщение", text: $text, lines: 6)
             Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
