@@ -760,7 +760,7 @@ function settingsScreen(e) {
                 choice("Карточки", ["Обучение", "Перевод", "Слово"], prefs.cardMode, "cardmode") + `<div class="note">${esc(modeText)}</div>` + line +
                 choice("Слов в работе одновременно", sizes.map(String), Math.max(0, sizes.indexOf(prefs.activeSize)), "activesize") + line +
                 toggle("Кнопки «Не знаю / Знаю»", null, prefs.useMarks, "usemarks") + line +
-                toggle("Проверять выученные слова", "Через неделю, потом через 3 недели, 2 месяца, полгода и год", prefs.reviewKnown, "reviewknown"))}
+                toggle("Проверять выученные слова", "Через неделю, потом через 3\u00a0недели, 2\u00a0месяца, полгода и год", prefs.reviewKnown, "reviewknown"))}
             ${groupTitle("Оформление")}
             ${panel(`<div class="choice"><div class="setting-title">Тема</div><div class="themes">${themes}</div></div>` + line +
                 choice("Алфавит", ["Кириллица", "Latinica"], prefs.latinFirst ? 1 : 0, "alphabet") + line +
