@@ -211,10 +211,13 @@ struct WhatSentSheet: View {
                         .foregroundStyle(p.secondary)
                     Text(last.map { "Последний пакет, \($0.day)" } ?? "Пока ничего не отправлялось").foregroundStyle(p.text)
                     if let last {
-                        Text(packetText(last)).font(.system(size: 12, design: .monospaced))
-                            .padding(10).frame(maxWidth: .infinity, alignment: .leading)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(p.panel))
-                            .accessibilityIdentifier("packet")
+                        ScrollView(.horizontal) {
+                            Text(packetText(last)).font(.system(size: 12, design: .monospaced)).fixedSize()
+                                .padding(10)
+                                .accessibilityIdentifier("packet")
+                        }
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .background(RoundedRectangle(cornerRadius: 12).fill(p.panel))
                     }
                     Link("Политика конфиденциальности", destination: URL(string: Telemetry.privacy)!)
                 }
