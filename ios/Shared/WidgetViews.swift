@@ -14,9 +14,11 @@ struct CardEntry: TimelineEntry {
 struct CardWidgetView: View {
     @Environment(\.widgetFamily) private var family
     let entry: CardEntry
+    // The app cannot set the widget family of the environment, so its preview says which it draws.
+    var shownAs: WidgetFamily? = nil
 
     var body: some View {
-        switch family {
+        switch shownAs ?? family {
         case .accessoryInline:
             Text(entry.title.map { "\($0) · \(entry.subtitle)" } ?? entry.subtitle)
         case .systemMedium:

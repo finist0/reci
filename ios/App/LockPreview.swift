@@ -25,7 +25,8 @@ struct LockPreview: View {
                 Text("9:41").font(.system(size: 92, weight: .bold, design: .rounded))
                 HStack(spacing: 10) {
                     if !wallpaper {
-                        CardWidgetView(entry: CardEntry(date: .now, title: card.title, subtitle: card.subtitle, recall: card.recall))
+                        CardWidgetView(entry: CardEntry(date: .now, title: card.title, subtitle: card.subtitle, recall: card.recall),
+                                       shownAs: .accessoryRectangular)
                             .padding(10)
                             .frame(width: 170, height: 72)
                             .background(RoundedRectangle(cornerRadius: 18).fill(.white.opacity(0.18)))
@@ -37,8 +38,8 @@ struct LockPreview: View {
                     }
                 }
             }
-            .foregroundStyle(.white)
-            .shadow(color: .black.opacity(wallpaper ? 0.35 : 0), radius: 4)
+            // On the phone the clock colour is picked in the lock screen editor; dark reads on a light card.
+            .foregroundStyle(wallpaper && !model.palette.dark ? model.palette.word : .white)
             .padding(.top, 70)
         }
         .ignoresSafeArea()
