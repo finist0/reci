@@ -96,6 +96,7 @@ struct GrammarScreen: View {
     private func tile(_ title: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title).font(.system(size: 16)).foregroundStyle(model.palette.text)
+                .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading).padding(16)
                 .background(RoundedRectangle(cornerRadius: 16).fill(model.palette.card))
         }
@@ -121,6 +122,7 @@ struct TopicScreen: View {
                             let next = topics[i + 1]
                             Button { router.go(.topic(next.id)) } label: {
                                 Text("Дальше: \(next.title) ›").font(.system(size: 16, weight: .semibold)).foregroundStyle(p.accent)
+                                    .multilineTextAlignment(.leading)
                             }
                             .padding(.top, 12)
                         }
@@ -158,6 +160,7 @@ struct TopicScreen: View {
                     Text(highlighted(model.prefs.primary(b.sr ?? ""), p.accent)).font(.serif(17)).foregroundStyle(p.text)
                     Text(b.ru ?? "").font(.system(size: 14)).foregroundStyle(p.secondary)
                 }
+                .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
         case "table":

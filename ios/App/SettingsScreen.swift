@@ -286,6 +286,7 @@ struct SettingsScreen: View {
                     Text(title).font(.system(size: 16)).foregroundStyle(p.text)
                     if let summary { Text(summary).font(.system(size: 13)).foregroundStyle(p.secondary) }
                 }
+                .multilineTextAlignment(.leading)
                 Spacer()
                 Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(p.faint)
             }

@@ -214,6 +214,7 @@ struct SearchScreen: View {
                         }
                         Text(w.meanings.joined(separator: " · ")).font(.system(size: 14)).foregroundStyle(p.secondary)
                     }
+                    .multilineTextAlignment(.leading)
                 }
                 .listRowBackground(p.card)
             }
@@ -260,6 +261,7 @@ struct ListScreen: View {
                             Text(w.meanings.joined(separator: " · ")).font(.system(size: 14)).foregroundStyle(p.secondary)
                         }
                     }
+                    .multilineTextAlignment(.leading)
                 }
                 .listRowBackground(p.card)
             }

@@ -201,6 +201,7 @@ struct GrammarLinks: View {
     private func link(_ title: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
             Text(title).font(.system(size: 13)).foregroundStyle(model.palette.accent)
+                .multilineTextAlignment(.leading)
                 .padding(.horizontal, 10).padding(.vertical, 5)
                 .background(Capsule().stroke(model.palette.divider))
         }
@@ -219,6 +220,7 @@ struct WordChip: View {
             if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(sr) }
         } label: {
             Text(model.prefs.primary(sr) + (target != nil ? " ›" : "")).font(.system(size: 15)).foregroundStyle(model.palette.text)
+                .multilineTextAlignment(.leading)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Capsule().fill(model.palette.panel))
         }
@@ -242,6 +244,7 @@ struct Details: View {
                             Text(highlighted(model.prefs.primary(e.sr), p.accent)).font(.serif(17)).foregroundStyle(p.text)
                             Text(e.ru).font(.system(size: 14)).foregroundStyle(p.secondary)
                         }
+                        .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .padding(.bottom, 10)
@@ -369,6 +372,7 @@ struct ArticleBody: View {
                             Text(highlighted(model.prefs.primary(e.sr), p.accent)).font(.serif(17)).foregroundStyle(p.text)
                             Text(e.ru).font(.system(size: 14)).foregroundStyle(p.secondary)
                         }
+                        .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
