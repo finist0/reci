@@ -3,6 +3,7 @@ package org.kostja.reci
 import android.app.Application
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
+import org.kostja.reci.data.DictUpdate
 import org.kostja.reci.data.Grammar
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
@@ -15,6 +16,7 @@ class App : Application() {
         super.onCreate()
         Prefs.init(this)
         Telemetry.init(this)
+        DictUpdate.init(this)
         Repo.init(this)
         Grammar.init(this)
         Speaker.init(this)

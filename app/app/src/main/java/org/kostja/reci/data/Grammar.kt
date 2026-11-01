@@ -51,19 +51,34 @@ object Grammar {
         load()
     }
 
-    @Synchronized
     private fun load(): List<GrammarTopic> {
         loaded?.let { return it }
-        val text = try {
-            ctx.assets.open("grammar.json").bufferedReader().use { it.readText() }
-        } catch (_: FileNotFoundException) {
-            "[]"
+        val list = DictUpdate.stored()?.grammar ?: parseAll(null)
+        // A patched reference swapped in during the parse is newer than this one.
+        synchronized(this) {
+            loaded?.let { return it }
+            loaded = list
         }
-        val arr = JSONArray(text)
-        val list = List(arr.length()) { parse(arr.getJSONObject(it)) }
-        loaded = list
         version.intValue++
         return list
+    }
+
+    private fun builtInText() = try {
+        ctx.assets.open("grammar.json").bufferedReader().use { it.readText() }
+    } catch (_: FileNotFoundException) {
+        "[]"
+    }
+
+    // The reference of a patch, or the built-in one when the patch keeps it.
+    fun parseAll(text: String?): List<GrammarTopic> {
+        val arr = JSONArray(text ?: builtInText())
+        return List(arr.length()) { parse(arr.getJSONObject(it)) }
+    }
+
+    // Puts a patched reference in place; called on the main thread.
+    fun swap(list: List<GrammarTopic>) {
+        synchronized(this) { loaded = list }
+        version.intValue++
     }
 
     private fun strings(a: JSONArray?) = if (a == null) emptyList() else List(a.length()) { a.getString(it) }

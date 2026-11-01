@@ -11,6 +11,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import org.kostja.reci.R
+import org.kostja.reci.data.DictUpdate
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
@@ -139,6 +140,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         sendStats()
+        DictUpdate.check()
     }
 
     override fun onNewIntent(intent: Intent) {

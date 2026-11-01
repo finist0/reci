@@ -67,21 +67,49 @@ object Repo {
     // Runs f on the io thread once the dictionary is loaded.
     fun afterLoad(f: () -> Unit) = io.execute { load(); f() }
 
-    @Synchronized
-    private fun load(): List<Word> {
-        loaded?.let { return it }
+    // The dictionary built into the app, as it was shipped.
+    fun builtIn(): List<Word> {
         val list = ArrayList<Word>(4096)
         JsonReader(ctx.assets.open("words.json").bufferedReader()).use { r ->
             r.beginArray()
             while (r.hasNext()) list += WordJson.read(r)
             r.endArray()
         }
+        return list
+    }
+
+    @Synchronized
+    private fun load(): List<Word> {
+        loaded?.let { return it }
+        val list = builtIn().let { b -> DictUpdate.stored()?.let { DictUpdate.apply(b, it) } ?: b }
         progress.putAll(db.loadAll())
         restorePending()
         byKey = list.associateBy { it.key }
         loaded = list
         version.intValue++
         return list
+    }
+
+    private val main = android.os.Handler(android.os.Looper.getMainLooper())
+
+    // Puts a patched dictionary in place of the one in use; called on the main thread. The cards
+    // derived from the old one are dropped; a card on screen that the patch removed gives way to
+    // the next one, as the card screen steps on when its card is gone.
+    fun swap(list: List<Word>) {
+        if (loaded == null) {
+            afterLoad { main.post { swap(list) } }
+            return
+        }
+        val keys = list.associateBy { it.key }
+        byKey = keys
+        byCyr = null
+        compareIndex = null
+        shuffled = emptyList()
+        queueKey = emptyList()
+        history.removeAll { it !in keys }
+        forward.removeAll { it !in keys }
+        loaded = list
+        version.intValue++
     }
 
     fun progress(w: Word): Progress {

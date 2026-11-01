@@ -16,6 +16,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.core.content.ContextCompat
+import org.kostja.reci.data.DictUpdate
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
@@ -58,7 +59,12 @@ class LockActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
-        if (isInCall(this)) finish() else sendStats()
+        if (isInCall(this)) {
+            finish()
+        } else {
+            sendStats()
+            DictUpdate.check()
+        }
     }
 
     override fun onDestroy() {
