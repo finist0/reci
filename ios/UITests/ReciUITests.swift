@@ -115,7 +115,9 @@ final class FeedbackUITests: XCTestCase {
         XCTAssertTrue(notice.waitForExistence(timeout: 5))
         XCTAssertTrue(notice.label.contains("Настройки → «Анонимная статистика»"))
         app.buttons["Понятно"].tap()
-        XCTAssertFalse(notice.waitForExistence(timeout: 2))
+        // waitForExistence answers at once while the notice is still on its way out.
+        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: notice)
+        wait(for: [gone], timeout: 5)
         app.terminate()
         launch(["-uitest"])
         XCTAssertFalse(app.staticTexts["statsNotice"].waitForExistence(timeout: 3))
