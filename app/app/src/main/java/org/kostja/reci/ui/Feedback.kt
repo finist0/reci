@@ -162,7 +162,8 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
                 OutlinedTextField(
                     text, { if (it.length <= 2000) text = it },
                     placeholder = { Text("Что именно не так, если хотите") },
-                    minLines = 2,
+                    minLines = 4,
+                    maxLines = 10,
                     modifier = Modifier.fillMaxWidth().testTag("comment"),
                 )
                 EmailField(email) { email = it }
@@ -202,7 +203,8 @@ fun WriteDialog(onDismiss: () -> Unit) {
                 OutlinedTextField(
                     text, { if (it.length <= 4000) text = it },
                     placeholder = { Text("Сообщение") },
-                    minLines = 4,
+                    minLines = 6,
+                    maxLines = 12,
                     modifier = Modifier.fillMaxWidth().testTag("message"),
                 )
                 EmailField(email) { email = it }
