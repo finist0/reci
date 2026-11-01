@@ -32,16 +32,19 @@ jobs:
         include:
           - runner: macos-15
             device: iPhone 16
+            slug: iphone-16
             os: "18.6"
             experimental: false
             main: true
           - runner: macos-15
             device: iPhone SE (3rd generation)
+            slug: iphone-se
             os: "18.6"
             experimental: false
             main: false
           - runner: macos-26
             device: iPhone 17 Pro
+            slug: iphone-17-pro
             os: latest
             experimental: true
             main: false
@@ -98,7 +101,7 @@ jobs:
             -destination "platform=iOS Simulator,name=${{ matrix.device }},OS=${{ matrix.os }}" \
             -resultBundlePath build/Reci.xcresult \
             CODE_SIGNING_ALLOWED=NO
-      # The screens ScreenshotUITests took, as PNG files whose names start with the shot names.
+      # The screens ScreenshotUITests took, as PNG files named after the shots.
       - name: Export the screenshots
         if: always()
         continue-on-error: true
@@ -108,18 +111,18 @@ jobs:
           xcrun xcresulttool export attachments --path build/Reci.xcresult --output-path build/shots
           cd build/shots
           jq -r '.[].attachments[] | [.exportedFileName, .suggestedHumanReadableName] | @tsv' manifest.json |
-            while IFS=$'\t' read -r file name; do mv "$file" "$name"; done
+            while IFS=$'\t' read -r file name; do mv "$file" "$(echo "$name" | sed -E 's/_[0-9]+_[0-9A-Fa-f-]+\.png$/.png/')"; done
       - name: Keep the screenshots
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ios-screenshots-${{ strategy.job-index }}
+          name: ios-screenshots-${{ matrix.slug }}
           path: ios/build/shots/*.png
           if-no-files-found: ignore
       - name: Keep the test results
         if: always()
         uses: actions/upload-artifact@v6
         with:
-          name: ios-test-results-${{ strategy.job-index }}
+          name: ios-test-results-${{ matrix.slug }}
           path: ios/build/Reci.xcresult
           if-no-files-found: ignore
