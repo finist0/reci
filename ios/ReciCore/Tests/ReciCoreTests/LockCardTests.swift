@@ -21,12 +21,16 @@ final class LockCardTests: XCTestCase {
         let r = repo()
         r.step(1)
         let w = r.current()!
-        XCTAssertEqual(LockCard.of(r), LockCard(title: r.prefs.headword(w), subtitle: w.meanings.prefix(2).joined(separator: ", "), recall: false))
+        let sr = w.examples[0].sr.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")
+        XCTAssertEqual(LockCard.of(r), LockCard(title: r.prefs.headword(w), subtitle: w.meanings.prefix(2).joined(separator: ", "),
+                                                recall: false, example: sr))
         var p = r.prefs
         p.cardMode = 1
         r.prefs = p
         XCTAssertEqual(LockCard.of(r).subtitle, "вспомните слово")
         XCTAssertTrue(LockCard.of(r).recall)
+        // The Serbian sentence would give the word away; its translation is the hint.
+        XCTAssertEqual(LockCard.of(r).example, "«\(w.examples[0].ru)»")
     }
 
     func testShowingTheCardNeitherMovesOnNorCounts() {
