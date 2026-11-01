@@ -59,7 +59,7 @@ export async function launch({ telemetry = { noticeShown: true, noticeClosed: tr
     const profile = mkdtempSync(join(tmpdir(), "reci-ui-"));
     const chrome = spawn(process.env.CHROME ?? "google-chrome", ["--headless=new", "--disable-gpu", "--no-first-run",
         "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--lang=ru", "about:blank"],
-    { stdio: "ignore" });
+    { stdio: "ignore", detached: true });
     let port;
     for (let i = 0; i < 100 && !port; i++) {
         await sleep(100);
@@ -156,9 +156,24 @@ export async function launch({ telemetry = { noticeShown: true, noticeClosed: tr
         text: () => page.eval("document.getElementById('app').innerText"),
         async close() {
             ws.close();
-            chrome.kill();
-            await sleep(300);
-            rmSync(profile, { recursive: true, force: true });
+            // Chrome's helper processes keep writing the profile after the browser exits: stop the
+            // whole process group, and never let a leftover temporary profile fail a test.
+            const alive = () => {
+                try {
+                    process.kill(-chrome.pid, 0);
+                    return true;
+                } catch {
+                    return false;
+                }
+            };
+            try {
+                process.kill(-chrome.pid, "SIGTERM");
+            } catch {}
+            for (let i = 0; i < 50 && alive(); i++) await sleep(100);
+            if (alive()) process.kill(-chrome.pid, "SIGKILL");
+            try {
+                rmSync(profile, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+            } catch {}
         },
     };
     return page;
