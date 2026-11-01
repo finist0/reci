@@ -17,6 +17,7 @@ struct ReciApp: App {
                 main
             }
         }
+        .environment(\.locale, Locale(identifier: "ru_RU"))
         .onChange(of: phase) { _, now in
             if now == .active { model.reload() }
         }
