@@ -24,7 +24,7 @@ struct Showing {
 // the screens.
 @MainActor
 final class AppModel: ObservableObject {
-    let repo: Repo
+    private(set) var repo: Repo
     @Published private(set) var version = 0
     @Published private(set) var showing: Showing?
     @Published var learnedToast = false
@@ -32,18 +32,37 @@ final class AppModel: ObservableObject {
     private var toastShown = 0
     let speech = Speech()
     let telemetry: Telemetry
+    let dict: DictUpdate
 
     init() {
-        let dec = JSONDecoder()
-        let words = Bundle.main.url(forResource: "words", withExtension: "json")
-            .flatMap { try? Data(contentsOf: $0) }.flatMap { try? dec.decode([Word].self, from: $0) } ?? []
-        let topics = Bundle.main.url(forResource: "grammar", withExtension: "json")
-            .flatMap { try? Data(contentsOf: $0) }.flatMap { try? dec.decode([GrammarTopic].self, from: $0) } ?? []
         // UI tests start from a fresh install.
-        if ProcessInfo.processInfo.arguments.contains("-uitest-reset") { try? FileManager.default.removeItem(at: LockDeck.dir) }
+        if ProcessInfo.processInfo.arguments.contains("-uitest-reset") {
+            try? FileManager.default.removeItem(at: LockDeck.dir)
+            try? FileManager.default.removeItem(at: Dict.dir)
+        }
+        dict = Dict.updater()
+        let (words, topics) = Dict.load(patch: dict.stored())
         repo = Repo(store: Store(dir: LockDeck.dir), words: words, topics: topics)
         LockDeck.writeDeck(words)
         telemetry = Telemetry(file: Self.telemetryFile(), post: Self.transport())
+    }
+
+    // Looks for a dictionary patch now and then; a new one is built off the main actor and swapped
+    // in, while the cards keep coming from the dictionary in use.
+    func checkDictionary() {
+        Task { @MainActor in
+            let result = await dict.check { Dict.baseId() }
+            guard result != .none else { return }
+            let kept = dict.kept
+            let (words, topics) = await Task.detached { Dict.load(patch: kept.flatMap { DictPatch.read($0.file, base: $0.base) }) }.value
+            await Task.detached { LockDeck.writeDeck(words) }.value
+            let fresh = Repo(store: repo.store, words: words, topics: topics)
+            fresh.takePlace(of: repo)
+            repo = fresh
+            syncShowing()
+            changed()
+            WidgetCenter.shared.reloadTimelines(ofKind: "card")
+        }
     }
 
     // Outside the App Group the widgets share and outside the backup, so that the statistics id
@@ -151,6 +170,7 @@ final class AppModel: ObservableObject {
         syncShowing()
         changed()
         sendStats()
+        checkDictionary()
     }
 
     // MARK: The card screen

@@ -133,9 +133,7 @@ struct CardWallpaperIntent: AppIntent {
     // The widgets' short deck lacks examples, forms and synonyms; the app's own dictionary has them.
     @MainActor
     private func fullWord(_ key: String) -> Word? {
-        let words = Bundle.main.url(forResource: "words", withExtension: "json")
-            .flatMap { try? Data(contentsOf: $0) }.flatMap { try? JSONDecoder().decode([Word].self, from: $0) }
-        return words?.first { $0.key == key }
+        Dict.load(patch: Dict.updater().stored()).words.first { $0.key == key }
     }
 
     @MainActor

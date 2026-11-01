@@ -467,6 +467,15 @@ public final class Repo {
 
     public var canGoBack: Bool { !history.isEmpty }
 
+    // Goes on from where another repository over an older dictionary was, without the cards this
+    // one no longer has.
+    public func takePlace(of old: Repo) {
+        history = old.history.filter { byKey[$0] != nil }
+        forward = old.forward.filter { byKey[$0] != nil }
+        answers = old.answers.filter { byKey[$0.key] != nil }
+        revisit = old.revisit
+    }
+
     public func step(_ delta: Int) {
         let cur = prefs.currentKey
         if delta < 0 {
