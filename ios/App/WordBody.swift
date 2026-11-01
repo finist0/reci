@@ -44,7 +44,7 @@ final class Router: ObservableObject {
 }
 
 // "[x]" marks the headword inside an example sentence.
-func highlighted(_ text: String, _ accent: Color) -> AttributedString {
+func highlighted(_ text: String, _ accent: Color, size: CGFloat = 17) -> AttributedString {
     var out = AttributedString()
     var rest = Substring(text)
     while let open = rest.firstIndex(of: "[") {
@@ -56,7 +56,7 @@ func highlighted(_ text: String, _ accent: Color) -> AttributedString {
         }
         var hl = AttributedString(String(rest[afterOpen..<close]))
         hl.foregroundColor = accent
-        hl.font = .serif(17, .semibold)
+        hl.font = .serif(size, .semibold)
         out += hl
         rest = rest[rest.index(after: close)...]
     }

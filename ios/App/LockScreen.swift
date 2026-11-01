@@ -49,26 +49,38 @@ struct LockSetup: View {
     }
 }
 
-// The card drawn as a lock screen wallpaper. The top third stays free for the clock and the
-// widgets, the bottom for the flashlight and camera buttons; the rest takes as much of the card
-// as fits, dropping from the end: antonyms and synonyms, then examples one by one.
+// The card drawn as a lock screen wallpaper, 1290 pixels wide in the proportions of the screen.
+// The top stays free for the clock and the widgets, the bottom for the flashlight and camera
+// buttons. A short card is drawn larger to fill the rest; a long one drops from the end:
+// antonyms and synonyms, then examples one by one.
 struct WallpaperCard: View {
+    static let width: CGFloat = 1290
+
     let w: Word?
     let prefs: Prefs
     let recall: Bool
     let palette: Palette
+    // In points.
+    let screen: CGSize
+
+    static func height(_ screen: CGSize) -> CGFloat { width * screen.height / screen.width }
 
     var body: some View {
+        // Pixels of the drawing per point of the screen: the clock and the buttons keep their size in points.
+        let k = Self.width / screen.width
         ZStack(alignment: .topLeading) {
             palette.bg
             Group {
                 if let w {
                     ViewThatFits(in: .vertical) {
-                        card(w, examples: 3, related: true)
-                        card(w, examples: 3, related: false)
-                        card(w, examples: 2, related: false)
-                        card(w, examples: 1, related: false)
-                        card(w, examples: 0, related: false)
+                        card(w, examples: 3, related: true, scale: 1.6)
+                        card(w, examples: 3, related: true, scale: 1.35)
+                        card(w, examples: 3, related: true, scale: 1.15)
+                        card(w, examples: 3, related: true, scale: 1)
+                        card(w, examples: 3, related: false, scale: 1)
+                        card(w, examples: 2, related: false, scale: 1)
+                        card(w, examples: 1, related: false, scale: 1)
+                        card(w, examples: 0, related: false, scale: 1)
                     }
                 } else {
                     Text("Слова закончились: выберите другие в приложении").font(.system(size: 44)).foregroundStyle(palette.text)
@@ -76,39 +88,39 @@ struct WallpaperCard: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
             .padding(.horizontal, 90)
-            .padding(.top, 900)
-            .padding(.bottom, 300)
+            .padding(.top, 310 * k)
+            .padding(.bottom, 100 * k)
         }
     }
 
-    private func card(_ w: Word, examples: Int, related: Bool) -> some View {
-        VStack(alignment: .leading, spacing: 18) {
+    private func card(_ w: Word, examples: Int, related: Bool, scale s: CGFloat) -> some View {
+        VStack(alignment: .leading, spacing: 18 * s) {
             if recall {
-                Text("Вспомните слово").font(.system(size: 34, weight: .semibold)).foregroundStyle(palette.accent)
-                meanings(w, size: 58)
+                Text("Вспомните слово").font(.system(size: 34 * s, weight: .semibold)).foregroundStyle(palette.accent)
+                meanings(w, size: 58 * s)
                 // The Serbian sentences would give the word away; their translations are the hints.
                 ForEach(Array(w.examples.prefix(examples).enumerated()), id: \.offset) { _, e in
-                    Text("«\(e.ru)»").font(.system(size: 36)).foregroundStyle(palette.secondary)
+                    Text("«\(e.ru)»").font(.system(size: 36 * s)).foregroundStyle(palette.secondary)
                 }
             } else {
-                if let sec = prefs.secondary(w.cyr), !w.isArticle { Text(sec).font(.system(size: 40)).foregroundStyle(palette.secondary) }
+                if let sec = prefs.secondary(w.cyr), !w.isArticle { Text(sec).font(.system(size: 40 * s)).foregroundStyle(palette.secondary) }
                 Text(w.isArticle && w.pos == "compare" ? (w.meanings.first ?? w.cyr) : prefs.headword(w))
-                    .font(.serif(110, .semibold)).foregroundStyle(palette.word).minimumScaleFactor(0.4).lineLimit(2)
+                    .font(.serif(110 * s, .semibold)).foregroundStyle(palette.word).minimumScaleFactor(0.4).lineLimit(2)
                 if !w.isArticle {
                     let gram = [Labels.pos(w.pos), w.gram, w.forms].filter { !$0.isEmpty }.joined(separator: " · ")
-                    if !gram.isEmpty { Text(gram).font(.system(size: 34)).foregroundStyle(palette.secondary) }
-                    meanings(w, size: 54)
+                    if !gram.isEmpty { Text(gram).font(.system(size: 34 * s)).foregroundStyle(palette.secondary) }
+                    meanings(w, size: 54 * s)
                 }
                 ForEach(Array(w.examples.prefix(examples).enumerated()), id: \.offset) { _, e in
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text(highlighted(prefs.primary(e.sr), palette.accent)).font(.serif(44)).foregroundStyle(palette.text)
-                        Text(e.ru).font(.system(size: 34)).foregroundStyle(palette.secondary)
+                    VStack(alignment: .leading, spacing: 4 * s) {
+                        Text(highlighted(prefs.primary(e.sr), palette.accent, size: 44 * s)).font(.serif(44 * s)).foregroundStyle(palette.text)
+                        Text(e.ru).font(.system(size: 34 * s)).foregroundStyle(palette.secondary)
                     }
-                    .padding(.top, 8)
+                    .padding(.top, 8 * s)
                 }
                 if related {
-                    if !w.syn.isEmpty { pairs("синонимы", w.syn) }
-                    if !w.ant.isEmpty { pairs("антонимы", w.ant) }
+                    if !w.syn.isEmpty { pairs("синонимы", w.syn, size: 36 * s) }
+                    if !w.ant.isEmpty { pairs("антонимы", w.ant, size: 36 * s) }
                 }
             }
         }
@@ -120,9 +132,9 @@ struct WallpaperCard: View {
         }
     }
 
-    private func pairs(_ title: String, _ words: [String]) -> some View {
+    private func pairs(_ title: String, _ words: [String], size: CGFloat) -> some View {
         (Text(title + ": ").foregroundColor(palette.accent) + Text(words.prefix(6).map { prefs.primary($0) }.joined(separator: ", ")).foregroundColor(palette.text))
-            .font(.system(size: 36))
+            .font(.system(size: size))
     }
 }
 
@@ -143,11 +155,12 @@ struct CardWallpaperIntent: AppIntent {
         let prefs = repo?.prefs ?? Prefs()
         let palette = palettes.indices.contains(prefs.theme) ? palettes[prefs.theme] : palettes[2]
         let screen = UIScreen.main
-        let size = CGSize(width: screen.bounds.width * screen.scale, height: screen.bounds.height * screen.scale)
-        let view = WallpaperCard(w: w, prefs: prefs, recall: repo?.current().map { repo?.asksRecall($0) ?? false } ?? false, palette: palette)
-            .frame(width: 1290, height: 2796)
+        let view = WallpaperCard(w: w, prefs: prefs, recall: repo?.current().map { repo?.asksRecall($0) ?? false } ?? false,
+                                 palette: palette, screen: screen.bounds.size)
+            .frame(width: WallpaperCard.width, height: WallpaperCard.height(screen.bounds.size))
         let renderer = ImageRenderer(content: view)
-        renderer.scale = size.width / 1290
+        // The picture has the pixels of the screen, so the lock screen shows it whole, without cropping.
+        renderer.scale = screen.bounds.width * screen.scale / WallpaperCard.width
         guard let data = renderer.uiImage?.pngData() else { throw CocoaError(.fileWriteUnknown) }
         return .result(value: IntentFile(data: data, filename: "reci-card.png", type: .png))
     }

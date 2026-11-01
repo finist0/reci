@@ -13,10 +13,11 @@ struct LockPreview: View {
         ZStack(alignment: .top) {
             if wallpaper {
                 let w = model.repo.current()
-                WallpaperCard(w: w, prefs: model.prefs, recall: w.map { model.repo.asksRecall($0) } ?? false, palette: model.palette)
-                    .frame(width: 1290, height: 2796)
-                    .scaleEffect(UIScreen.main.bounds.width / 1290)
-                    .frame(width: UIScreen.main.bounds.width, height: UIScreen.main.bounds.height)
+                let screen = UIScreen.main.bounds.size
+                WallpaperCard(w: w, prefs: model.prefs, recall: w.map { model.repo.asksRecall($0) } ?? false, palette: model.palette, screen: screen)
+                    .frame(width: WallpaperCard.width, height: WallpaperCard.height(screen))
+                    .scaleEffect(screen.width / WallpaperCard.width)
+                    .frame(width: screen.width, height: screen.height)
             } else {
                 LinearGradient(colors: [Color(hex: 0x1F3A4D), Color(hex: 0x0E1626)], startPoint: .top, endPoint: .bottom)
             }
