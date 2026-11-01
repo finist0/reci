@@ -8,6 +8,8 @@ import re
 import sys
 from pathlib import Path
 
+import build_patches
+
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "data" / "grammar" / "grammar.json"
 OUT = ROOT / "app" / "app" / "src" / "main" / "assets" / "grammar.json"
@@ -85,6 +87,7 @@ def main():
         print(e, file=sys.stderr)
     if not errs and "--check" not in sys.argv:
         OUT.write_text(json.dumps(topics, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+        build_patches.write()
     print(f"{len(topics)} topics, {len(errs)} errors")
     sys.exit(1 if errs else 0)
 

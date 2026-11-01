@@ -11,6 +11,8 @@ import sys
 import unicodedata
 from pathlib import Path
 
+import build_patches
+
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "data" / "words"
 OUT = ROOT / "app" / "app" / "src" / "main" / "assets" / "words.json"
@@ -204,6 +206,8 @@ def main():
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{len(out)} words ok, {bad} rejected, {mismatches} nouns differ in gender from Russian")
+    if "--check" not in sys.argv:
+        build_patches.write()
 
 
 if __name__ == "__main__":

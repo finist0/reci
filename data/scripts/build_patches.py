@@ -10,6 +10,10 @@ months and always the newest one. Six months count back from the date of HEAD, s
 not change from one day to the next. A release that carries the current dictionary needs no patch,
 so a new tag changes nothing here until the dictionary does.
 
+build_json.py and build_grammar.py call write() after they change the assets, so a card change
+always comes with its patches. Running this by hand is needed only after a release leaves the
+six months.
+
 Usage: build_patches.py           write dict/
        build_patches.py --check   exit 1 when dict/ is not what this would write
 """
@@ -105,21 +109,29 @@ def build():
     return files
 
 
-def main():
-    files = build()
-    current = {p.name: p.read_bytes() for p in OUT.glob("*.json")} if OUT.exists() else {}
-    if "--check" in sys.argv:
-        if current != files:
-            stale = sorted(set(current) ^ set(files) | {n for n in files if current.get(n) != files[n]})
-            sys.exit("dict/ is out of date, run data/scripts/build_patches.py: " + ", ".join(stale))
-        print(f"dict/ is up to date: {len(files) - 1} patches")
-        return
+def current():
+    return {p.name: p.read_bytes() for p in OUT.glob("*.json")} if OUT.exists() else {}
+
+
+def write():
+    files, old = build(), current()
     OUT.mkdir(exist_ok=True)
-    for name in set(current) - set(files):
+    for name in set(old) - set(files):
         (OUT / name).unlink()
     for name, data in files.items():
         (OUT / name).write_bytes(data)
     print(f"dict/: {len(files) - 1} patches")
+
+
+def main():
+    if "--check" not in sys.argv:
+        write()
+        return
+    files, old = build(), current()
+    if old != files:
+        stale = sorted(set(old) ^ set(files) | {n for n in files if old.get(n) != files[n]})
+        sys.exit("dict/ is out of date, run data/scripts/build_patches.py: " + ", ".join(stale))
+    print(f"dict/ is up to date: {len(files) - 1} patches")
 
 
 if __name__ == "__main__":
