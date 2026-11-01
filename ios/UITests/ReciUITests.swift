@@ -203,6 +203,8 @@ final class ScreenshotUITests: XCTestCase {
         app.launch()
         XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 20))
         let shot = { (name: String) in
+            // Let screen transitions and button highlights finish.
+            sleep(1)
             let a = XCTAttachment(screenshot: app.screenshot())
             a.name = name
             a.lifetime = .keepAlways
@@ -219,6 +221,8 @@ final class ScreenshotUITests: XCTestCase {
         shot("3-card")
         app.buttons["Поиск"].tap()
         app.textFields.firstMatch.tap()
+        // A fresh simulator explains swipe typing over the keyboard first.
+        if app.buttons["Continue"].waitForExistence(timeout: 2) { app.buttons["Continue"].tap() }
         app.textFields.firstMatch.typeText("кућ")
         shot("4-search")
         app.buttons["Назад"].firstMatch.tap()
@@ -226,8 +230,9 @@ final class ScreenshotUITests: XCTestCase {
         shot("5-grammar")
         app.buttons["Назад"].firstMatch.tap()
         app.buttons["Настройки"].tap()
+        _ = app.staticTexts["Настройки"].waitForExistence(timeout: 5)
         shot("6-settings")
-        for _ in 0..<15 where !app.buttons["Написать разработчику"].isHittable { app.swipeUp() }
+        for _ in 0..<15 where !app.buttons["Помочь автору"].isHittable { app.swipeUp() }
         shot("7-settings-feedback")
         app.buttons["Что отправляется"].tap()
         _ = app.staticTexts["packet"].waitForExistence(timeout: 5)
