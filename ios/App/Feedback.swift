@@ -91,7 +91,7 @@ private struct Field: View {
         let p = model.palette
         Group {
             if lines > 1 {
-                TextField(placeholder, text: $text, axis: .vertical).lineLimit(lines...max(lines, 8))
+                TextField(placeholder, text: $text, axis: .vertical).lineLimit(lines...lines + 6)
             } else {
                 TextField(placeholder, text: $text)
             }
@@ -133,7 +133,7 @@ struct ReportSheet: View {
                     .accessibilityIdentifier("problem:\(k)")
                 }
             }
-            Field(placeholder: "Что именно не так, если хотите", text: $text, lines: 3, limit: 2000)
+            Field(placeholder: "Что именно не так, если хотите", text: $text, lines: 4, limit: 2000)
             Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
             if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.system(size: 14)) }
         }
@@ -169,7 +169,7 @@ struct WriteSheet: View {
     var body: some View {
         FormFrame(title: "Написать разработчику", sendTitle: "Отправить", canSend: true, onSend: send) {
             Text("Идея, ошибка, вопрос — что угодно.").foregroundStyle(model.palette.secondary)
-            Field(placeholder: "Сообщение", text: $text, lines: 5)
+            Field(placeholder: "Сообщение", text: $text, lines: 6)
             Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
             if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.system(size: 14)) }
         }
