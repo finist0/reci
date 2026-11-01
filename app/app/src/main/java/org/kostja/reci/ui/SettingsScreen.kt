@@ -193,7 +193,7 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                 Line()
                 Toggle(
                     "Проверять выученные слова",
-                    "Через неделю, потом через 3 недели, 2 месяца, полгода и год",
+                    "Через неделю, потом через 3\u00A0недели, 2\u00A0месяца, полгода и год",
                     Prefs.reviewKnown,
                 ) { Prefs.reviewKnown = it }
             }
