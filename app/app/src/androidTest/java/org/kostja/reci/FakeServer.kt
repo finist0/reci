@@ -3,10 +3,12 @@ package org.kostja.reci
 import android.content.Context
 import androidx.test.platform.app.InstrumentationRegistry
 import org.json.JSONObject
+import org.kostja.reci.data.DictUpdate
 import org.kostja.reci.data.Telemetry
 import java.util.concurrent.CopyOnWriteArrayList
 
-// Stands in for the statistics server in UI tests, so that no test reaches the real one.
+// Stands in for the statistics server and the dictionary site in UI tests, so that no test
+// reaches the real ones.
 object FakeServer {
     val posts = CopyOnWriteArrayList<Pair<String, JSONObject>>()
 
@@ -24,6 +26,7 @@ object FakeServer {
         }
         posts.clear()
         status = 204
+        DictUpdate.get = { null }
         Telemetry.post = { url, body ->
             posts.add(url.substringAfterLast('/') to JSONObject(body))
             status

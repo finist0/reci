@@ -17,6 +17,7 @@ import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.kostja.reci.data.DictUpdate
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
@@ -51,6 +52,7 @@ class LockSettingsTest {
     @Before
     fun freshStart() {
         Telemetry.post = { _, _ -> 204 }
+        DictUpdate.get = { null }
         waitIo()
         Repo.resetAll()
         waitIo()
