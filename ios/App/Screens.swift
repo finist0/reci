@@ -219,6 +219,7 @@ struct SearchScreen: View {
                 .listRowBackground(p.card)
             }
             .scrollContentBackground(.hidden)
+            .contentMargins(.top, 0, for: .scrollContent)
         }
         .background(p.bg.ignoresSafeArea())
         .onAppear { focused = true }
