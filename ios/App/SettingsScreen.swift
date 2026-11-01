@@ -55,7 +55,7 @@ struct SettingsScreen: View {
                             Line()
                             toggle("Кнопки «Не знаю / Знаю»", nil, prefs.useMarks) { v in model.set { $0.useMarks = v } }
                             Line()
-                            toggle("Проверять выученные слова", "Через неделю, потом через 3 недели, 2 месяца, полгода и год", prefs.reviewKnown) { v in
+                            toggle("Проверять выученные слова", "Через неделю, потом через 3\u{00A0}недели, 2\u{00A0}месяца, полгода и год", prefs.reviewKnown) { v in
                                 model.set { $0.reviewKnown = v }
                             }
                         }
