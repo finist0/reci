@@ -1,0 +1,23 @@
+# Checks that dict/, the dictionary patches the apps download, matches the dictionary and the
+# releases, so a card change pushed without them is caught.
+name: Dictionary
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  patches:
+    name: Patches for recent releases
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      # The patches are made from the releases' own files, so the tags and history are needed.
+      - uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
+      - name: Tests of the patch builder
+        run: python3 -m unittest discover -s data/scripts -p 'test_*.py'
+      - name: dict/ matches the dictionary and the releases
+        run: python3 data/scripts/build_patches.py --check
