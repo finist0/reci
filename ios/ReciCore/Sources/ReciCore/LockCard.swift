@@ -7,6 +7,8 @@ public struct LockCard: Equatable {
     public let title: String?
     public let subtitle: String
     public let recall: Bool
+    // The first example, or its Russian side for a word to recall.
+    public var example: String? = nil
 
     public static func of(_ repo: Repo?) -> LockCard {
         guard let repo else { return LockCard(title: nil, subtitle: "Откройте приложение", recall: false) }
@@ -19,7 +21,11 @@ public struct LockCard: Equatable {
                             subtitle: w.pos == "compare" ? "похожие слова" : "заметка", recall: false)
         }
         // A word to recall shows its translation; the word itself opens with the app.
-        if repo.asksRecall(w) { return LockCard(title: meanings, subtitle: "вспомните слово", recall: true) }
-        return LockCard(title: repo.prefs.headword(w), subtitle: meanings, recall: false)
+        let first = w.examples.first
+        if repo.asksRecall(w) {
+            return LockCard(title: meanings, subtitle: "вспомните слово", recall: true, example: first.map { "«\($0.ru)»" })
+        }
+        let sr = first.map { repo.prefs.primary($0.sr.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")) }
+        return LockCard(title: repo.prefs.headword(w), subtitle: meanings, recall: false, example: sr)
     }
 }

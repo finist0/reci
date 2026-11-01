@@ -19,7 +19,7 @@ struct CardProvider: TimelineProvider {
 
     private func entry() -> CardEntry {
         let card = LockCard.of(LockDeck.repo())
-        return CardEntry(date: Date(), title: card.title, subtitle: card.subtitle, recall: card.recall)
+        return CardEntry(date: Date(), title: card.title, subtitle: card.subtitle, recall: card.recall, example: card.example)
     }
 }
 

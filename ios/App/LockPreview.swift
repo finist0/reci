@@ -25,7 +25,7 @@ struct LockPreview: View {
                 Text("9:41").font(.system(size: 92, weight: .bold, design: .rounded))
                 HStack(spacing: 10) {
                     if !wallpaper {
-                        CardWidgetView(entry: CardEntry(date: .now, title: card.title, subtitle: card.subtitle, recall: card.recall),
+                        CardWidgetView(entry: CardEntry(date: .now, title: card.title, subtitle: card.subtitle, recall: card.recall, example: card.example),
                                        shownAs: .accessoryRectangular)
                             .padding(10)
                             .frame(width: 170, height: 72)

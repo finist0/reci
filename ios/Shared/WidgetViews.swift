@@ -9,6 +9,7 @@ struct CardEntry: TimelineEntry {
     let title: String?
     let subtitle: String
     let recall: Bool
+    var example: String? = nil
 }
 
 struct CardWidgetView: View {
@@ -36,15 +37,27 @@ struct CardWidgetView: View {
         }
     }
 
+    // With the example when it fits, without it otherwise.
     private var card: some View {
-        VStack(alignment: .leading, spacing: 2) {
-            if let title = entry.title {
-                Text(title).font(.system(size: entry.recall ? 15 : 20, weight: .semibold)).lineLimit(2).minimumScaleFactor(0.6)
-            }
-            Text(entry.subtitle).font(.system(size: 13)).lineLimit(2).opacity(0.8)
+        ViewThatFits(in: .vertical) {
+            lines(example: true)
+            lines(example: false)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .widgetAccentable()
+    }
+
+    private func lines(example: Bool) -> some View {
+        VStack(alignment: .leading, spacing: 1) {
+            if let title = entry.title {
+                Text(title).font(.system(size: entry.recall ? 15 : 20, weight: .semibold)).lineLimit(example ? 1 : 2).minimumScaleFactor(0.6)
+            }
+            Text(entry.subtitle).font(.system(size: 13)).lineLimit(example ? 1 : 2).opacity(0.8)
+            if example, let ex = entry.example {
+                Text(ex).font(.system(size: 12).italic()).lineLimit(2).opacity(0.7)
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 

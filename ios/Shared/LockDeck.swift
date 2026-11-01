@@ -20,18 +20,20 @@ enum LockDeck {
     }
 
     // The widgets have little memory, so they read a short copy of the dictionary: only the
-    // fields the learning rules and a lock screen card need. The app writes it at start.
+    // fields the learning rules and a lock screen card need, with the first example only. The
+    // app writes it at start.
     private static var deckURL: URL { dir.appendingPathComponent("deck.json") }
 
     private struct Short: Encodable {
         let key, cyr, acc, pos, gram, topic: String
         let level: Int
         let meanings: [String]
+        let examples: [Example]
     }
 
     static func writeDeck(_ words: [Word]) {
         let short = words.map { Short(key: $0.key, cyr: $0.cyr, acc: $0.acc, pos: $0.pos, gram: $0.gram, topic: $0.topic,
-                                      level: $0.level, meanings: Array($0.meanings.prefix(3))) }
+                                      level: $0.level, meanings: Array($0.meanings.prefix(3)), examples: Array($0.examples.prefix(1))) }
         if let data = try? JSONEncoder().encode(short) { try? data.write(to: deckURL, options: .atomic) }
     }
 
