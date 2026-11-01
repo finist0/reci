@@ -19,17 +19,17 @@
     ]
   },
   {
-    "name": "Don't know in recall goes back to the introduction, five cards later",
+    "name": "Don't know in recall starts the count again, the word stays hidden, five cards later",
     "steps": [
       {"do": "next"}, {"do": "remember", "as": "a"},
       {"do": "answer", "a": "know"},
       {"do": "until", "word": "a", "max": 60, "answer": "know"},
       {"expect": {"distance": 20, "word": "a", "phase": "recall"}},
       {"do": "answer", "a": "dontknow"},
-      {"expect": {"word": "a", "phase": "intro", "state": "dontknow"}},
+      {"expect": {"word": "a", "phase": "recall", "streak": 0, "state": "dontknow"}},
       {"do": "remember", "as": "a"},
       {"do": "until", "word": "a", "max": 30, "answer": "know"},
-      {"expect": {"distance": 5}}
+      {"expect": {"distance": 5, "word": "a", "phase": "recall", "state": "dontknow"}}
     ]
   },
   {

@@ -174,8 +174,9 @@ function advance(w, p, a) {
     }
     if (p.phase === RECALL) {
         if (a === KNOWN) return p.streak + 1 >= RECALL_STREAK ? learned(p) : { ...p, streak: p.streak + 1, state: NEW };
+        // A word once known is asked again, not shown: the count of «Знаю» starts over.
         if (a === UNSURE) return { ...p, streak: 0, state: a };
-        return { ...p, phase: INTRO, streak: 0, state: DONT_KNOW, showAt: n + RETRY_AFTER };
+        return { ...p, streak: 0, state: DONT_KNOW, showAt: n + RETRY_AFTER };
     }
     if (a === KNOWN) {
         return p.streak + 1 >= INTRO_STREAK ? { ...p, phase: RECALL, streak: 0, state: NEW }

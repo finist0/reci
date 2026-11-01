@@ -249,8 +249,9 @@ object Repo {
                 else p.copy(phase = RECALL, streak = 0, state = a, step = 0, due = 0, showAt = n + Prefs.activeSize)
             p.phase == RECALL -> when (a) {
                 State.KNOWN -> if (p.streak + 1 >= RECALL_STREAK) learned(p) else p.copy(streak = p.streak + 1, state = State.NEW)
+                // A word once known is asked again, not shown: the count of «Знаю» starts over.
                 State.UNSURE -> p.copy(streak = 0, state = a)
-                else -> p.copy(phase = INTRO, streak = 0, state = State.DONT_KNOW, showAt = n + RETRY_AFTER)
+                else -> p.copy(streak = 0, state = State.DONT_KNOW, showAt = n + RETRY_AFTER)
             }
             a == State.KNOWN ->
                 if (p.streak + 1 >= INTRO_STREAK) p.copy(phase = RECALL, streak = 0, state = State.NEW)

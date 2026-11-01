@@ -204,8 +204,9 @@ public final class Repo {
                 p.streak += 1; p.state = Mark.new
                 return p
             }
+            // A word once known is asked again, not shown: the count of «Знаю» starts over.
             if a == Mark.unsure { p.streak = 0; p.state = a; return p }
-            p.phase = Repo.intro; p.streak = 0; p.state = Mark.dontKnow; p.showAt = n + Repo.retryAfter
+            p.streak = 0; p.state = Mark.dontKnow; p.showAt = n + Repo.retryAfter
             return p
         }
         if a == Mark.known {
