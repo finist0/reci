@@ -179,6 +179,61 @@ test("a message goes out with its own id and only the accepted fields", async ()
     assert.deepEqual(T.state.queue, []);
 });
 
+test("a message tells where the app runs within the server's limits", async () => {
+    await T.sendFeedback({ kind: "app", text: "Карточка не помещается" }, "", "1.2");
+    const env = requests[0].body.env;
+    const rules = fields.feedback.env;
+    const name = new RegExp(rules.name, "u");
+    assert.ok(Object.keys(env).length <= rules.maxEntries);
+    for (const [k, v] of Object.entries(env)) {
+        assert.match(k, name);
+        if (typeof v === "string") assert.ok(v.length <= rules.maxString && !/[\u0000-\u001f]/.test(v), k);
+        else assert.ok(typeof v === "boolean" || Number.isFinite(v), `${k}: ${v}`);
+    }
+    for (const k of ["browser", "screen", "ratio", "locale", "mode", "theme", "latin"]) assert.ok(k in env, k);
+    assert.equal(env.browser, "Chrome 141");
+});
+
+test("a crash report goes out without the remembered email", async () => {
+    T.state.email = "me@example.org";
+    await T.sendFeedback({ kind: "crash", text: "TypeError: x is undefined" }, "me@example.org", "1.2");
+    const m = requests[0].body;
+    assert.ok(fields.feedback.kinds.includes(m.kind));
+    assert.equal(m.email, undefined);
+    assert.equal(T.state.email, "me@example.org");
+});
+
+test("the browser", () => {
+    const cases = [
+        ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.1 Mobile/15E148 Safari/604.1", "Safari 18"],
+        ["Mozilla/5.0 (iPhone; CPU iPhone OS 18_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/131.0 Mobile/15E148 Safari/604.1", "Chrome 131"],
+        ["Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0 Safari/537.36 Edg/131.0", "Edge 131"],
+        ["Mozilla/5.0 (X11; Linux x86_64; rv:133.0) Gecko/20100101 Firefox/133.0", "Firefox 133"],
+        [ANDROID_UA, "Chrome 141"],
+        ["curl/8", "other"],
+    ];
+    for (const [ua, name] of cases) assert.equal(T.browser(ua), name, ua);
+});
+
+test("an error of the app is kept for the next start, the first one only", () => {
+    const handlers = {};
+    globalThis.addEventListener = (type, f) => (handlers[type] = f);
+    globalThis.location = { origin: "https://finist0.github.io" };
+    T.clearCrash();
+    T.watchErrors();
+    handlers.error({ filename: "chrome-extension://abc/x.js", message: "theirs", lineno: 1, colno: 1 });
+    assert.equal(T.pendingCrash(), null);
+    handlers.error({ filename: "https://finist0.github.io/reci/web/js/ui.js", lineno: 7, colno: 3,
+                     error: { stack: "TypeError: w is undefined\n    at render (ui.js:7:3)" } });
+    handlers.unhandledrejection({ reason: { stack: "Error: later\n    at https://finist0.github.io/reci/web/js/repo.js:1:1" } });
+    const kept = T.pendingCrash();
+    assert.match(kept, /^\d{4}-\d\d-\d\dT.*\nTypeError: w is undefined\n    at render \(ui.js:7:3\)\n    at https:\/\/finist0.github.io\/reci\/web\/js\/ui.js:7:3$/);
+    T.clearCrash();
+    handlers.unhandledrejection({ reason: { stack: "Error: later\n    at https://finist0.github.io/reci/web/js/repo.js:1:1" } });
+    assert.match(T.pendingCrash(), /Unhandled rejection: Error: later/);
+    T.clearCrash();
+});
+
 test("without network a message waits and goes out later", async () => {
     reply = () => new Error("offline");
     assert.equal(await T.sendFeedback({ kind: "app", text: "Привет" }, "", "0.12"), false);

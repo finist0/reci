@@ -44,6 +44,27 @@ test("the first start tells about statistics and where to turn them off", async 
     assert.equal(posts("ping").length, 1);
 });
 
+test("an error from the last start is offered once and sent on yes", async t => {
+    const page = await app(t, { storage: { "reci.crash": "2026-11-02T10:00:00.000Z\nTypeError: w is undefined" } });
+    assert.match(await page.text(), /В прошлый раз случилась ошибка/);
+    await page.tap('[data-act="sendcrash"]');
+    await waitPosts(page, "feedback");
+    const m = posts("feedback")[0];
+    assert.equal(m.kind, "crash");
+    assert.match(m.text, /TypeError: w is undefined/);
+    assert.equal(m.env.screen, "390x844 css px");
+    await page.reload();
+    assert.ok(!(await has(page, '[data-act="sendcrash"]')));
+});
+
+test("a declined error report is dropped unsent", async t => {
+    const page = await app(t, { storage: { "reci.crash": "TypeError: w is undefined" } });
+    await page.tap('[data-act="dropcrash"]');
+    await page.sleep(300);
+    assert.deepEqual(posts("feedback"), []);
+    assert.equal(await page.eval("localStorage.getItem('reci.crash')"), null);
+});
+
 test("with statistics off nothing is sent", async t => {
     const page = await app(t, { telemetry: { noticeShown: true, noticeClosed: true, enabled: false } });
     await page.tap('[data-act="next"]');
@@ -83,6 +104,7 @@ test("a card is reported from the card itself, and the email is remembered", asy
     await waitPosts(page, "feedback");
     const m = posts("feedback")[0];
     assert.deepEqual([m.kind, m.card.key, m.card.problem, m.text, m.email], ["card", key, "stress", "ударение на втором слоге", "me@example.org"]);
+    assert.equal(m.env.browser.split(" ")[0], "Chrome");
     assert.notEqual(m.id, (await telemetry(page)).id);
     await page.waitFor("document.querySelector('.toast')?.textContent.includes('Спасибо')");
     await page.tap('[data-act="report"]');

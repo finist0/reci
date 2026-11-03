@@ -55,7 +55,8 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // `telemetry` is the stored statistics state the page starts with; by default the notice about
 // statistics was already shown and closed, so that it does not get in the way of other tests.
-export async function launch({ telemetry = { noticeShown: true, noticeClosed: true } } = {}) {
+// `storage` holds more local storage entries, set for the first page load only.
+export async function launch({ telemetry = { noticeShown: true, noticeClosed: true }, storage = {} } = {}) {
     const profile = mkdtempSync(join(tmpdir(), "reci-ui-"));
     const chrome = spawn(process.env.CHROME ?? "google-chrome", ["--headless=new", "--disable-gpu", "--no-first-run",
         "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--lang=ru", "about:blank"],
@@ -101,6 +102,10 @@ export async function launch({ telemetry = { noticeShown: true, noticeClosed: tr
         window.reciServer = location.origin + "/srv";
         try {
             if (!localStorage.getItem("reci.telemetry")) localStorage.setItem("reci.telemetry", ${JSON.stringify(JSON.stringify(telemetry))});
+            if (!sessionStorage.getItem("reci.preset")) {
+                sessionStorage.setItem("reci.preset", "1");
+                for (const [k, v] of Object.entries(${JSON.stringify(storage)})) localStorage.setItem(k, v);
+            }
         } catch {}` });
 
     const page = {
