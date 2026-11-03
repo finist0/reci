@@ -49,7 +49,8 @@ public struct CardInfo: Codable, Equatable {
     }
 }
 
-// A message to the developer: an error in a card ("card") or anything else ("app").
+// A message to the developer: an error in a card ("card") or anything else ("app"). `env` says
+// where the app runs; its values are text, which the queue on disk keeps as it was.
 public struct Message: Codable, Equatable {
     public var id: String
     public var kind: String
@@ -59,6 +60,19 @@ public struct Message: Codable, Equatable {
     public var text: String?
     public var email: String?
     public var card: CardInfo?
+    public var env: [String: String]?
+}
+
+public enum Env {
+    // The app settings that change how a card looks, under the names the other apps send them.
+    public static func of(_ p: Prefs) -> [String: String] {
+        [
+            "mode": "\(p.cardMode)", "theme": "\(p.theme)", "latin": "\(p.latinFirst)", "both": "\(p.showBothScripts)",
+            "stress": "\(p.accentMode)", "size": "\(p.wordSize)", "marks": "\(p.useMarks)", "review": "\(p.reviewKnown)",
+            "speak": "\(p.autoSpeak)", "active": "\(p.activeSize)", "order": "\(p.order)",
+            "lock": p.lockMode == 1 ? "wallpaper" : "widget",
+        ]
+    }
 }
 
 public struct TelemetryState: Codable {
@@ -238,7 +252,8 @@ public final class Telemetry {
     // Queues a message and tries to send it; true when it went out at once. It carries its own
     // id, so that it cannot be tied to the statistics of the same install.
     @discardableResult
-    public func sendFeedback(kind: String, text: String, card: CardInfo?, email: String, app: String, os: String) async -> Bool {
+    public func sendFeedback(kind: String, text: String, card: CardInfo?, email: String, app: String, os: String,
+                             env: [String: String]? = nil) async -> Bool {
         state.email = email
         // The server refuses control characters; pasted text may carry some.
         let clean = String(String.UnicodeScalarView(text.unicodeScalars.filter {
@@ -246,7 +261,7 @@ public final class Telemetry {
         }))
         let m = Message(
             id: state.feedbackId, kind: kind, platform: "ios", app: app, os: os,
-            text: clean.isEmpty ? nil : clean, email: email.isEmpty ? nil : email, card: card
+            text: clean.isEmpty ? nil : clean, email: email.isEmpty ? nil : email, card: card, env: env
         )
         state.queue.append(m)
         save()

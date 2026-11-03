@@ -47,6 +47,29 @@ final class AppModel: ObservableObject {
         telemetry = Telemetry(file: Self.telemetryFile(), post: Self.transport())
     }
 
+    // Where the app runs, sent with every message and crash report so that a card can be seen as
+    // the user saw it. No words, answers or progress.
+    func environment() -> [String: String] {
+        var e = Env.of(prefs)
+        let size = UIScreen.main.bounds.size
+        e["device"] = Self.deviceModel
+        e["idiom"] = UIDevice.current.userInterfaceIdiom == .pad ? "pad" : "phone"
+        e["screen"] = "\(Int(size.width))x\(Int(size.height)) pt"
+        e["scale"] = "\(UIScreen.main.scale)"
+        e["font"] = UIApplication.shared.preferredContentSizeCategory.rawValue
+        e["dark"] = "\(UITraitCollection.current.userInterfaceStyle == .dark)"
+        e["locale"] = Locale.current.identifier(.bcp47)
+        e["dict"] = dict.describe
+        return e.mapValues { String($0.prefix(120)) }
+    }
+
+    private static var deviceModel: String {
+        if let sim = ProcessInfo.processInfo.environment["SIMULATOR_MODEL_IDENTIFIER"] { return sim + " simulator" }
+        var u = utsname()
+        uname(&u)
+        return withUnsafeBytes(of: &u.machine) { String(decoding: $0.prefix { $0 != 0 }, as: UTF8.self) }
+    }
+
     // Looks for a dictionary patch now and then; a new one is built off the main actor and swapped
     // in, while the cards keep coming from the dictionary in use.
     func checkDictionary() {
@@ -136,7 +159,8 @@ final class AppModel: ObservableObject {
 
     func sendFeedback(kind: String, text: String, card: CardInfo?, email: String) {
         Task { @MainActor in
-            let sent = await telemetry.sendFeedback(kind: kind, text: text, card: card, email: email, app: appVersion, os: osName)
+            let sent = await telemetry.sendFeedback(kind: kind, text: text, card: card, email: email, app: appVersion, os: osName,
+                                                    env: environment())
             sentToast = sent ? "Спасибо! Сообщение отправлено" : "Сообщение уйдёт, когда появится интернет"
             toastShown += 1
             let shown = toastShown

@@ -95,6 +95,9 @@ public final class DictUpdate {
         state.patchOf == install && !state.patchSha.isEmpty ? (patchFile, state.base) : nil
     }
 
+    // Which dictionary the cards come from, for reports.
+    public var describe: String { kept == nil ? "built-in" : "patch " + state.patchSha.prefix(8) }
+
     // The patch kept for this install, or nil. Reads only the small patch file.
     public func stored() -> DictPatch? {
         kept.flatMap { DictPatch.read($0.file, base: $0.base) }
