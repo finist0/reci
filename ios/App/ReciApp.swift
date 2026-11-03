@@ -42,6 +42,11 @@ struct ReciApp: App {
                     .toolbar(.hidden, for: .navigationBar)
                 }
         }
+        // On an iPad the phone layout stays a column of reading width in the middle: stretched to
+        // the full width, lines grow too long and the buttons drift apart.
+        .frame(maxWidth: 680)
+        .frame(maxWidth: .infinity)
+        .background(model.palette.bg.ignoresSafeArea())
         .environmentObject(model)
         .environmentObject(router)
         .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
