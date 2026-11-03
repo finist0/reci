@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
 import org.kostja.reci.R
+import org.kostja.reci.data.Crash
 import org.kostja.reci.data.Env
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
@@ -228,6 +229,37 @@ fun WriteDialog(onDismiss: () -> Unit) {
             }) { Text("Отправить") }
         },
         dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+    )
+}
+
+// Offers the report of the last crash once, at the next start of the app.
+@Composable
+fun CrashDialog() {
+    val ctx = LocalContext.current
+    val toast = sentToast()
+    var report by remember { mutableStateOf(Crash.pending) }
+    val r = report ?: return
+    val close = {
+        Crash.clear()
+        report = null
+    }
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("Приложение закрылось с ошибкой") },
+        text = {
+            Text(
+                "В прошлый раз приложение неожиданно закрылось. Отправить разработчику отчёт, чтобы он мог " +
+                    "это исправить? В отчёте место в коде, где случилась ошибка, модель телефона, версия Android " +
+                    "и настройки приложения. Слова и прогресс не отправляются."
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                Telemetry.sendFeedback("crash", r, null, "", Env.of(ctx), toast)
+                close()
+            }) { Text("Отправить") }
+        },
+        dismissButton = { TextButton(onClick = close) { Text("Не отправлять") } },
     )
 }
 

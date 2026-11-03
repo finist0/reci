@@ -133,6 +133,7 @@ class MainActivity : ComponentActivity() {
                     is Screen.GrammarTopic -> GrammarTopicScreen(s.id, open = { go(Screen.GrammarTopic(it)) }, back = back)
                 }
                 }
+                CrashDialog()
             }
         }
     }

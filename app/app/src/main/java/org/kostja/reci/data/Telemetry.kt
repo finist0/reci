@@ -251,9 +251,10 @@ object Telemetry {
 
     // Queues a message (kind, text, card) and tries to send it; `done` gets true when it went out.
     // It carries its own id, so that it cannot be tied to the statistics of the same install.
-    // `env` says where the app runs (Env.of).
+    // `env` says where the app runs (Env.of); a crash report carries no email and leaves the
+    // remembered one alone.
     fun sendFeedback(kind: String, text: String, card: JSONObject?, mail: String, env: JSONObject?, done: (Boolean) -> Unit = {}) {
-        email = mail
+        if (kind != "crash") email = mail
         val m = JSONObject()
             .put("id", feedbackId).put("kind", kind).put("platform", "android").put("app", appVersion)
             .put("os", osName)

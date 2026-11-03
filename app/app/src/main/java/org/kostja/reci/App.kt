@@ -3,6 +3,7 @@ package org.kostja.reci
 import android.app.Application
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationManagerCompat
+import org.kostja.reci.data.Crash
 import org.kostja.reci.data.DictUpdate
 import org.kostja.reci.data.Grammar
 import org.kostja.reci.data.Prefs
@@ -14,6 +15,7 @@ import org.kostja.reci.lock.LockService
 class App : Application() {
     override fun onCreate() {
         super.onCreate()
+        Crash.init(this)
         Prefs.init(this)
         Telemetry.init(this)
         DictUpdate.init(this)
