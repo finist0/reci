@@ -48,6 +48,13 @@ jobs:
             os: latest
             experimental: true
             main: false
+          # The iPad layout; its UI tests are not required to pass yet.
+          - runner: macos-15
+            device: iPad Pro 13-inch (M4)
+            slug: ipad-pro-13
+            os: "18.6"
+            experimental: true
+            main: false
     steps:
       - uses: actions/checkout@v5
       - run: brew install xcodegen
