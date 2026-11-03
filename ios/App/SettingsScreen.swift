@@ -47,7 +47,7 @@ struct SettingsScreen: View {
                             }
                             Line()
                             choice("Карточки", ["Обучение", "Перевод", "Слово"], prefs.cardMode) { i in model.set { $0.cardMode = i } }
-                            Text(modeText).font(.system(size: 13)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
+                            Text(modeText).font(.ui(13)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
                             Line()
                             choice("Слов в работе одновременно", sizes.map(String.init), max(0, sizes.firstIndex(of: prefs.activeSize) ?? 0)) { i in
                                 model.set { $0.activeSize = sizes[i] }
@@ -108,11 +108,11 @@ struct SettingsScreen: View {
                                 Line()
                             }
                             Button { confirmReset = true } label: {
-                                Text("Сбросить прогресс").font(.system(size: 16)).foregroundStyle(markDontKnow)
+                                Text("Сбросить прогресс").font(.ui(16)).foregroundStyle(markDontKnow)
                                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18).padding(.vertical, 15)
                             }
                             if let message {
-                                Text(message).font(.system(size: 14)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
+                                Text(message).font(.ui(14)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
                                     .accessibilityIdentifier("dataMessage")
                             }
                         }
@@ -208,14 +208,14 @@ struct SettingsScreen: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .lastTextBaseline) {
                 Text("\(known)").font(.serif(40, .semibold)).foregroundStyle(p.word).accessibilityIdentifier("knownCount")
-                Text("из \(all) слов знаю").font(.system(size: 15)).foregroundStyle(p.secondary)
+                Text("из \(all) слов знаю").font(.ui(15)).foregroundStyle(p.secondary)
             }
             ProgressView(value: all > 0 ? Double(known) / Double(all) : 0).tint(p.known)
             HStack(spacing: 16) {
                 Label("\(dontKnow) не знаю", systemImage: "circle.fill").labelStyle(DotLabel(color: markDontKnow))
                 Label("\(model.repo.todayCount) сегодня", systemImage: "circle.fill").labelStyle(DotLabel(color: p.accent))
             }
-            .font(.system(size: 13)).foregroundStyle(p.secondary)
+            .font(.ui(13)).foregroundStyle(p.secondary)
         }
         .padding(18)
         .background(RoundedRectangle(cornerRadius: 20).fill(p.card))
@@ -225,7 +225,7 @@ struct SettingsScreen: View {
     private var themes: some View {
         let p = model.palette
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Тема").font(.system(size: 16)).foregroundStyle(p.text).padding(.horizontal, 18)
+            Text("Тема").font(.ui(16)).foregroundStyle(p.text).padding(.horizontal, 18)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(palettes.indices, id: \.self) { i in
@@ -236,7 +236,7 @@ struct SettingsScreen: View {
                                 Circle().fill(pal.bg).frame(width: 52, height: 52)
                                     .overlay(Circle().fill(pal.accent).frame(width: 26, height: 26))
                                     .overlay(Circle().stroke(on ? p.accent : p.divider, lineWidth: on ? 3 : 1))
-                                Text(pal.name).font(.system(size: 12)).foregroundStyle(on ? p.accent : p.secondary)
+                                Text(pal.name).font(.ui(12)).foregroundStyle(on ? p.accent : p.secondary)
                             }
                         }
                         .accessibilityIdentifier("theme-\(pal.name)")
@@ -252,7 +252,7 @@ struct SettingsScreen: View {
         let p = model.palette
         return VStack(alignment: .leading) {
             HStack(alignment: .lastTextBaseline) {
-                Text("Размер шрифта: \(model.prefs.wordSize)").font(.system(size: 16)).foregroundStyle(p.text)
+                Text("Размер шрифта: \(model.prefs.wordSize)").font(.ui(16)).foregroundStyle(p.text)
                 Spacer()
                 Text("реч").font(.serif(CGFloat(model.prefs.wordSize) * 0.6)).foregroundStyle(p.word)
             }
@@ -272,9 +272,9 @@ struct SettingsScreen: View {
             Text("Автор: Константин Хоренко")
             Text("Лицензия: GNU GPL v3 или новее")
             Text("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\nУдарения: Викисловарь (kaikki.org), CC BY-SA.\nЧасть карточек и подсказок составлена по материалам из открытых источников.\nШрифты Literata и Ruslan Display: SIL Open Font License.")
-                .font(.system(size: 13)).padding(.top, 10)
+                .font(.ui(13)).padding(.top, 10)
         }
-        .font(.system(size: 14)).foregroundStyle(p.secondary)
+        .font(.ui(14)).foregroundStyle(p.secondary)
         .padding(18).frame(maxWidth: .infinity, alignment: .leading)
     }
 
@@ -283,12 +283,12 @@ struct SettingsScreen: View {
         return Button(action: action) {
             HStack {
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(title).font(.system(size: 16)).foregroundStyle(p.text)
-                    if let summary { Text(summary).font(.system(size: 13)).foregroundStyle(p.secondary) }
+                    Text(title).font(.ui(16)).foregroundStyle(p.text)
+                    if let summary { Text(summary).font(.ui(13)).foregroundStyle(p.secondary) }
                 }
                 .multilineTextAlignment(.leading)
                 Spacer()
-                Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(p.faint)
+                Image(systemName: "chevron.right").font(.ui(14)).foregroundStyle(p.faint)
             }
             .padding(.horizontal, 18).padding(.vertical, 13)
             .contentShape(Rectangle())
@@ -300,8 +300,8 @@ struct SettingsScreen: View {
         let p = model.palette
         return Toggle(isOn: Binding(get: { on }, set: set)) {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 16)).foregroundStyle(p.text)
-                if let summary { Text(summary).font(.system(size: 13)).foregroundStyle(p.secondary) }
+                Text(title).font(.ui(16)).foregroundStyle(p.text)
+                if let summary { Text(summary).font(.ui(13)).foregroundStyle(p.secondary) }
             }
         }
         .tint(p.accent)
@@ -312,7 +312,7 @@ struct SettingsScreen: View {
     private func choice(_ title: String, _ options: [String], _ selected: Int, _ onSelect: @escaping (Int) -> Void) -> some View {
         let p = model.palette
         return VStack(alignment: .leading, spacing: 8) {
-            Text(title).font(.system(size: 16)).foregroundStyle(p.text)
+            Text(title).font(.ui(16)).foregroundStyle(p.text)
             Picker(title, selection: Binding(get: { selected }, set: onSelect)) {
                 ForEach(options.indices, id: \.self) { i in Text(options[i]).tag(i) }
             }

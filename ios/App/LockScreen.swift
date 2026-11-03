@@ -32,7 +32,7 @@ struct LockSetup: View {
                 Text("Обои обновляются, когда срабатывает команда, а не сразу после ответа.")
             }
         }
-        .font(.system(size: 13)).foregroundStyle(p.secondary)
+        .font(.ui(13)).foregroundStyle(p.secondary)
     }
 
     private func steps(_ items: [String]) -> some View {
@@ -83,7 +83,7 @@ struct WallpaperCard: View {
                         card(w, examples: 0, related: false, scale: 1)
                     }
                 } else {
-                    Text("Слова закончились: выберите другие в приложении").font(.system(size: 44)).foregroundStyle(palette.text)
+                    Text("Слова закончились: выберите другие в приложении").font(.ui(44 / uiScale)).foregroundStyle(palette.text)
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -94,33 +94,35 @@ struct WallpaperCard: View {
     }
 
     private func card(_ w: Word, examples: Int, related: Bool, scale s: CGFloat) -> some View {
-        VStack(alignment: .leading, spacing: 18 * s) {
+        // A picture of a fixed size: its fonts do not grow on an iPad.
+        let f = s / uiScale
+        return VStack(alignment: .leading, spacing: 18 * s) {
             if recall {
-                Text("Вспомните слово").font(.system(size: 34 * s, weight: .semibold)).foregroundStyle(palette.accent)
-                meanings(w, size: 58 * s)
+                Text("Вспомните слово").font(.ui(34 * f, .semibold)).foregroundStyle(palette.accent)
+                meanings(w, size: 58 * f)
                 // The Serbian sentences would give the word away; their translations are the hints.
                 ForEach(Array(w.examples.prefix(examples).enumerated()), id: \.offset) { _, e in
-                    Text("«\(e.ru)»").font(.system(size: 36 * s)).foregroundStyle(palette.secondary)
+                    Text("«\(e.ru)»").font(.ui(36 * f)).foregroundStyle(palette.secondary)
                 }
             } else {
-                if let sec = prefs.secondary(w.cyr), !w.isArticle { Text(sec).font(.system(size: 40 * s)).foregroundStyle(palette.secondary) }
+                if let sec = prefs.secondary(w.cyr), !w.isArticle { Text(sec).font(.ui(40 * f)).foregroundStyle(palette.secondary) }
                 Text(w.isArticle && w.pos == "compare" ? (w.meanings.first ?? w.cyr) : prefs.headword(w))
-                    .font(.serif(110 * s, .semibold)).foregroundStyle(palette.word).minimumScaleFactor(0.4).lineLimit(2)
+                    .font(.serif(110 * f, .semibold)).foregroundStyle(palette.word).minimumScaleFactor(0.4).lineLimit(2)
                 if !w.isArticle {
                     let gram = [Labels.pos(w.pos), w.gram, w.forms].filter { !$0.isEmpty }.joined(separator: " · ")
-                    if !gram.isEmpty { Text(gram).font(.system(size: 34 * s)).foregroundStyle(palette.secondary) }
-                    meanings(w, size: 54 * s)
+                    if !gram.isEmpty { Text(gram).font(.ui(34 * f)).foregroundStyle(palette.secondary) }
+                    meanings(w, size: 54 * f)
                 }
                 ForEach(Array(w.examples.prefix(examples).enumerated()), id: \.offset) { _, e in
                     VStack(alignment: .leading, spacing: 4 * s) {
-                        Text(highlighted(prefs.primary(e.sr), palette.accent, size: 44 * s)).font(.serif(44 * s)).foregroundStyle(palette.text)
-                        Text(e.ru).font(.system(size: 34 * s)).foregroundStyle(palette.secondary)
+                        Text(highlighted(prefs.primary(e.sr), palette.accent, size: 44 * f)).font(.serif(44 * f)).foregroundStyle(palette.text)
+                        Text(e.ru).font(.ui(34 * f)).foregroundStyle(palette.secondary)
                     }
                     .padding(.top, 8 * s)
                 }
                 if related {
-                    if !w.syn.isEmpty { pairs("синонимы", w.syn, size: 36 * s) }
-                    if !w.ant.isEmpty { pairs("антонимы", w.ant, size: 36 * s) }
+                    if !w.syn.isEmpty { pairs("синонимы", w.syn, size: 36 * f) }
+                    if !w.ant.isEmpty { pairs("антонимы", w.ant, size: 36 * f) }
                 }
             }
         }
@@ -134,7 +136,7 @@ struct WallpaperCard: View {
 
     private func pairs(_ title: String, _ words: [String], size: CGFloat) -> some View {
         (Text(title + ": ").foregroundColor(palette.accent) + Text(words.prefix(6).map { prefs.primary($0) }.joined(separator: ", ")).foregroundColor(palette.text))
-            .font(.system(size: size))
+            .font(.ui(size))
     }
 }
 

@@ -80,7 +80,7 @@ struct CategoriesScreen: View {
                     Group {
                         GroupTitle(text: "Разделы")
                         Text("Долгое нажатие на раздел, тему или отметку открывает список слов")
-                            .font(.system(size: 12)).foregroundStyle(p.secondary).padding(.horizontal, 26).padding(.bottom, 8)
+                            .font(.ui(12)).foregroundStyle(p.secondary).padding(.horizontal, 26).padding(.bottom, 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         chips(Labels.sections.filter { count($0.0) > 0 }.map { ($0.0, "\($0.1) · \(count($0.0))") })
                     }
@@ -112,7 +112,7 @@ struct CategoriesScreen: View {
                 dismiss()
             } label: {
                 Text("Учить \(total) \(plural(total, "карточку", "карточки", "карточек"))")
-                    .font(.system(size: 17, weight: .semibold)).foregroundStyle(.white)
+                    .font(.ui(17, .semibold)).foregroundStyle(.white)
                     .frame(maxWidth: .infinity).frame(height: 54)
                     .background(Capsule().fill(sel.isEmpty ? p.faint : p.accent))
             }
@@ -141,9 +141,9 @@ struct CategoriesScreen: View {
             Text(name.components(separatedBy: " ")[0]).font(.serif(17, .bold)).foregroundStyle(on ? .white : p.accent)
                 .frame(width: 44, height: 44).background(RoundedRectangle(cornerRadius: 12).fill(on ? p.accent : p.highlight))
             VStack(alignment: .leading, spacing: 6) {
-                Text(name.components(separatedBy: "· ").last ?? name).font(.system(size: 16, weight: .medium)).foregroundStyle(p.text)
+                Text(name.components(separatedBy: "· ").last ?? name).font(.ui(16, .medium)).foregroundStyle(p.text)
                 ProgressView(value: all > 0 ? Double(known) / Double(all) : 0).tint(p.known)
-                Text("знаю \(known) из \(all)").font(.system(size: 12)).foregroundStyle(p.secondary)
+                Text("знаю \(known) из \(all)").font(.ui(12)).foregroundStyle(p.secondary)
             }
             Button { router.go(.list(id)) } label: {
                 Image(systemName: "chevron.right").foregroundStyle(p.secondary).frame(width: 32, height: 32)
@@ -173,7 +173,7 @@ struct CategoriesScreen: View {
 
     private func chip(_ title: String, on: Bool) -> some View {
         let p = model.palette
-        return Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(on ? .white : p.text)
+        return Text(title).font(.ui(14, .medium)).foregroundStyle(on ? .white : p.text)
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(Capsule().fill(on ? p.accent : p.card))
             .overlay(Capsule().stroke(on ? p.accent : p.divider))
@@ -210,9 +210,9 @@ struct SearchScreen: View {
                         HStack {
                             Text(model.prefs.primary(w.cyr)).font(.serif(18, .semibold)).foregroundStyle(p.word)
                             Spacer()
-                            Text(Labels.levelShort(w.level)).font(.system(size: 12)).foregroundStyle(p.secondary)
+                            Text(Labels.levelShort(w.level)).font(.ui(12)).foregroundStyle(p.secondary)
                         }
-                        Text(w.meanings.joined(separator: " · ")).font(.system(size: 14)).foregroundStyle(p.secondary)
+                        Text(w.meanings.joined(separator: " · ")).font(.ui(14)).foregroundStyle(p.secondary)
                     }
                     .multilineTextAlignment(.leading)
                 }
@@ -259,7 +259,7 @@ struct ListScreen: View {
                         Text(w.pos == "compare" ? (w.meanings.first ?? w.cyr) : model.prefs.headword(w))
                             .font(.serif(18, .semibold)).foregroundStyle(p.word)
                         if !w.isArticle {
-                            Text(w.meanings.joined(separator: " · ")).font(.system(size: 14)).foregroundStyle(p.secondary)
+                            Text(w.meanings.joined(separator: " · ")).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                     }
                     .multilineTextAlignment(.leading)

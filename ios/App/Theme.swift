@@ -50,9 +50,29 @@ let palettes = [
     Palette("Шума", 0x111612, 0x1A211B, 0x8DC26F, 0xE6F0E0, 0x26382A, true),
 ]
 
+// An iPad shows the phone layout a size larger, as Android tablets do.
+let uiScale: CGFloat = UIDevice.current.userInterfaceIdiom == .pad ? 1.15 : 1
+
+// Text without a size of its own and the system controls follow Dynamic Type, not uiScale: on an
+// iPad they go one step up from the user's choice.
+struct LargerOnPad: ViewModifier {
+    @Environment(\.dynamicTypeSize) private var size
+
+    func body(content: Content) -> some View {
+        let all = DynamicTypeSize.allCases
+        let i = all.firstIndex(of: size) ?? 0
+        content.dynamicTypeSize(uiScale > 1 ? all[min(i + 1, all.count - 1)] : size)
+    }
+}
+
 extension Font {
+    static func ui(_ size: CGFloat, _ weight: Font.Weight = .regular, design: Font.Design = .default) -> Font {
+        .system(size: size * uiScale, weight: weight, design: design)
+    }
+
     // Literata is a variable font: the weight is a position on its "wght" axis.
-    static func serif(_ size: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+    static func serif(_ points: CGFloat, _ weight: Font.Weight = .regular) -> Font {
+        let size = points * uiScale
         let wght: Double = weight == .bold ? 700 : weight == .semibold ? 600 : weight == .medium ? 500 : 400
         guard let base = UIFont(name: "Literata-Regular", size: size) else { return .system(size: size, weight: weight, design: .serif) }
         // "wght" and "opsz": the large headwords want Literata's large-size drawing.
@@ -61,5 +81,5 @@ extension Font {
         return Font(UIFont(descriptor: desc, size: size))
     }
 
-    static func display(_ size: CGFloat) -> Font { .custom("RuslanDisplay", size: size) }
+    static func display(_ size: CGFloat) -> Font { .custom("RuslanDisplay", size: size * uiScale) }
 }

@@ -10,7 +10,7 @@ func grammarText(_ s: String, prefs: Prefs, palette p: Palette) -> AttributedStr
     func piece(_ text: String, _ color: Color? = nil, serif: Bool = false) -> AttributedString {
         var a = AttributedString(text)
         if let color { a.foregroundColor = color }
-        if serif { a.font = .serif(16, bold ? .bold : .semibold) } else if bold { a.font = .system(size: 16, weight: .bold) }
+        if serif { a.font = .serif(16, bold ? .bold : .semibold) } else if bold { a.font = .ui(16, .bold) }
         return a
     }
     while i < s.endIndex {
@@ -95,7 +95,7 @@ struct GrammarScreen: View {
 
     private func tile(_ title: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(.system(size: 16)).foregroundStyle(model.palette.text)
+            Text(title).font(.ui(16)).foregroundStyle(model.palette.text)
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading).padding(16)
                 .background(RoundedRectangle(cornerRadius: 16).fill(model.palette.card))
@@ -121,7 +121,7 @@ struct TopicScreen: View {
                         if let i = topics.firstIndex(where: { $0.id == id }), i + 1 < topics.count {
                             let next = topics[i + 1]
                             Button { router.go(.topic(next.id)) } label: {
-                                Text("Дальше: \(next.title) ›").font(.system(size: 16, weight: .semibold)).foregroundStyle(p.accent)
+                                Text("Дальше: \(next.title) ›").font(.ui(16, .semibold)).foregroundStyle(p.accent)
                                     .multilineTextAlignment(.leading)
                             }
                             .padding(.top, 12)
@@ -144,21 +144,21 @@ struct TopicScreen: View {
         let text = { (s: String) in Text(grammarText(s, prefs: model.prefs, palette: p)).foregroundStyle(p.text) }
         switch b.type {
         case "p":
-            text(b.text ?? "").font(.system(size: 16))
+            text(b.text ?? "").font(.ui(16))
         case "tip":
-            text(b.text ?? "").font(.system(size: 15)).padding(14).frame(maxWidth: .infinity, alignment: .leading)
+            text(b.text ?? "").font(.ui(15)).padding(14).frame(maxWidth: .infinity, alignment: .leading)
                 .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight.opacity(0.6)))
         case "list":
             VStack(alignment: .leading, spacing: 6) {
                 ForEach(Array((b.items ?? []).enumerated()), id: \.offset) { _, it in
-                    HStack(alignment: .top, spacing: 6) { Text("•").foregroundStyle(p.accent); text(it).font(.system(size: 16)) }
+                    HStack(alignment: .top, spacing: 6) { Text("•").foregroundStyle(p.accent); text(it).font(.ui(16)) }
                 }
             }
         case "ex":
             Button { model.speech.speak(plain(b.sr ?? "")) } label: {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(highlighted(model.prefs.primary(b.sr ?? ""), p.accent)).font(.serif(17)).foregroundStyle(p.text)
-                    Text(b.ru ?? "").font(.system(size: 14)).foregroundStyle(p.secondary)
+                    Text(b.ru ?? "").font(.ui(14)).foregroundStyle(p.secondary)
                 }
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -168,12 +168,12 @@ struct TopicScreen: View {
                 Grid(alignment: .leading, horizontalSpacing: 14, verticalSpacing: 8) {
                     GridRow {
                         ForEach(Array((b.head ?? []).enumerated()), id: \.offset) { _, h in
-                            text(h).font(.system(size: 13, weight: .semibold)).fixedSize()
+                            text(h).font(.ui(13, .semibold)).fixedSize()
                         }
                     }
                     ForEach(Array((b.rows ?? []).enumerated()), id: \.offset) { _, row in
                         GridRow {
-                            ForEach(Array(row.enumerated()), id: \.offset) { _, c in text(c).font(.system(size: 15)).fixedSize() }
+                            ForEach(Array(row.enumerated()), id: \.offset) { _, c in text(c).font(.ui(15)).fixedSize() }
                         }
                     }
                 }

@@ -16,7 +16,7 @@ struct CardScreen: View {
                     ScrollView {
                         VStack(alignment: .leading, spacing: 6) {
                             if let stage = s.stage {
-                                Text(stage).font(.system(size: 12, weight: .semibold)).foregroundStyle(p.accent)
+                                Text(stage).font(.ui(12, .semibold)).foregroundStyle(p.accent)
                                     .accessibilityIdentifier("stage")
                             }
                             WordBody(w: w, covered: s.covered, hideWord: s.recall && !s.revealed,
@@ -65,7 +65,7 @@ struct TopBar: View {
             ForEach([("magnifyingglass", "Поиск", Route.search), ("book", "Грамматика", Route.grammar), ("gearshape", "Настройки", Route.settings)],
                     id: \.1) { item in
                 Button { router.go(item.2) } label: {
-                    Image(systemName: item.0).font(.system(size: 19)).foregroundStyle(p.text).frame(width: 40, height: 40)
+                    Image(systemName: item.0).font(.ui(19)).foregroundStyle(p.text).frame(width: 40, height: 40)
                 }
                 .accessibilityLabel(item.1)
             }
@@ -87,9 +87,9 @@ struct DeckChip: View {
         let (k, t) = counts(cats)
         Button { router.go(.categories) } label: {
             HStack(spacing: 6) {
-                Text(title).font(.system(size: 15, weight: .semibold)).foregroundStyle(p.text)
-                Text("\(k)/\(t)").font(.system(size: 13)).foregroundStyle(p.secondary).accessibilityIdentifier("deckCount")
-                Image(systemName: "chevron.down").font(.system(size: 12)).foregroundStyle(p.secondary)
+                Text(title).font(.ui(15, .semibold)).foregroundStyle(p.text)
+                Text("\(k)/\(t)").font(.ui(13)).foregroundStyle(p.secondary).accessibilityIdentifier("deckCount")
+                Image(systemName: "chevron.down").font(.ui(12)).foregroundStyle(p.secondary)
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(Capsule().fill(p.card))
@@ -113,7 +113,7 @@ struct Star: View {
     var body: some View {
         let fav = model.repo.progress(w).fav
         Button { model.toggleFav(w) } label: {
-            Image(systemName: fav ? "star.fill" : "star").font(.system(size: 20))
+            Image(systemName: fav ? "star.fill" : "star").font(.ui(20))
                 .foregroundStyle(fav ? markUnsure : model.palette.faint).frame(width: 40, height: 40)
         }
         .accessibilityLabel("Избранное")
@@ -124,7 +124,7 @@ struct LearnedToast: View {
     @EnvironmentObject var model: AppModel
     var body: some View {
         Label("Слово отмечено выученным", systemImage: "checkmark")
-            .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+            .font(.ui(14, .semibold)).foregroundStyle(.white)
             .padding(.horizontal, 16).padding(.vertical, 9)
             .background(Capsule().fill(model.palette.known))
             .accessibilityIdentifier("learnedToast")
@@ -136,7 +136,7 @@ struct LongPressHint: View {
     var body: some View {
         let p = model.palette
         HStack {
-            Text("Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.").font(.system(size: 14)).foregroundStyle(p.text)
+            Text("Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.").font(.ui(14)).foregroundStyle(p.text)
             Button("✕") { model.closeHint() }.foregroundStyle(p.secondary).frame(width: 40, height: 40)
                 .accessibilityLabel("Закрыть")
         }
@@ -173,7 +173,7 @@ struct MarksRow: View {
     private func mark(_ title: String, id: String, on: Bool, color: Color) -> some View {
         HStack(spacing: 8) {
             Circle().fill(on ? .white : color).frame(width: 8, height: 8)
-            Text(title).font(.system(size: 16, weight: .semibold)).foregroundStyle(on ? .white : model.palette.text)
+            Text(title).font(.ui(16, .semibold)).foregroundStyle(on ? .white : model.palette.text)
         }
         .frame(maxWidth: .infinity).padding(.vertical, 12)
         .background(Capsule().fill(on ? color : .clear))
@@ -191,13 +191,13 @@ struct BottomNav: View {
         let p = model.palette
         HStack(spacing: 10) {
             Button { model.step(-1) } label: {
-                Image(systemName: "chevron.left").font(.system(size: 20, weight: .semibold)).foregroundStyle(p.text)
+                Image(systemName: "chevron.left").font(.ui(20, .semibold)).foregroundStyle(p.text)
                     .frame(width: 54, height: 54).background(Circle().fill(p.card))
             }
             .accessibilityLabel("Предыдущее слово")
             Button { model.step(1) } label: {
                 HStack {
-                    Text("Дальше").font(.system(size: 17, weight: .semibold))
+                    Text("Дальше").font(.ui(17, .semibold))
                     Image(systemName: "arrow.right")
                 }
                 .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)

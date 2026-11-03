@@ -70,7 +70,7 @@ struct SectionLabel: View {
     @EnvironmentObject var model: AppModel
     let text: String
     var body: some View {
-        Text(text.uppercased()).font(.system(size: 12, weight: .semibold)).tracking(1).foregroundStyle(model.palette.secondary)
+        Text(text.uppercased()).font(.ui(12, .semibold)).tracking(1).foregroundStyle(model.palette.secondary)
             .padding(.bottom, 6)
     }
 }
@@ -102,7 +102,7 @@ struct WordBody: View {
         let size = CGFloat(w.pos == "phrase" ? Double(prefs.wordSize) * 0.72 : Double(prefs.wordSize))
         return VStack(alignment: .leading, spacing: 0) {
             if let sec = prefs.secondary(w.cyr) {
-                Text(sec).font(.system(size: 15)).foregroundStyle(p.secondary).padding(.trailing, 40)
+                Text(sec).font(.ui(15)).foregroundStyle(p.secondary).padding(.trailing, 40)
             }
             Text(prefs.headword(w)).font(.serif(size, .semibold)).foregroundStyle(p.word).padding(.trailing, 40)
                 .accessibilityIdentifier("headword")
@@ -114,7 +114,7 @@ struct WordBody: View {
                 .accessibilityLabel("Произнести")
                 VStack(alignment: .leading, spacing: 2) {
                     GramLine(w: w)
-                    if !w.forms.isEmpty { Text(prefs.primary(w.forms)).font(.system(size: 14)).foregroundStyle(p.secondary) }
+                    if !w.forms.isEmpty { Text(prefs.primary(w.forms)).font(.ui(14)).foregroundStyle(p.secondary) }
                 }
             }
             .padding(.top, 10)
@@ -123,7 +123,7 @@ struct WordBody: View {
                 Meanings(w: w)
                 if covered {
                     Button(action: onUncover) {
-                        Text("Показать перевод").font(.system(size: 15, weight: .semibold)).foregroundStyle(p.accent)
+                        Text("Показать перевод").font(.ui(15, .semibold)).foregroundStyle(p.accent)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight))
                     }
@@ -139,14 +139,14 @@ struct GramLine: View {
     @EnvironmentObject var model: AppModel
     let w: Word
     var body: some View {
-        Text(line()).font(.system(size: 14)).foregroundStyle(model.palette.secondary)
+        Text(line()).font(.ui(14)).foregroundStyle(model.palette.secondary)
     }
 
     private func line() -> AttributedString {
         var out = AttributedString(Labels.pos(w.pos))
         guard !w.gram.isEmpty else { return out }
         var g = AttributedString("  " + w.gram)
-        g.font = .system(size: 14, weight: .semibold)
+        g.font = .ui(14, .semibold)
         if w.ruGram.isEmpty {
             g.foregroundColor = w.pos == "noun" ? model.palette.accent : model.palette.text
             return out + g
@@ -167,7 +167,7 @@ struct Meanings: View {
         VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(w.meanings.enumerated()), id: \.offset) { i, m in
                 HStack(alignment: .top, spacing: 10) {
-                    Text("\(i + 1)").font(.system(size: 12, weight: .bold)).foregroundStyle(p.accent)
+                    Text("\(i + 1)").font(.ui(12, .bold)).foregroundStyle(p.accent)
                         .frame(width: 22, height: 22).background(Circle().fill(p.highlight))
                     Text(m).font(.serif(19)).foregroundStyle(p.text)
                 }
@@ -200,7 +200,7 @@ struct GrammarLinks: View {
 
     private func link(_ title: String, _ action: @escaping () -> Void) -> some View {
         Button(action: action) {
-            Text(title).font(.system(size: 13)).foregroundStyle(model.palette.accent)
+            Text(title).font(.ui(13)).foregroundStyle(model.palette.accent)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 10).padding(.vertical, 5)
                 .background(Capsule().stroke(model.palette.divider))
@@ -219,7 +219,7 @@ struct WordChip: View {
         Button {
             if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(sr) }
         } label: {
-            Text(model.prefs.primary(sr) + (target != nil ? " ›" : "")).font(.system(size: 15)).foregroundStyle(model.palette.text)
+            Text(model.prefs.primary(sr) + (target != nil ? " ›" : "")).font(.ui(15)).foregroundStyle(model.palette.text)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Capsule().fill(model.palette.panel))
@@ -242,7 +242,7 @@ struct Details: View {
                     Button { model.speech.speak(plain(e.sr)) } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(highlighted(model.prefs.primary(e.sr), p.accent)).font(.serif(17)).foregroundStyle(p.text)
-                            Text(e.ru).font(.system(size: 14)).foregroundStyle(p.secondary)
+                            Text(e.ru).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -269,13 +269,13 @@ struct Details: View {
             let notes = ([w.note] + w.tips).filter { !$0.isEmpty }
             if !notes.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Полезно знать").font(.system(size: 13, weight: .semibold)).foregroundStyle(p.accent)
+                    Text("Полезно знать").font(.ui(13, .semibold)).foregroundStyle(p.accent)
                     ForEach(notes, id: \.self) { t in
                         HStack(alignment: .top, spacing: 6) {
                             Text("•")
                             Text(t)
                         }
-                        .font(.system(size: 15)).foregroundStyle(p.text)
+                        .font(.ui(15)).foregroundStyle(p.text)
                     }
                 }
                 .padding(14)
@@ -302,7 +302,7 @@ struct RelatedList: View {
                 } label: {
                     (Text(model.prefs.primary(r.sr) + (target != nil ? " ›" : "")).fontWeight(.semibold).foregroundColor(p.word)
                         + Text("  —  ").foregroundColor(p.faint) + Text(r.ru).foregroundColor(p.text))
-                        .font(.system(size: 16))
+                        .font(.ui(16))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .multilineTextAlignment(.leading)
                 }
@@ -327,11 +327,11 @@ struct RecallBody: View {
                 Divider().overlay(p.divider)
                 SectionLabel(text: "Как сказать по-сербски")
                 ForEach(Array(w.examples.enumerated()), id: \.offset) { _, e in
-                    Text("«\(e.ru)»").font(.system(size: 16)).foregroundStyle(p.text)
+                    Text("«\(e.ru)»").font(.ui(16)).foregroundStyle(p.text)
                 }
             }
             Button(action: onReveal) {
-                Text("Показать слово").font(.system(size: 16, weight: .semibold)).foregroundStyle(p.accent)
+                Text("Показать слово").font(.ui(16, .semibold)).foregroundStyle(p.accent)
                     .frame(maxWidth: .infinity).padding(.vertical, 14)
                     .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight))
             }
@@ -355,9 +355,9 @@ struct ArticleBody: View {
                 .accessibilityIdentifier("articleTitle")
             if compare {
                 RelatedList(items: w.related, from: w.key)
-                if !w.note.isEmpty { Text(w.note).font(.system(size: 16)).foregroundStyle(p.text) }
+                if !w.note.isEmpty { Text(w.note).font(.ui(16)).foregroundStyle(p.text) }
             } else {
-                Text(w.note).font(.system(size: 16)).foregroundStyle(p.text)
+                Text(w.note).font(.ui(16)).foregroundStyle(p.text)
                 if !w.related.isEmpty {
                     SectionLabel(text: "Слова")
                     RelatedList(items: w.related, from: w.key)
@@ -370,7 +370,7 @@ struct ArticleBody: View {
                     Button { model.speech.speak(plain(e.sr)) } label: {
                         VStack(alignment: .leading, spacing: 2) {
                             Text(highlighted(model.prefs.primary(e.sr), p.accent)).font(.serif(17)).foregroundStyle(p.text)
-                            Text(e.ru).font(.system(size: 14)).foregroundStyle(p.secondary)
+                            Text(e.ru).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)

@@ -7,7 +7,7 @@ struct StatsNotice: View {
         let p = model.palette
         HStack {
             Text("Приложение раз в день отправляет анонимную статистику: сколько карточек показано, какие разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика».")
-                .font(.system(size: 14)).foregroundStyle(p.text)
+                .font(.ui(14)).foregroundStyle(p.text)
                 .accessibilityIdentifier("statsNotice")
             Button("✕") { model.closeNotice() }.foregroundStyle(p.secondary).frame(width: 40, height: 40)
                 .accessibilityLabel("Понятно")
@@ -24,7 +24,7 @@ struct FlagButton: View {
     let action: () -> Void
     var body: some View {
         Button(action: action) {
-            Image(systemName: "flag").font(.system(size: 18)).foregroundStyle(model.palette.faint).frame(width: 40, height: 40)
+            Image(systemName: "flag").font(.ui(18)).foregroundStyle(model.palette.faint).frame(width: 40, height: 40)
         }
         .accessibilityLabel("Сообщить об ошибке")
     }
@@ -35,7 +35,7 @@ struct SentToast: View {
     let text: String
     var body: some View {
         Label(text, systemImage: "checkmark")
-            .font(.system(size: 14, weight: .semibold)).foregroundStyle(.white)
+            .font(.ui(14, .semibold)).foregroundStyle(.white)
             .padding(.horizontal, 16).padding(.vertical, 9)
             .background(Capsule().fill(model.palette.known))
             // One element read as its text; left alone, VoiceOver and UI tests get the icon's name.
@@ -125,7 +125,7 @@ struct ReportSheet: View {
             FlowLayout(spacing: 8) {
                 ForEach(w.isArticle ? articleProblems : wordProblems, id: \.0) { k, title in
                     Button { problem = k } label: {
-                        Text(title).font(.system(size: 14, weight: .medium)).foregroundStyle(problem == k ? .white : p.text)
+                        Text(title).font(.ui(14, .medium)).foregroundStyle(problem == k ? .white : p.text)
                             .padding(.horizontal, 14).padding(.vertical, 8)
                             .background(Capsule().fill(problem == k ? p.accent : p.card))
                             .overlay(Capsule().stroke(problem == k ? p.accent : p.divider))
@@ -135,7 +135,7 @@ struct ReportSheet: View {
             }
             Field(placeholder: "Что именно не так, если хотите", text: $text, lines: 4, limit: 2000)
             Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
-            if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.system(size: 14)) }
+            if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.ui(14)) }
         }
         .onAppear {
             if !started {
@@ -171,7 +171,7 @@ struct WriteSheet: View {
             Text("Идея, ошибка, вопрос — что угодно.").foregroundStyle(model.palette.secondary)
             Field(placeholder: "Сообщение", text: $text, lines: 6)
             Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
-            if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.system(size: 14)) }
+            if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.ui(14)) }
         }
         .onAppear {
             if !started {
@@ -212,7 +212,7 @@ struct WhatSentSheet: View {
                     Text(last.map { "Последний пакет, \($0.day)" } ?? "Пока ничего не отправлялось").foregroundStyle(p.text)
                     if let last {
                         ScrollView(.horizontal) {
-                            Text(packetText(last)).font(.system(size: 12, design: .monospaced)).fixedSize()
+                            Text(packetText(last)).font(.ui(12, design: .monospaced)).fixedSize()
                                 .padding(10)
                                 .accessibilityIdentifier("packet")
                         }
@@ -282,12 +282,12 @@ struct HelpSheet: View {
         let p = model.palette
         return HStack {
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(.system(size: 16)).foregroundStyle(p.text)
-                Text(summary).font(.system(size: 13)).foregroundStyle(p.secondary)
+                Text(title).font(.ui(16)).foregroundStyle(p.text)
+                Text(summary).font(.ui(13)).foregroundStyle(p.secondary)
             }
             .multilineTextAlignment(.leading)
             Spacer()
-            Image(systemName: "chevron.right").font(.system(size: 14)).foregroundStyle(p.faint)
+            Image(systemName: "chevron.right").font(.ui(14)).foregroundStyle(p.faint)
         }
         .padding(.horizontal, 18).padding(.vertical, 13)
         .contentShape(Rectangle())

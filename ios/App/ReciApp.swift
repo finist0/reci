@@ -44,9 +44,10 @@ struct ReciApp: App {
         }
         // On an iPad the phone layout stays a column of reading width in the middle: stretched to
         // the full width, lines grow too long and the buttons drift apart.
-        .frame(maxWidth: 680)
+        .frame(maxWidth: 680 * uiScale)
         .frame(maxWidth: .infinity)
         .background(model.palette.bg.ignoresSafeArea())
+        .modifier(LargerOnPad())
         .environmentObject(model)
         .environmentObject(router)
         .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
@@ -71,7 +72,7 @@ struct Header: View {
     var body: some View {
         HStack(spacing: 12) {
             Button { dismiss() } label: {
-                Image(systemName: "arrow.left").font(.system(size: 18, weight: .semibold)).foregroundStyle(model.palette.text)
+                Image(systemName: "arrow.left").font(.ui(18, .semibold)).foregroundStyle(model.palette.text)
                     .frame(width: 44, height: 44).background(Circle().fill(model.palette.card))
             }
             .accessibilityLabel("Назад")
@@ -86,7 +87,7 @@ struct GroupTitle: View {
     @EnvironmentObject var model: AppModel
     let text: String
     var body: some View {
-        Text(text.uppercased()).font(.system(size: 12, weight: .semibold)).tracking(1).foregroundStyle(model.palette.accent)
+        Text(text.uppercased()).font(.ui(12, .semibold)).tracking(1).foregroundStyle(model.palette.accent)
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(.horizontal, 26).padding(.top, 22).padding(.bottom, 8)
     }
