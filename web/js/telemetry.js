@@ -112,6 +112,35 @@ export async function osName(ua = navigator.userAgent, hints = navigator.userAge
     return "other";
 }
 
+// The browser and its version, from the user agent; enough to tell which engine drew a card.
+export function browser(ua = navigator.userAgent) {
+    for (const [re, name] of [[/EdgA?\/(\d+)/, "Edge"], [/FxiOS\/(\d+)/, "Firefox"], [/Firefox\/(\d+)/, "Firefox"],
+                              [/CriOS\/(\d+)/, "Chrome"], [/SamsungBrowser\/(\d+)/, "Samsung Internet"],
+                              [/Chrome\/(\d+)/, "Chrome"], [/Version\/(\d+).*Safari/, "Safari"]]) {
+        const m = ua.match(re);
+        if (m) return `${name} ${m[1]}`;
+    }
+    return "other";
+}
+
+// Where the app runs, sent with every message and crash report so that a card can be seen as
+// the user saw it. No words, answers or progress.
+export function environment() {
+    const media = q => globalThis.matchMedia?.(q).matches ?? false;
+    return {
+        browser: browser(),
+        screen: `${globalThis.innerWidth}x${globalThis.innerHeight} css px`,
+        ratio: globalThis.devicePixelRatio ?? 1,
+        touch: navigator.maxTouchPoints > 0,
+        installed: media("(display-mode: standalone)") || navigator.standalone === true,
+        dark: media("(prefers-color-scheme: dark)"),
+        locale: String(navigator.language).slice(0, 120),
+        mode: prefs.cardMode, theme: prefs.theme, latin: prefs.latinFirst, both: prefs.showBothScripts,
+        stress: prefs.accentMode, size: prefs.wordSize, marks: prefs.useMarks, review: prefs.reviewKnown,
+        speak: prefs.autoSpeak, active: prefs.activeSize, order: prefs.order,
+    };
+}
+
 // --- The daily ping ---
 
 export async function ping(app, learned, day = localDay(), c = state.counts) {
@@ -210,7 +239,8 @@ export const isEmail = s => /^[^\s@<>"]{1,64}@[^\s@<>"]{1,128}\.[^\s@<>"]{2,32}$
 // It carries its own id, so that it cannot be tied to the statistics of the same install.
 export async function sendFeedback(message, email, app) {
     state.email = email;
-    const m = { id: state.feedbackId, platform: platform(), app: app || "unknown", os: await osName(), ...message };
+    const m = { id: state.feedbackId, platform: platform(), app: app || "unknown", os: await osName(), ...message,
+                env: environment() };
     // The server refuses control characters; pasted text may carry some.
     m.text = (m.text ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
     if (!m.text) delete m.text;
