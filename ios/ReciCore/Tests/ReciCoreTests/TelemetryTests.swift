@@ -197,6 +197,53 @@ final class TelemetryTests: XCTestCase {
         XCTAssertTrue(t.state.queue.isEmpty)
     }
 
+    func testAMessageTellsWhereTheAppRunsWithinTheServerLimits() async throws {
+        var prefs = Prefs()
+        prefs.latinFirst = true
+        let env = Env.of(prefs).merging(["device": "iPhone15,2", "screen": "393x852 pt"]) { a, _ in a }
+        await t.sendFeedback(kind: "app", text: "Карточка не помещается", card: nil, email: "", app: "1.2", os: "iOS 18.6", env: env)
+        let sent = try XCTUnwrap(posts[0].body["env"] as? [String: String])
+        let rules = (fields["feedback"] as! [String: Any])["env"] as! [String: Any]
+        let name = try NSRegularExpression(pattern: rules["name"] as! String)
+        XCTAssertLessThanOrEqual(sent.count, rules["maxEntries"] as! Int)
+        for (k, v) in sent {
+            XCTAssertNotNil(name.firstMatch(in: k, range: NSRange(k.startIndex..., in: k)), k)
+            XCTAssertLessThanOrEqual(v.count, rules["maxString"] as! Int, k)
+            XCTAssertFalse(v.unicodeScalars.contains { $0.value < 0x20 }, k)
+        }
+        XCTAssertEqual(sent["latin"], "true")
+        XCTAssertEqual(sent["lock"], "widget")
+        XCTAssertEqual(sent["device"], "iPhone15,2")
+    }
+
+    func testACrashReportGoesOutWithoutTheRememberedEmail() async {
+        await t.sendFeedback(kind: "app", text: "Привет", card: nil, email: "me@example.org", app: "1.2", os: "iOS 18.6")
+        await t.sendFeedback(kind: "crash", text: "EXC_BAD_ACCESS", card: nil, email: "me@example.org", app: "1.2", os: "iOS 18.6")
+        let m = posts[1].body
+        XCTAssertEqual(m["kind"] as? String, "crash")
+        XCTAssertTrue(names("feedback", "kinds").contains("crash"))
+        XCTAssertNil(m["email"])
+        XCTAssertEqual(t.state.email, "me@example.org")
+    }
+
+    func testAMessageQueuedByAnOlderVersionStillGoesOut() throws {
+        let old = #"{"id":"0f8fad5b-d9cb-469f-a165-70867728950e","kind":"app","platform":"ios","app":"1.1","os":"iOS 18.6","text":"x"}"#
+        let m = try JSONDecoder().decode(Message.self, from: Data(old.utf8))
+        XCTAssertNil(m.env)
+        XCTAssertNil((try JSONSerialization.jsonObject(with: JSONEncoder().encode(m)) as! [String: Any])["env"])
+    }
+
+    func testTheFirstCrashWaitsUntilItIsSentOrDeclined() {
+        let r = CrashReport(dir: FileManager.default.temporaryDirectory.appendingPathComponent("reci-crash-\(UUID().uuidString)"))
+        XCTAssertNil(r.pending)
+        r.keep("first\n" + String(repeating: "x", count: 20000))
+        r.keep("second")
+        XCTAssertTrue(r.pending!.hasPrefix("first"))
+        XCTAssertEqual(r.pending!.count, CrashReport.maxLength)
+        r.clear()
+        XCTAssertNil(r.pending)
+    }
+
     func testWithoutNetworkAMessageWaitsAndGoesOutLater() async {
         reply = { _ in -1 }
         var sent = await t.sendFeedback(kind: "app", text: "Привет", card: nil, email: "", app: "0.12", os: "iOS 18.6")

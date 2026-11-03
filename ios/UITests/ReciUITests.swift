@@ -123,6 +123,27 @@ final class FeedbackUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["statsNotice"].waitForExistence(timeout: 3))
     }
 
+    func testTheLastCrashIsOfferedOnceAndSentOnYes() {
+        launch(["-uitest-reset", "-uitest-crash"])
+        XCTAssertTrue(app.alerts["Приложение закрылось с ошибкой"].waitForExistence(timeout: 10))
+        app.alerts.buttons["Отправить"].tap()
+        XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.waitForExistence(timeout: 5))
+        XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.label.contains("Спасибо"))
+        app.terminate()
+        launch(["-uitest"])
+        XCTAssertFalse(app.alerts["Приложение закрылось с ошибкой"].waitForExistence(timeout: 3))
+    }
+
+    func testADeclinedCrashReportIsNotOfferedAgain() {
+        launch(["-uitest-reset", "-uitest-crash"])
+        XCTAssertTrue(app.alerts["Приложение закрылось с ошибкой"].waitForExistence(timeout: 10))
+        app.alerts.buttons["Не отправлять"].tap()
+        XCTAssertFalse(app.descendants(matching: .any)["sentToast"].firstMatch.waitForExistence(timeout: 2))
+        app.terminate()
+        launch(["-uitest"])
+        XCTAssertFalse(app.alerts["Приложение закрылось с ошибкой"].waitForExistence(timeout: 3))
+    }
+
     func testACardIsReportedFromTheCard() {
         launch()
         report(problem: "stress")
