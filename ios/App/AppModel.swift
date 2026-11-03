@@ -33,18 +33,44 @@ final class AppModel: ObservableObject {
     let speech = Speech()
     let telemetry: Telemetry
     let dict: DictUpdate
+    let crash: CrashReport
+    // The report of the last crash while the user has not answered whether to send it.
+    @Published private(set) var crashOffer: String?
+    private var crashWatcher: CrashWatcher?
 
     init() {
+        let crash = CrashReport(dir: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("crash", isDirectory: true))
+        self.crash = crash
         // UI tests start from a fresh install.
         if ProcessInfo.processInfo.arguments.contains("-uitest-reset") {
             try? FileManager.default.removeItem(at: LockDeck.dir)
             try? FileManager.default.removeItem(at: Dict.dir)
+            crash.clear()
+        }
+        // UI tests cannot crash the app on purpose; "-uitest-crash" stands for a crash at the last start.
+        if ProcessInfo.processInfo.arguments.contains("-uitest-crash") {
+            crash.keep("2026-11-02T10:00:00Z, build 14\nexception type 1\nsignal 11")
         }
         dict = Dict.updater()
         let (words, topics) = Dict.load(patch: dict.stored())
         repo = Repo(store: Store(dir: LockDeck.dir), words: words, topics: topics)
         LockDeck.writeDeck(words)
         telemetry = Telemetry(file: Self.telemetryFile(), post: Self.transport())
+        crashOffer = crash.pending
+        crashWatcher = CrashWatcher { [weak self] text in
+            Task { @MainActor in
+                guard let self else { return }
+                self.crash.keep(text)
+                self.crashOffer = self.crash.pending
+            }
+        }
+    }
+
+    func answerCrash(send: Bool) {
+        if send, let text = crashOffer { sendFeedback(kind: "crash", text: text, card: nil, email: "") }
+        crash.clear()
+        crashOffer = nil
     }
 
     // Where the app runs, sent with every message and crash report so that a card can be seen as

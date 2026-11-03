@@ -49,8 +49,9 @@ public struct CardInfo: Codable, Equatable {
     }
 }
 
-// A message to the developer: an error in a card ("card") or anything else ("app"). `env` says
-// where the app runs; its values are text, which the queue on disk keeps as it was.
+// A message to the developer: an error in a card ("card"), a crash report ("crash") or anything
+// else ("app"). `env` says where the app runs; its values are text, which the queue on disk keeps
+// as it was.
 public struct Message: Codable, Equatable {
     public var id: String
     public var kind: String
@@ -72,6 +73,31 @@ public enum Env {
             "speak": "\(p.autoSpeak)", "active": "\(p.activeSize)", "order": "\(p.order)",
             "lock": p.lockMode == 1 ? "wallpaper" : "widget",
         ]
+    }
+}
+
+// The report of the last crash, kept until the user sends it or says no. Only the first one
+// waits: a crash that repeats says nothing new.
+public struct CrashReport {
+    public static let maxLength = 11000
+    public let file: URL
+
+    public init(dir: URL) {
+        file = dir.appendingPathComponent("crash.txt")
+    }
+
+    public var pending: String? {
+        (try? String(contentsOf: file, encoding: .utf8)).flatMap { $0.isEmpty ? nil : $0 }
+    }
+
+    public func keep(_ text: String) {
+        guard pending == nil else { return }
+        try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        try? Data(text.prefix(Self.maxLength).utf8).write(to: file, options: .atomic)
+    }
+
+    public func clear() {
+        try? FileManager.default.removeItem(at: file)
     }
 }
 
@@ -250,11 +276,13 @@ public final class Telemetry {
     }
 
     // Queues a message and tries to send it; true when it went out at once. It carries its own
-    // id, so that it cannot be tied to the statistics of the same install.
+    // id, so that it cannot be tied to the statistics of the same install. A crash report carries
+    // no email and leaves the remembered one alone.
     @discardableResult
     public func sendFeedback(kind: String, text: String, card: CardInfo?, email: String, app: String, os: String,
                              env: [String: String]? = nil) async -> Bool {
-        state.email = email
+        let email = kind == "crash" ? "" : email
+        if kind != "crash" { state.email = email }
         // The server refuses control characters; pasted text may carry some.
         let clean = String(String.UnicodeScalarView(text.unicodeScalars.filter {
             !(0...8 ~= $0.value || $0.value == 0x0B || $0.value == 0x0C || 0x0E...0x1F ~= $0.value || $0.value == 0x7F)

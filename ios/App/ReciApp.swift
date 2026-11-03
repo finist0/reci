@@ -46,6 +46,14 @@ struct ReciApp: App {
         .environmentObject(router)
         .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
         .preferredColorScheme(model.palette.dark ? .dark : .light)
+        .alert("Приложение закрылось с ошибкой", isPresented: .constant(model.crashOffer != nil)) {
+            Button("Не отправлять", role: .cancel) { model.answerCrash(send: false) }
+            Button("Отправить") { model.answerCrash(send: true) }
+        } message: {
+            Text("В прошлый раз приложение неожиданно закрылось. Отправить разработчику отчёт, чтобы он мог это исправить? " +
+                 "В отчёте место в коде, где случилась ошибка, модель телефона, версия iOS и настройки приложения. " +
+                 "Слова и прогресс не отправляются.")
+        }
     }
 }
 
