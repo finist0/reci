@@ -1,5 +1,8 @@
 import * as R from "./repo.js";
+import { watchErrors } from "./telemetry.js";
 import { start } from "./ui.js";
+
+watchErrors();
 
 if ("serviceWorker" in navigator) navigator.serviceWorker.register("sw.js").catch(() => {});
 

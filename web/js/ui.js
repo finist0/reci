@@ -439,6 +439,17 @@ function reportDialog(e) {
     </div></div>`;
 }
 
+// The report of an error from the last start, offered once.
+let crashOffer = null;
+
+const crashDialog = () => (crashOffer === null ? "" : `<div class="modal"><div class="dialog form">
+        <div class="dialog-title">В прошлый раз случилась ошибка</div>
+        <div class="dialog-text">В прошлый раз в приложении случилась ошибка. Отправить разработчику отчёт, чтобы он мог
+        это исправить? В отчёте место в коде, где случилась ошибка, браузер, размер экрана и настройки приложения.
+        Слова и прогресс не отправляются.</div>
+        <div class="dialog-buttons"><button ${act("dropcrash")}>Не отправлять</button><button ${act("sendcrash")}>Отправить</button></div>
+    </div></div>`);
+
 function writeDialog(e) {
     const f = e.write;
     if (!f) return "";
@@ -834,7 +845,7 @@ function render() {
     if (rendered === e) saveScroll(e);
     const focused = document.activeElement?.dataset?.input;
     applyTheme();
-    root.innerHTML = `<div class="screen ${e.name}">${screens[e.name](e)}</div>`;
+    root.innerHTML = `<div class="screen ${e.name}">${screens[e.name](e)}</div>${crashDialog()}`;
     for (const el of root.querySelectorAll("[data-scroll]")) el.scrollTop = e.scroll?.[el.dataset.scroll] ?? 0;
     if (rendered !== e) {
         root.querySelector("[autofocus]")?.focus();
@@ -1015,6 +1026,17 @@ const actions = {
         if (!checkEmail(f)) return;
         top().write = null;
         send({ kind: "app", text: f.text.trim() }, f.email.trim());
+    },
+    sendcrash: () => {
+        const text = crashOffer;
+        crashOffer = null;
+        T.clearCrash();
+        send({ kind: "crash", text }, "");
+    },
+    dropcrash: () => {
+        crashOffer = null;
+        T.clearCrash();
+        schedule();
     },
     closeform: () => {
         Object.assign(top(), { report: null, write: null, whatSent: false, help: false });
@@ -1200,6 +1222,7 @@ window.addEventListener("online", () => T.flush());
 
 export async function start() {
     history.replaceState({ depth: 1 }, "");
+    crashOffer = T.pendingCrash();
     // Messages need no app version, so they do not wait for it.
     T.flush();
     fetch("../app/app/build.gradle.kts").then(r => r.text()).then(t => {

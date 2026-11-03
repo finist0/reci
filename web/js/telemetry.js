@@ -141,6 +141,42 @@ export function environment() {
     };
 }
 
+// --- Errors ---
+
+const CRASH = "reci.crash";
+
+// An error the page did not handle is kept, the first one only, and offered to the developer
+// at the next start. Errors of browser extensions and other sites are not ours to report.
+export function watchErrors() {
+    const keep = text => {
+        try {
+            if (!localStorage.getItem(CRASH)) localStorage.setItem(CRASH, `${new Date().toISOString()}\n${text}`.slice(0, 11000));
+        } catch {}
+    };
+    globalThis.addEventListener("error", e => {
+        if (!e.filename?.startsWith(globalThis.location.origin)) return;
+        keep(`${e.error?.stack ?? e.message}\n    at ${e.filename}:${e.lineno}:${e.colno}`);
+    });
+    globalThis.addEventListener("unhandledrejection", e => {
+        const stack = e.reason?.stack ?? String(e.reason);
+        if (stack.includes(globalThis.location.origin)) keep(`Unhandled rejection: ${stack}`);
+    });
+}
+
+export const pendingCrash = () => {
+    try {
+        return localStorage.getItem(CRASH);
+    } catch {
+        return null;
+    }
+};
+
+export function clearCrash() {
+    try {
+        localStorage.removeItem(CRASH);
+    } catch {}
+}
+
 // --- The daily ping ---
 
 export async function ping(app, learned, day = localDay(), c = state.counts) {
@@ -236,15 +272,16 @@ async function drain() {
 export const isEmail = s => /^[^\s@<>"]{1,64}@[^\s@<>"]{1,128}\.[^\s@<>"]{2,32}$/.test(s);
 
 // Queues a message ({kind, text, card}) and tries to send it; true when it went out at once.
-// It carries its own id, so that it cannot be tied to the statistics of the same install.
+// It carries its own id, so that it cannot be tied to the statistics of the same install. A
+// crash report carries no email and leaves the remembered one alone.
 export async function sendFeedback(message, email, app) {
-    state.email = email;
+    if (message.kind !== "crash") state.email = email;
     const m = { id: state.feedbackId, platform: platform(), app: app || "unknown", os: await osName(), ...message,
                 env: environment() };
     // The server refuses control characters; pasted text may carry some.
     m.text = (m.text ?? "").replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
     if (!m.text) delete m.text;
-    if (email) m.email = email;
+    if (email && message.kind !== "crash") m.email = email;
     state.queue.push(m);
     save();
     // A flush already running may have passed the end of the queue before this message came.
