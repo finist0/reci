@@ -1,6 +1,10 @@
 package org.kostja.reci.ui
 
 import android.app.Activity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.lightColorScheme
@@ -8,8 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.staticCompositionLocalOf
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontVariation
@@ -127,6 +137,20 @@ fun ReciTheme(content: @Composable () -> Unit) {
         }
     }
     CompositionLocalProvider(LocalPalette provides p) {
-        MaterialTheme(colorScheme = scheme, content = content)
+        MaterialTheme(colorScheme = scheme) { Adaptive(p, content) }
+    }
+}
+
+// A tablet gets the phone layout a size larger, in a column of reading width in the middle of
+// the screen: stretched to the full width, lines grow too long and the buttons drift apart.
+@Composable
+private fun Adaptive(p: Palette, content: @Composable () -> Unit) {
+    val cfg = LocalConfiguration.current
+    if (cfg.smallestScreenWidthDp < 600) return content()
+    val d = LocalDensity.current
+    CompositionLocalProvider(LocalDensity provides Density(d.density * 1.15f, d.fontScale)) {
+        Box(Modifier.fillMaxSize().background(p.bg), contentAlignment = Alignment.TopCenter) {
+            Box(Modifier.widthIn(max = 680.dp).fillMaxSize()) { content() }
+        }
     }
 }
