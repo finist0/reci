@@ -9,7 +9,10 @@
     "lock": ["widget", "wallpaper", "overlay", "off"],
     "feedback": {
         "required": ["id", "kind", "platform", "app", "os"],
-        "optional": ["text", "email", "card"],
+        "optional": ["text", "email", "card", "env"],
+        "kinds": ["card", "app", "crash"],
+        "crashText": 12000,
+        "env": {"maxEntries": 40, "maxString": 120, "name": "^[\\p{L}\\p{N}_:.-]{1,32}$"},
         "card": ["key", "word", "problem", "latin", "stress"],
         "problems": {
             "word": ["translation", "stress", "example", "forms", "other"],
