@@ -30,6 +30,7 @@ import org.junit.runner.RunWith
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Telemetry
 import org.kostja.reci.ui.MainActivity
+import java.io.File
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -117,6 +118,33 @@ class FeedbackTest {
     }
 
     @Test
+    fun theLastCrashIsOfferedOnceAndSentOnYes() {
+        File(ctx.filesDir, "crash.txt").writeText("java.lang.IllegalStateException: boom\n\tat org.kostja.reci.X")
+        launch()
+        assertTrue(exists("Приложение закрылось с ошибкой"))
+        click("Отправить")
+        waitPosts("feedback")
+        val m = FakeServer.of("feedback")[0]
+        assertEquals("crash", m.getString("kind"))
+        assertTrue(m.getString("text").startsWith("java.lang.IllegalStateException: boom"))
+        assertTrue(m.has("env"))
+        assertFalse(File(ctx.filesDir, "crash.txt").exists())
+        activity?.close()
+        launch()
+        assertFalse(exists("Приложение закрылось с ошибкой"))
+    }
+
+    @Test
+    fun aDeclinedCrashReportIsDroppedUnsent() {
+        File(ctx.filesDir, "crash.txt").writeText("java.lang.IllegalStateException: boom")
+        launch()
+        click("Не отправлять")
+        Thread.sleep(500)
+        assertEquals(emptyList<Any>(), FakeServer.of("feedback"))
+        assertFalse(File(ctx.filesDir, "crash.txt").exists())
+    }
+
+    @Test
     fun aCardIsReportedFromTheCardAndTheEmailIsRemembered() {
         launch()
         val key = Repo.current()!!.key
@@ -135,6 +163,7 @@ class FeedbackTest {
         assertEquals("ударение на втором слоге", m.getString("text"))
         assertEquals("me@example.org", m.getString("email"))
         assertNotEquals(Telemetry.id, m.getString("id"))
+        assertTrue(m.getJSONObject("env").getString("device").isNotBlank())
         report()
         compose.onNodeWithTag("email").assert(hasText("me@example.org"))
     }

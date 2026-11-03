@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.kostja.reci.data.Backup
+import org.kostja.reci.data.Env
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Telemetry
 import org.robolectric.RobolectricTestRunner
@@ -78,8 +79,8 @@ class TelemetryTest {
         assertEquals(before, posts.size)
     }
 
-    private fun feedback(kind: String, text: String, card: JSONObject? = null, mail: String = ""): Boolean =
-        await { done -> Telemetry.sendFeedback(kind, text, card, mail, done) }
+    private fun feedback(kind: String, text: String, card: JSONObject? = null, mail: String = "", env: JSONObject? = null): Boolean =
+        await { done -> Telemetry.sendFeedback(kind, text, card, mail, env, done) }
 
     private fun flush(): Int = await { done -> Telemetry.flush(done) }
 
@@ -189,6 +190,38 @@ class TelemetryTest {
         assertFalse(m.has("text"))
         assertEquals("me@example.org", Telemetry.email)
         assertEquals(0, Telemetry.waiting)
+    }
+
+    @Test
+    fun aMessageTellsWhereTheAppRunsWithinTheServerLimits() {
+        Prefs.latinFirst = true
+        assertTrue(feedback("app", "Карточка не помещается", env = Env.of(app)))
+        val env = posts.single().second.getJSONObject("env")
+        val rules = fields.getJSONObject("feedback").getJSONObject("env")
+        val name = Regex(rules.getString("name"))
+        assertTrue(env.length() <= rules.getInt("maxEntries"))
+        for (k in env.keys()) {
+            assertTrue(k, name.matches(k))
+            when (val v = env.get(k)) {
+                is Boolean, is Number -> {}
+                is String -> assertTrue(k, v.length <= rules.getInt("maxString") && v.none { it < ' ' })
+                else -> error("$k is $v")
+            }
+        }
+        for (k in listOf("device", "screen", "font", "theme", "mode", "dict", "lock", "overlay")) assertTrue(k, env.has(k))
+        assertEquals(true, env.getBoolean("latin"))
+        assertEquals("built-in", env.getString("dict"))
+    }
+
+    @Test
+    fun aCrashReportGoesOutWithoutTheRememberedEmail() {
+        Telemetry.email = "me@example.org"
+        assertTrue(feedback("crash", "java.lang.IllegalStateException: boom", env = Env.of(app)))
+        val m = posts.single().second
+        assertEquals("crash", m.getString("kind"))
+        assertFalse(m.has("email"))
+        assertEquals("me@example.org", Telemetry.email)
+        assertTrue(m.getString("kind") in names("feedback", "kinds"))
     }
 
     @Test
