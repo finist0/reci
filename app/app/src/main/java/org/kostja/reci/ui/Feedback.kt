@@ -43,6 +43,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.json.JSONObject
 import org.kostja.reci.R
+import org.kostja.reci.data.Env
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.State
@@ -143,6 +144,7 @@ private fun EmailField(value: String, onChange: (String) -> Unit) {
 @Composable
 fun ReportDialog(w: Word, onDismiss: () -> Unit) {
     val p = LocalPalette.current
+    val ctx = LocalContext.current
     val toast = sentToast()
     var problem by remember { mutableStateOf<String?>(null) }
     var text by remember { mutableStateOf("") }
@@ -180,7 +182,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
                 val card = JSONObject()
                     .put("key", w.key.take(120)).put("word", w.cyr.take(120)).put("problem", problem)
                     .put("latin", Prefs.latinFirst).put("stress", Prefs.accentMode)
-                Telemetry.sendFeedback("card", text.trim(), card, mail, toast)
+                Telemetry.sendFeedback("card", text.trim(), card, mail, Env.of(ctx), toast)
                 onDismiss()
             }) { Text("Отправить") }
         },
@@ -190,6 +192,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
 
 @Composable
 fun WriteDialog(onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
     val toast = sentToast()
     var text by remember { mutableStateOf("") }
     var email by remember { mutableStateOf(Telemetry.email) }
@@ -220,7 +223,7 @@ fun WriteDialog(onDismiss: () -> Unit) {
                     else -> ""
                 }
                 if (error.isNotEmpty()) return@TextButton
-                Telemetry.sendFeedback("app", text.trim(), null, mail, toast)
+                Telemetry.sendFeedback("app", text.trim(), null, mail, Env.of(ctx), toast)
                 onDismiss()
             }) { Text("Отправить") }
         },

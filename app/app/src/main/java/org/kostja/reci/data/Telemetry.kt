@@ -251,11 +251,13 @@ object Telemetry {
 
     // Queues a message (kind, text, card) and tries to send it; `done` gets true when it went out.
     // It carries its own id, so that it cannot be tied to the statistics of the same install.
-    fun sendFeedback(kind: String, text: String, card: JSONObject?, mail: String, done: (Boolean) -> Unit = {}) {
+    // `env` says where the app runs (Env.of).
+    fun sendFeedback(kind: String, text: String, card: JSONObject?, mail: String, env: JSONObject?, done: (Boolean) -> Unit = {}) {
         email = mail
         val m = JSONObject()
             .put("id", feedbackId).put("kind", kind).put("platform", "android").put("app", appVersion)
             .put("os", osName)
+        if (env != null) m.put("env", env)
         val clean = text.replace(CONTROL, "")
         if (clean.isNotEmpty()) m.put("text", clean)
         if (card != null) m.put("card", card)

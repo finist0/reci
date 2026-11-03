@@ -86,6 +86,9 @@ object DictUpdate {
         }
     }
 
+    // Which dictionary the cards come from, for reports.
+    fun describe() = if (hasPatch) "patch " + (sp.getString("patch_sha", "") ?: "").take(8) else "built-in"
+
     // The built-in cards with the patch on top, in the order the build sorts them.
     fun apply(base: List<Word>, p: Patch): List<Word> {
         val byKey = LinkedHashMap<String, Word>(base.size * 2)
