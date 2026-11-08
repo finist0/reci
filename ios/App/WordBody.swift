@@ -64,7 +64,9 @@ func highlighted(_ text: String, _ accent: Color, size: CGFloat = 17) -> Attribu
     return out
 }
 
-func plain(_ text: String) -> String { text.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "") }
+func plain(_ text: String) -> String {
+    Translit.strip(text.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: ""))
+}
 
 struct SectionLabel: View {
     @EnvironmentObject var model: AppModel
@@ -219,7 +221,7 @@ struct WordChip: View {
         Button {
             if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(sr) }
         } label: {
-            Text(model.prefs.primary(sr) + (target != nil ? " ›" : "")).font(.ui(15)).foregroundStyle(model.palette.text)
+            Text(model.prefs.linked(sr, target) + (target != nil ? " ›" : "")).font(.ui(15)).foregroundStyle(model.palette.text)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Capsule().fill(model.palette.panel))
@@ -241,7 +243,7 @@ struct Details: View {
                 ForEach(Array(w.examples.enumerated()), id: \.offset) { _, e in
                     Button { model.speech.speak(plain(e.sr)) } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(highlighted(model.prefs.primary(e.sr), p.accent)).font(.serif(17)).foregroundStyle(p.text)
+                            Text(highlighted(model.prefs.primary(model.prefs.marked(e.sr)), p.accent)).font(.serif(17)).foregroundStyle(p.text)
                             Text(e.ru).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                         .multilineTextAlignment(.leading)
@@ -273,7 +275,7 @@ struct Details: View {
                     ForEach(notes, id: \.self) { t in
                         HStack(alignment: .top, spacing: 6) {
                             Text("•")
-                            Text(t)
+                            Text(model.prefs.marked(t))
                         }
                         .font(.ui(15)).foregroundStyle(p.text)
                     }
@@ -300,7 +302,7 @@ struct RelatedList: View {
                 Button {
                     if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(r.sr) }
                 } label: {
-                    (Text(model.prefs.primary(r.sr) + (target != nil ? " ›" : "")).fontWeight(.semibold).foregroundColor(p.word)
+                    (Text(model.prefs.linked(r.sr, target) + (target != nil ? " ›" : "")).fontWeight(.semibold).foregroundColor(p.word)
                         + Text("  —  ").foregroundColor(p.faint) + Text(r.ru).foregroundColor(p.text))
                         .font(.ui(16))
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -355,9 +357,9 @@ struct ArticleBody: View {
                 .accessibilityIdentifier("articleTitle")
             if compare {
                 RelatedList(items: w.related, from: w.key)
-                if !w.note.isEmpty { Text(w.note).font(.ui(16)).foregroundStyle(p.text) }
+                if !w.note.isEmpty { Text(model.prefs.marked(w.note)).font(.ui(16)).foregroundStyle(p.text) }
             } else {
-                Text(w.note).font(.ui(16)).foregroundStyle(p.text)
+                Text(model.prefs.marked(w.note)).font(.ui(16)).foregroundStyle(p.text)
                 if !w.related.isEmpty {
                     SectionLabel(text: "Слова")
                     RelatedList(items: w.related, from: w.key)
@@ -369,7 +371,7 @@ struct ArticleBody: View {
                 ForEach(Array(w.examples.enumerated()), id: \.offset) { _, e in
                     Button { model.speech.speak(plain(e.sr)) } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(highlighted(model.prefs.primary(e.sr), p.accent)).font(.serif(17)).foregroundStyle(p.text)
+                            Text(highlighted(model.prefs.primary(model.prefs.marked(e.sr)), p.accent)).font(.serif(17)).foregroundStyle(p.text)
                             Text(e.ru).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                         .multilineTextAlignment(.leading)

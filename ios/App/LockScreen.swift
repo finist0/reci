@@ -115,7 +115,7 @@ struct WallpaperCard: View {
                 }
                 ForEach(Array(w.examples.prefix(examples).enumerated()), id: \.offset) { _, e in
                     VStack(alignment: .leading, spacing: 4 * s) {
-                        Text(highlighted(prefs.primary(e.sr), palette.accent, size: 44 * f)).font(.serif(44 * f)).foregroundStyle(palette.text)
+                        Text(highlighted(prefs.primary(prefs.marked(e.sr)), palette.accent, size: 44 * f)).font(.serif(44 * f)).foregroundStyle(palette.text)
                         Text(e.ru).font(.ui(34 * f)).foregroundStyle(palette.secondary)
                     }
                     .padding(.top, 8 * s)

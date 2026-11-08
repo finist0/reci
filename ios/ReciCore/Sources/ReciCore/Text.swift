@@ -91,6 +91,24 @@ public enum Translit {
         }
         return out.precomposedStringWithCanonicalMapping
     }
+
+    // Drops the marks of Cyrillic vowels and р only: the acute of ć or of Montenegrin с́ is part of the letter.
+    public static func strip(_ text: String) -> String {
+        let s = text.decomposedStringWithCanonicalMapping.unicodeScalars
+        var out = String.UnicodeScalarView()
+        var vowel = false
+        for sc in s {
+            let mark = stress.contains(String(sc)) || sc == "\u{304}"
+            if !mark || !vowel { out.append(sc) }
+            if sc.properties.generalCategory != .nonspacingMark { vowel = "аеиоурАЕИОУР".unicodeScalars.contains(sc) }
+        }
+        return out.count == s.count ? text : String(out).precomposedStringWithCanonicalMapping
+    }
+
+    // Text with stress marks as the accent setting wants it: 0 as is, 1 the place only, 2 none.
+    public static func showAccents(_ text: String, _ mode: Int) -> String {
+        mode == 0 ? text : mode == 1 ? placeOnly(text) : strip(text)
+    }
 }
 
 // How Serbian text is shown under the current settings.
@@ -100,8 +118,16 @@ public extension Prefs {
     func headword(_ w: Word) -> String {
         // A note's title is Russian; transliterating it would garble it.
         if w.pos == "note" { return w.cyr }
-        let shown = w.acc.isEmpty || accentMode == 2 ? w.cyr : accentMode == 1 ? Translit.placeOnly(w.acc) : w.acc
-        return primary(shown)
+        return primary(w.acc.isEmpty ? w.cyr : Translit.showAccents(w.acc, accentMode))
+    }
+
+    // Serbian text that may carry stress marks: an example, a note.
+    func marked(_ text: String) -> String { Translit.showAccents(text, accentMode) }
+
+    // A word a card refers to, with the stress of its own card when there is one.
+    func linked(_ sr: String, _ target: Word?) -> String {
+        guard let acc = target?.acc, !acc.isEmpty else { return primary(sr) }
+        return primary(marked(acc))
     }
 
     func secondary(_ cyr: String) -> String? {

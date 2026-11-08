@@ -25,7 +25,7 @@ public struct LockCard: Equatable {
         if repo.asksRecall(w) {
             return LockCard(title: meanings, subtitle: "вспомните слово", recall: true, example: first.map { "«\($0.ru)»" })
         }
-        let sr = first.map { repo.prefs.primary($0.sr.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: "")) }
+        let sr = first.map { repo.prefs.primary(repo.prefs.marked($0.sr.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: ""))) }
         return LockCard(title: repo.prefs.headword(w), subtitle: meanings, recall: false, example: sr)
     }
 }
