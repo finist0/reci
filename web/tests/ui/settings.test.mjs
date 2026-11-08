@@ -136,6 +136,25 @@ test("Stress marks: full, the stressed vowel only, none", async t => {
     assert.equal(await textOf(page, ".headword"), w.cyr);
 });
 
+test("Examples follow the stress setting", async t => {
+    const page = await app(t);
+    const marked = "import('./js/repo.js').then(R => R.current().examples.map(e => e.sr).find(s => /[̀-ͯ]/.test(s)) ?? null)";
+    for (let i = 0; i < 20 && !(await page.eval(marked)); i++) await page.tap('[data-act="next"]');
+    const sr = await page.eval(marked);
+    assert.ok(sr, "no example with stress marks in the first cards");
+    const shown = () => page.eval(`[...document.querySelectorAll(".example .sr-text")].map(e => e.textContent.trim())`);
+    const marks = /[̀-ͯ]/g;
+
+    await settings(page, '[data-act="accents"][data-arg="0"]');
+    assert.ok((await shown()).includes(sr.replace(/[[\]]/g, "")));
+    await settings(page, '[data-act="accents"][data-arg="2"]');
+    const none = sr.normalize("NFD").replace(/[[\]̀-ͯ]/g, "").normalize("NFC");
+    assert.ok((await shown()).includes(none));
+    await settings(page, '[data-act="accents"][data-arg="1"]');
+    const one = (await shown()).find(s => s.normalize("NFD").replace(marks, "").normalize("NFC") === none);
+    assert.ok(one && [...one.normalize("NFD").matchAll(marks)].every(m => m[0] === "\u0301"), one);
+});
+
 test("Font size changes the headword", async t => {
     const page = await app(t);
     await page.tap('[data-act="settings"]');
