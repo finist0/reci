@@ -1,10 +1,11 @@
-# Tests of the Android app on every push. The signed release is built and uploaded by hand: the
-# signing key stays off GitHub.
+# Tests of the Android app for every release tag, and by hand from the Actions tab: the emulator
+# runs take long. The signed release is built and uploaded by hand: the signing key stays off
+# GitHub.
 name: Android
 
 on:
   push:
-  pull_request:
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:

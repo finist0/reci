@@ -194,10 +194,13 @@ python3 -m venv /path/to/venv
 
 | Сценарий | Когда | Что делает | Что сохраняет |
 |---|---|---|---|
-| `android.yml` | каждый push | тесты на JVM, отладочный APK; тесты интерфейса на эмуляторах Android 9, 13, 15 и 17 и на планшете с Android 15 | `reci-debug-apk`, отчёты при ошибке |
+| `android.yml` | push тега `v*` | тесты на JVM, отладочный APK; тесты интерфейса на эмуляторах Android 9, 13, 15 и 17 и на планшете с Android 15 | `reci-debug-apk`, отчёты при ошибке |
 | `web.yml` | каждый push | правила обучения и файл прогресса в Node, интерфейс в Chrome | — |
 | `dict.yml` | каждый push | тесты сборки поправок; `dict/` совпадает со словарём и выпусками | — |
-| `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах четырёх iPhone и iPad; из `main` — подписанная сборка в App Store Connect ([docs/ios.md](ios.md)) | `reci-unsigned-ipa`, `ios-test-results-<телефон>`, снимки экранов `ios-screenshots-<телефон>` |
+| `ios.yml` | push тега `v*` | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах четырёх iPhone и iPad; подписанная сборка в App Store Connect ([docs/ios.md](ios.md)) | `reci-unsigned-ipa`, `ios-test-results-<телефон>`, снимки экранов `ios-screenshots-<телефон>` |
+
+Android и iOS идут только по тегу: эмуляторы долгие, а минуты macOS дорогие. Веб и словарь
+проверяются на каждый push, потому что GitHub Pages выкладывает их из `main` сразу.
 
 Любой сценарий можно запустить и вручную: Actions → сценарий → Run workflow.
 

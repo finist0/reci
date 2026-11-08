@@ -80,8 +80,8 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
 
 ### На GitHub
 
-Сценарий `.github/workflows/ios.yml` запускается сам при каждом push, который меняет
-`ios/`, `tests/` или словарь. Его можно запустить и вручную: Actions → iOS → Run workflow.
+Сценарий `.github/workflows/ios.yml` запускается сам при push тега выпуска `v*`. Его можно
+запустить и вручную: Actions → iOS → Run workflow.
 
 1. **Learning logic on Linux:** тесты логики в контейнере со Swift.
 2. **App and UI tests on …:** на машине macOS от GitHub ставит XcodeGen, генерирует
@@ -121,7 +121,7 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
 Сценарий GitHub собирает неподписанный `Reci-unsigned.ipa` для настоящего iPhone. Подписывает
 и ставит его ваш бесплатный Apple ID через программу Impactor, которая работает на Linux.
 
-1. После push откройте на GitHub: Actions → iOS → последний запуск → внизу Artifacts →
+1. После push тега или ручного запуска откройте на GitHub: Actions → iOS → последний запуск → внизу Artifacts →
    `reci-unsigned-ipa`. Скачается zip, внутри `Reci-unsigned.ipa`.
 2. Поставьте Impactor: https://github.com/khcrysalis/Impactor. Запасные варианты — Sideloader
    (https://github.com/Dadoum/Sideloader) или AltServer-Linux.
@@ -155,8 +155,8 @@ TestFlight, без кабеля и Developer Mode, и виджеты точно 
 
 ### Сборка и загрузка
 
-Делает GitHub, Mac не нужен. Каждый push в `main`, который меняет `ios/`, `tests/` или словарь,
-после тестов запускает задачу **Upload to App Store Connect**:
+Делает GitHub, Mac не нужен. Каждый push тега выпуска `v*` после тестов запускает задачу
+**Upload to App Store Connect**:
 
 1. собирает приложение с виджетами на самом новом Xcode (`macos-26`);
 2. входит в App Store Connect ключом API; Xcode сам регистрирует идентификаторы и App Group,

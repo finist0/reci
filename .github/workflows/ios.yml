@@ -1,12 +1,11 @@
 # The iPhone app needs a Mac to build; GitHub's macOS runners provide one with Xcode and the
-# iOS simulator. The learning logic also runs on Linux, which is quicker and cheaper.
+# iOS simulator. The learning logic also runs on Linux, which is quicker and cheaper. macOS
+# minutes are dear, so it runs for every release tag and by hand from the Actions tab.
 name: iOS
 
 on:
   push:
-    paths: ["ios/**", "tests/**", "app/app/src/main/assets/**", ".github/workflows/ios.yml"]
-  pull_request:
-    paths: ["ios/**", "tests/**", "app/app/src/main/assets/**", ".github/workflows/ios.yml"]
+    tags: ["v*"]
   workflow_dispatch:
 
 permissions:
@@ -144,14 +143,14 @@ jobs:
           path: ios/build/Reci.xcresult
           if-no-files-found: ignore
 
-  # A push to main that changes the app sends a build to App Store Connect: TestFlight gives it to
+  # A pushed release tag sends a build to App Store Connect: TestFlight gives it to
   # testers, and the App Store takes it once it is chosen for a release there. The key of the
   # App Store Connect API in the secrets ASC_KEY_P8, ASC_KEY_ID and ASC_ISSUER_ID signs it and
   # lets Xcode make the certificate and profiles; without the key nothing is uploaded.
   upload:
     name: Upload to App Store Connect
     needs: [core-linux, app-simulator]
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'finist0/reci'
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.repository == 'finist0/reci'
     # App Store Connect takes only builds made with the newest Xcode.
     runs-on: macos-26
     timeout-minutes: 60
