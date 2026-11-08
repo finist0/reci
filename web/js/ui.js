@@ -438,7 +438,7 @@ function reportDialog(e) {
         <div class="dialog-title">Что не так с карточкой?</div>
         <div class="dialog-text">${esc(primary(w.cyr))}</div>
         <div class="chips">${problems.map(([k, t]) => chip(t, r.problem === k, "problem", k)).join("")}</div>
-        <textarea data-input="reporttext" rows="4" maxlength="2000" placeholder="Что именно не так, если хотите">${esc(r.text)}</textarea>
+        <textarea data-input="reporttext" rows="4" maxlength="2000" placeholder="Что именно не так">${esc(r.text)}</textarea>
         ${emailField("reportemail", r.email)}
         ${formError(r)}
         <div class="dialog-buttons"><button ${act("closeform")}>Отмена</button>
@@ -1037,7 +1037,12 @@ const actions = {
     sendreport: () => {
         const r = top().report;
         const w = R.word(r.key);
-        if (!r.problem || !checkEmail(r)) return;
+        if (!r.problem) return;
+        if (!r.text.trim()) {
+            r.error = "Напишите, что не так";
+            return schedule();
+        }
+        if (!checkEmail(r)) return;
         const card = { key: w.key.slice(0, 120), word: w.cyr.slice(0, 120), problem: r.problem, latin: prefs.latinFirst, stress: prefs.accentMode };
         top().report = null;
         send({ kind: "card", text: r.text.trim(), card }, r.email.trim());
