@@ -18,5 +18,9 @@
             "word": ["translation", "stress", "example", "forms", "other"],
             "article": ["text", "other"]
         }
+    },
+    "forget": {
+        "required": ["id", "feedbackId"],
+        "optional": []
     }
 }
