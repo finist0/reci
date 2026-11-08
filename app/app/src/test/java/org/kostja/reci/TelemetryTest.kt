@@ -84,6 +84,40 @@ class TelemetryTest {
 
     private fun flush(): Int = await { done -> Telemetry.flush(done) }
 
+    private fun forget(): Boolean = await { done -> Telemetry.forget(done) }
+
+    @Test
+    fun forgetSendsBothIdsThenStartsAfreshWithNewOnes() {
+        reply = { -1 }
+        feedback("app", "ещё не ушло", mail = "me@example.org")
+        val (id, feedbackId) = Telemetry.id to Telemetry.feedbackId
+        reply = { 204 }
+        assertTrue(forget())
+        val (url, body) = posts.last()
+        assertTrue(url.endsWith("/forget"))
+        assertEquals(names("forget", "required").sorted(), body.keys().asSequence().toList().sorted())
+        assertEquals(id, body.getString("id"))
+        assertEquals(feedbackId, body.getString("feedbackId"))
+        assertNotEquals(id, Telemetry.id)
+        assertNotEquals(feedbackId, Telemetry.feedbackId)
+        assertNotEquals(Telemetry.id, Telemetry.feedbackId)
+        assertEquals(0, Telemetry.waiting)
+        assertEquals("", Telemetry.email)
+    }
+
+    @Test
+    fun aFailedForgetKeepsTheIdsAndTheWaitingMessages() {
+        reply = { -1 }
+        feedback("app", "ещё не ушло")
+        val (id, feedbackId) = Telemetry.id to Telemetry.feedbackId
+        assertFalse(forget())
+        reply = { 503 }
+        assertFalse(forget())
+        assertEquals(id, Telemetry.id)
+        assertEquals(feedbackId, Telemetry.feedbackId)
+        assertEquals(1, Telemetry.waiting)
+    }
+
     @Test
     fun aNewInstallHasTwoDifferentIdsAndStatisticsOn() {
         assertTrue(Regex("[0-9a-f-]{36}").matches(Telemetry.id))

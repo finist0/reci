@@ -270,6 +270,29 @@ class FeedbackTest {
     }
 
     @Test
+    fun whatIsSentShowsBothIdsAndForgetsThemOnRequest() {
+        launch()
+        waitPosts("ping")
+        val (id, feedbackId) = Telemetry.id to Telemetry.feedbackId
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        compose.waitForIdle()
+        click("Что отправляется")
+        compose.onNodeWithTag("installId").assert(hasText(id))
+        compose.onNodeWithTag("feedbackId").assert(hasText(feedbackId))
+        click("Удалить мои данные с сервера")
+        click("Отмена")
+        assertTrue(FakeServer.of("forget").isEmpty())
+        click("Удалить мои данные с сервера")
+        click("Удалить")
+        compose.waitUntil(5000) { FakeServer.of("forget").isNotEmpty() && Telemetry.id != id }
+        val sent = FakeServer.of("forget").single()
+        assertEquals(id, sent.getString("id"))
+        assertEquals(feedbackId, sent.getString("feedbackId"))
+        compose.onNodeWithTag("installId").assert(hasText(Telemetry.id))
+        assertNotEquals(feedbackId, Telemetry.feedbackId)
+    }
+
+    @Test
     fun statisticsCountShownCardsAndAnswers() {
         launch()
         waitPosts("ping")
