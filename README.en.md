@@ -47,7 +47,7 @@ The app's interface and translations are in Russian.
 - **Grammar reference:** 26 topics with tables.
 - **Cyrillic or Latin script**, three ways to show stress, pronunciation.
 - **Eight colour themes**, light and dark.
-- **No ads, no sign-up.** Open source.
+- **No sign-up, no text messages.** Open source.
 
 ## How learning works
 
