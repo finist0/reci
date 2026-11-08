@@ -65,6 +65,17 @@ final class ReciUITests: XCTestCase {
         XCTAssertFalse(mark("markKnow").waitForExistence(timeout: 2))
     }
 
+    func testSchoolsOpenFromTheCardAndFromTheSettings() {
+        let empty = app.staticTexts["schoolsEmpty"]
+        app.buttons["Куда пойти учиться"].firstMatch.tap()
+        XCTAssertTrue(empty.waitForExistence(timeout: 5))
+        back()
+        XCTAssertFalse(empty.waitForExistence(timeout: 2))
+        openSettings()
+        reach(app.buttons["Куда пойти учиться?"].firstMatch).tap()
+        XCTAssertTrue(empty.waitForExistence(timeout: 5))
+    }
+
     func testLatinAlphabet() {
         openSettings()
         reach(app.buttons["Latinica"].firstMatch).tap()
