@@ -65,8 +65,21 @@ How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/lea
 
 ## Installing on Android
 
-1. Download `reci-release.apk` from the Releases page and open it on the phone. Android asks
-   to allow installs from this source.
+**The app is in closed testing on Google Play.** To install it from there:
+
+1. Join the testers group: https://groups.google.com/g/reci-testing.
+2. Open https://play.google.com/apps/testing/org.kostja.reci and tap "Become a tester".
+3. Install the app: https://play.google.com/store/apps/details?id=org.kostja.reci.
+
+Use the same Google account as in Google Play on the phone. Updates then come from Google
+Play by themselves. Please stay in the group and in the test for at least two weeks: Google
+requires that much testing before the app can be released to everyone.
+
+The rest is the same for both ways to install:
+
+1. Install the app from Google Play as above, or download `reci-release.apk` from the
+   Releases page and open it on the phone. For the APK, Android asks to allow installs from
+   this source.
 
 2. Open the app's settings, the lock screen section:
    - turn on the card when the screen turns on;
