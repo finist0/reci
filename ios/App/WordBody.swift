@@ -8,6 +8,7 @@ enum Route: Hashable {
     case categories
     case search
     case settings
+    case schools
     case list(String)
 }
 
@@ -21,6 +22,7 @@ extension Route {
         case .categories: "categories"
         case .search: "search"
         case .settings: "settings"
+        case .schools: "schools"
         case .list: "list"
         }
     }

@@ -36,6 +36,7 @@ struct ReciApp: App {
                         case .categories: CategoriesScreen()
                         case .search: SearchScreen()
                         case .settings: SettingsScreen()
+                        case .schools: SchoolsScreen()
                         case .list(let id): ListScreen(id: id)
                         }
                     }

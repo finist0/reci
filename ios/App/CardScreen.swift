@@ -28,6 +28,7 @@ struct CardScreen: View {
                     .id(s.id)
                     Star(w: w).padding(10)
                     FlagButton { reporting = w }.padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    SchoolsButton().padding(.trailing, 48).padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     if model.learnedToast {
                         LearnedToast().frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
                     } else if let t = model.sentToast {

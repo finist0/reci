@@ -58,6 +58,8 @@ struct SettingsScreen: View {
                             toggle("Проверять выученные слова", "Через неделю, потом через 3\u{00A0}недели, 2\u{00A0}месяца, полгода и год", prefs.reviewKnown) { v in
                                 model.set { $0.reviewKnown = v }
                             }
+                            Line()
+                            navRow("Куда пойти учиться?", "Школы сербского языка") { router.go(.schools) }
                         }
                     }
                     Group {

@@ -19,6 +19,33 @@ struct StatsNotice: View {
     }
 }
 
+// Opens "Куда пойти учиться?"; sits next to the flag at the bottom of a card.
+struct SchoolsButton: View {
+    @EnvironmentObject var model: AppModel
+    @EnvironmentObject var router: Router
+    var body: some View {
+        Button { router.go(.schools) } label: {
+            Image(systemName: "studentdesk").font(.ui(18)).foregroundStyle(model.palette.faint).frame(width: 40, height: 40)
+        }
+        .accessibilityLabel("Куда пойти учиться")
+    }
+}
+
+// A place for Serbian language schools to tell about themselves; empty for now.
+struct SchoolsScreen: View {
+    @EnvironmentObject var model: AppModel
+    var body: some View {
+        VStack(spacing: 0) {
+            Header(title: "Куда пойти учиться?")
+            Text("Здесь могла быть реклама вашей школы сербского языка")
+                .font(.ui(17)).foregroundStyle(model.palette.secondary).multilineTextAlignment(.center)
+                .padding(32).frame(maxWidth: .infinity, maxHeight: .infinity)
+                .accessibilityIdentifier("schoolsEmpty")
+        }
+        .background(model.palette.bg.ignoresSafeArea())
+    }
+}
+
 struct FlagButton: View {
     @EnvironmentObject var model: AppModel
     let action: () -> Void
@@ -265,7 +292,7 @@ struct WhatSentSheet: View {
     }
 }
 
-let shareText = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно и без рекламы.\nAndroid: https://play.google.com/store/apps/details?id=org.kostja.reci\niPhone и компьютер: https://finist0.github.io/reci/web/"
+let shareText = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно.\nAndroid: https://play.google.com/store/apps/details?id=org.kostja.reci\niPhone и компьютер: https://finist0.github.io/reci/web/"
 
 // No App Store page yet, so there is nothing to rate on the iPhone.
 struct HelpSheet: View {
@@ -277,7 +304,7 @@ struct HelpSheet: View {
         let p = model.palette
         NavigationStack {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Приложение бесплатное и без рекламы. Вот чем можно помочь:").foregroundStyle(p.secondary)
+                Text("Приложение бесплатное. Вот чем можно помочь:").foregroundStyle(p.secondary)
                 VStack(alignment: .leading, spacing: 0) {
                     ShareLink(item: shareText) {
                         row("Поделиться с другом", "Ссылки на Android, iPhone и компьютер")

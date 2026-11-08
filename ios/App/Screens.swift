@@ -22,6 +22,7 @@ struct DetailScreen: View {
                     .background(RoundedRectangle(cornerRadius: 28).fill(p.card))
                     Star(w: w).padding(10)
                     FlagButton { reporting = true }.padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
+                    SchoolsButton().padding(.trailing, 48).padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                 }
                 .padding(.horizontal, 14)
                 if learned { LearnedToast().padding(.top, 10) } else if let t = model.sentToast { SentToast(text: t).padding(.top, 10) }
