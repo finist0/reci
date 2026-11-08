@@ -247,15 +247,16 @@ object Prefs {
 
     fun primary(cyr: String) = if (latinFirst) Translit.toLatin(cyr) else cyr
 
+    // Serbian text that may carry stress marks: an example, a note.
+    fun marked(text: String) = Accents.show(text, accentMode)
+
+    // A word a card refers to, with the stress of its own card when there is one.
+    fun linked(sr: String) = primary(Repo.wordByCyr(sr)?.acc?.ifEmpty { null }?.let { marked(it) } ?: sr)
+
     fun headword(w: Word): String {
         // A note's title is Russian; transliterating it would garble it.
         if (w.pos == "note") return w.cyr
-        val shown = when {
-            w.acc.isEmpty() || accentMode == 2 -> w.cyr
-            accentMode == 1 -> Accents.placeOnly(w.acc)
-            else -> w.acc
-        }
-        return primary(shown)
+        return primary(if (w.acc.isEmpty()) w.cyr else Accents.show(w.acc, accentMode))
     }
 
     fun secondary(cyr: String): String? {
