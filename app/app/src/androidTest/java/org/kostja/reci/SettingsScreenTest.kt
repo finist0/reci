@@ -252,6 +252,20 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun schoolsOpenFromTheCardAndFromSettings() {
+        val ad = "Здесь могла быть реклама вашей школы сербского языка"
+        compose.onNodeWithContentDescription("Куда пойти учиться").performClick()
+        compose.waitForIdle()
+        assertTrue(exists(ad))
+        back()
+        assertFalse(exists(ad))
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        compose.waitForIdle()
+        click("Куда пойти учиться?")
+        assertTrue(exists(ad))
+    }
+
+    @Test
     fun fontSizeReachesTheHeadword() {
         val w = word()
         val before = compose.onNodeWithText(Prefs.headword(w)).fetchSemanticsNode().size.height
