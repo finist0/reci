@@ -236,6 +236,22 @@ class SettingsScreenTest {
     }
 
     @Test
+    fun examplesFollowTheStressSetting() {
+        val marked = { word().examples.map { it.sr }.firstOrNull { Accents.strip(it) != it } }
+        repeat(20) { if (marked() == null) next() }
+        val sr = marked()
+        assertTrue("no example with stress marks in the first cards", sr != null)
+        val text = sr!!.replace("[", "").replace("]", "")
+        settings("ку̏ћа")
+        assertTrue(exists(text))
+        settings("ку́ћа")
+        assertTrue(exists(Accents.placeOnly(text)))
+        settings("кућа")
+        assertTrue(exists(Accents.strip(text)))
+        assertFalse(exists(text))
+    }
+
+    @Test
     fun fontSizeReachesTheHeadword() {
         val w = word()
         val before = compose.onNodeWithText(Prefs.headword(w)).fetchSemanticsNode().size.height
