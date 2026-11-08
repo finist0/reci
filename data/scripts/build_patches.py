@@ -23,6 +23,7 @@ import json
 import os
 import subprocess
 import sys
+import unicodedata
 from pathlib import Path
 
 # RECI_ROOT points the script at another checkout; the tests use it.
@@ -30,6 +31,10 @@ ROOT = Path(os.environ.get("RECI_ROOT") or Path(__file__).resolve().parents[2])
 ASSETS = "app/app/src/main/assets"
 OUT = ROOT / "dict"
 UPDATER = "app/app/src/main/java/org/kostja/reci/data/DictUpdate.kt"
+# Releases whose Accents.kt has no strip() show the stress marks of examples and notes whatever
+# the accent setting says, and read them out; their patches get these texts without the marks.
+ACCENTS = "app/app/src/main/java/org/kostja/reci/data/Accents.kt"
+STRESS_SET = set("\u030f\u0311\u0300\u0301\u0304")
 KEEP = datetime.timedelta(days=183)
 
 
@@ -56,6 +61,40 @@ def releases():
         return []
     head = datetime.datetime.fromisoformat(git("log", "-1", "--format=%cI", "HEAD").strip())
     return [tags[0]] + [t for t in tags[1:] if head - t[1] <= KEEP]
+
+
+def marks_shown(tag):
+    """Whether the release can hide the stress marks of examples and notes."""
+    try:
+        return "fun strip(" in git("show", f"{tag}:{ACCENTS}")
+    except subprocess.CalledProcessError:
+        return False
+
+
+def bare(text):
+    """The text without the stress marks of Cyrillic vowels and р; ѐ and ѝ lose theirs too."""
+    d = unicodedata.normalize("NFD", text)
+    out, vowel = [], False
+    for ch in d:
+        if ch not in STRESS_SET or not vowel:
+            out.append(ch)
+        if unicodedata.category(ch) != "Mn":
+            vowel = ch in "аеиоурАЕИОУР"
+    out = "".join(out)
+    return text if out == d else unicodedata.normalize("NFC", out)
+
+
+def unmarked(words):
+    """The dictionary with no stress marks in examples and notes, for older releases."""
+    out = []
+    for w in words:
+        w = dict(w)
+        if "note" in w:
+            w["note"] = bare(w["note"])
+        if "examples" in w:
+            w["examples"] = [{**e, "sr": bare(e["sr"])} for e in w["examples"]]
+        out.append(w)
+    return out
 
 
 def patch(base_words, base_grammar, words, grammar):
@@ -91,15 +130,22 @@ def build():
     grammar_bytes = (ROOT / ASSETS / "grammar.json").read_bytes()
     words, grammar = json.loads(words_bytes), json.loads(grammar_bytes)
     files, entries = {}, {}
-    for tag, date in releases():
+    tags = releases()
+    bases = {tag: base_id(git("show", f"{tag}:{ASSETS}/words.json", binary=True),
+                          git("show", f"{tag}:{ASSETS}/grammar.json", binary=True)) for tag, _ in tags}
+    # Releases with the same dictionary share a patch, so one that shows the marks unhidden
+    # decides for all of them.
+    shown = {bid: all(marks_shown(t) for t in bases if bases[t] == bid) for bid in bases.values()}
+    for tag, date in tags:
         bw = git("show", f"{tag}:{ASSETS}/words.json", binary=True)
         bg = git("show", f"{tag}:{ASSETS}/grammar.json", binary=True)
         bid = base_id(bw, bg)
         if bid == base_id(words_bytes, grammar_bytes):
             continue
         base_words, base_grammar = json.loads(bw), json.loads(bg)
-        p = {**patch(base_words, base_grammar, words, grammar), "base": bid}
-        if apply(base_words, base_grammar, p) != (words, grammar):
+        target = words if shown[bid] else unmarked(words)
+        p = {**patch(base_words, base_grammar, target, grammar), "base": bid}
+        if apply(base_words, base_grammar, p) != (target, grammar):
             sys.exit(f"the patch for {tag} does not give the current dictionary")
         data = dump(p)
         name = f"patch-{bid}.json"
