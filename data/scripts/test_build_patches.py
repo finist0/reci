@@ -73,7 +73,7 @@ class Releases(unittest.TestCase):
             env.update(GIT_AUTHOR_DATE=date, GIT_COMMITTER_DATE=date)
         subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True, env=env)
 
-    def commit(self, words, date, updater=True, grammar=None):
+    def commit(self, words, date, updater=True, grammar=None, strip=False):
         assets = self.root / bp.ASSETS
         assets.mkdir(parents=True, exist_ok=True)
         (assets / "words.json").write_text(json.dumps(words, ensure_ascii=False))
@@ -84,6 +84,9 @@ class Releases(unittest.TestCase):
             upd.write_text("// updater")
         elif upd.exists():
             upd.unlink()
+        acc = self.root / bp.ACCENTS
+        acc.parent.mkdir(parents=True, exist_ok=True)
+        acc.write_text("fun strip(text: String)" if strip else "fun placeOnly(acc: String)")
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "c", date=date)
 
@@ -140,6 +143,35 @@ class Releases(unittest.TestCase):
         self.assertEqual(list(manifest["patches"]), [bp.base_id(w, g)])
         p = json.loads(bp.build()[manifest["patches"][bp.base_id(w, g)]["file"]])
         self.assertEqual(p["grammar"], [{"id": "g2"}])
+
+    def test_only_releases_that_hide_marks_get_them_in_examples_and_notes(self):
+        marked = {**card("а", 1, ["a"]), "note": "ку̏ћа", "examples": [{"sr": "[ку̏ћа̄] у сѐлу", "ru": "дом"}]}
+        self.commit([{**marked, "note": "кућа", "examples": [{"sr": "[кућа]", "ru": "дом"}]}],
+                    "2026-10-01T20:00:00+01:00")
+        self.tag("v1.0", "2026-10-01T20:00:00+01:00")
+        self.commit([{**marked, "note": "кућа", "examples": [{"sr": "[кућа]", "ru": "дом"}], "meanings": ["c"]}],
+                    "2026-10-02T20:00:00+01:00", strip=True)
+        self.tag("v1.1", "2026-10-02T20:00:00+01:00")
+        self.commit([{**marked, "meanings": ["b"]}], "2026-10-03T20:00:00+01:00", strip=True)
+        files = bp.build()
+        got = {e["release"]: json.loads(files[e["file"]])["words"][0]
+               for e in json.loads(files["manifest.json"])["patches"].values()}
+        self.assertEqual((got["v1.0"]["note"], got["v1.0"]["examples"][0]["sr"]), ("кућа", "[кућа] у селу"))
+        self.assertEqual((got["v1.1"]["note"], got["v1.1"]["examples"][0]["sr"]), ("ку̏ћа", "[ку̏ћа̄] у сѐлу"))
+
+    def test_a_shared_dictionary_gets_the_marks_only_when_every_release_hides_them(self):
+        base = {**card("а", 1, ["a"]), "note": "кућа", "examples": []}
+        self.commit([base], "2026-10-01T20:00:00+01:00")
+        self.tag("v1.0", "2026-10-01T20:00:00+01:00")
+        self.commit([base], "2026-10-02T20:00:00+01:00", strip=True)
+        self.tag("v1.1", "2026-10-02T20:00:00+01:00")
+        self.commit([{**base, "note": "ку̏ћа", "meanings": ["b"]}], "2026-10-03T20:00:00+01:00", strip=True)
+        files = bp.build()
+        [e] = json.loads(files["manifest.json"])["patches"].values()
+        self.assertEqual(json.loads(files[e["file"]])["words"][0]["note"], "кућа")
+
+    def test_latin_letters_keep_their_marks(self):
+        self.assertEqual(bp.bare("ćevapi, с́, ку̏ћа, ср̏це"), "ćevapi, с́, кућа, срце")
 
     def test_check_finds_a_stale_dict_and_writing_fixes_it(self):
         self.commit([card("а", 1, ["a"])], "2026-10-01T20:00:00+01:00")
