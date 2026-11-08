@@ -160,7 +160,7 @@ struct ReportSheet: View {
                     .accessibilityIdentifier("problem:\(k)")
                 }
             }
-            Field(placeholder: "Что именно не так, если хотите", text: $text, lines: 4, limit: 2000)
+            Field(placeholder: "Что именно не так", text: $text, lines: 4, limit: 2000)
             Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
             if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.ui(14)) }
         }
@@ -173,15 +173,20 @@ struct ReportSheet: View {
     }
 
     private func send() -> Bool {
+        let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let mail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let problem else { return false }
+        if body.isEmpty {
+            error = "Напишите, что не так"
+            return false
+        }
         if !mail.isEmpty && !Telemetry.isEmail(mail) {
             error = "Проверьте адрес почты"
             return false
         }
         let card = CardInfo(key: String(w.key.prefix(120)), word: String(w.cyr.prefix(120)), problem: problem,
                             latin: model.prefs.latinFirst, stress: model.prefs.accentMode)
-        model.sendFeedback(kind: "card", text: text.trimmingCharacters(in: .whitespacesAndNewlines), card: card, email: mail)
+        model.sendFeedback(kind: "card", text: body, card: card, email: mail)
         return true
     }
 }
