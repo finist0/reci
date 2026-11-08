@@ -202,9 +202,19 @@ python3 -m venv /path/to/venv
 Любой сценарий можно запустить и вручную: Actions → сценарий → Run workflow.
 
 Подписанный релизный APK на GitHub не собирается: ключ подписи остаётся только у
-владельца, релиз собирается `build.sh` и выкладывается на страницу Releases вручную.
-Приложение для iPhone, наоборот, подписывает и загружает в App Store Connect сам GitHub,
-ключом App Store Connect API из секретов репозитория.
+владельца. Выпуск Android-версии:
+
+1. В `app/app/build.gradle.kts` поднимается версия, по-английски пишется, что нового.
+2. Коммит и тег `v<версия>` отправляются на GitHub.
+3. `build.sh` собирает APK и App Bundle, подписанные ключом.
+4. APK выкладывается на страницу Releases:
+   ```sh
+   gh release create v<версия> app/app/build/outputs/apk/release/reci-release.apk \
+       -R finist0/reci --verify-tag --title v<версия> --notes-file <что нового>.md
+   ```
+
+Приложение для iPhone подписывает и загружает в App Store Connect `ios.yml`, ключом
+App Store Connect API из секретов репозитория.
 
 ### Как написать новый сценарий
 
