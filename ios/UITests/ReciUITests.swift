@@ -201,6 +201,25 @@ final class FeedbackUITests: XCTestCase {
         XCTAssertTrue(app.otherElements["ActivityListView"].waitForExistence(timeout: 5) || app.collectionViews.firstMatch.waitForExistence(timeout: 1))
     }
 
+    func testWhatIsSentShowsBothIdsAndForgetsThemOnRequest() {
+        launch()
+        openSettings()
+        reach(app.buttons["Что отправляется"]).tap()
+        let installId = app.staticTexts["installId"]
+        XCTAssertTrue(installId.waitForExistence(timeout: 5))
+        let before = installId.label
+        XCTAssertNotNil(before.range(of: #"^[0-9a-f-]{36}$"#, options: .regularExpression))
+        XCTAssertNotEqual(app.staticTexts["feedbackId"].label, before)
+        reach(app.buttons["Удалить мои данные с сервера"]).tap()
+        app.alerts.buttons["Отмена"].tap()
+        XCTAssertFalse(app.staticTexts["forgetResult"].exists)
+        app.buttons["Удалить мои данные с сервера"].tap()
+        app.alerts.buttons["Удалить"].tap()
+        XCTAssertTrue(app.staticTexts["forgetResult"].waitForExistence(timeout: 5))
+        XCTAssertEqual(app.staticTexts["forgetResult"].label, "Данные удалены с сервера")
+        XCTAssertNotEqual(app.staticTexts["installId"].label, before)
+    }
+
     func testTheStatisticsSwitchAndWhatIsSent() {
         launch()
         openSettings()

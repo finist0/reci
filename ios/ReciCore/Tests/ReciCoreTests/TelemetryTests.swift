@@ -37,6 +37,86 @@ final class TelemetryTests: XCTestCase {
         await t.sendPing(app: "0.12", os: "iOS 18.6", locale: "ru-RS", prefs: prefs, learned: learned)
     }
 
+    func testForgetSendsBothIdsThenStartsAfreshWithNewOnes() async {
+        reply = { _ in -1 }
+        await t.sendFeedback(kind: "app", text: "ещё не ушло", card: nil, email: "me@example.org", app: "1.4", os: "iOS 18.6")
+        let (id, feedbackId) = (t.state.id, t.state.feedbackId)
+        reply = { _ in 204 }
+        let forgotten = await t.forget()
+        XCTAssertTrue(forgotten)
+        let last = posts.last!
+        XCTAssertTrue(last.url.hasSuffix("/forget"))
+        XCTAssertEqual(last.body.keys.sorted(), names("forget", "required").sorted())
+        XCTAssertEqual(last.body["id"] as? String, id)
+        XCTAssertEqual(last.body["feedbackId"] as? String, feedbackId)
+        XCTAssertNotEqual(t.state.id, id)
+        XCTAssertNotEqual(t.state.feedbackId, feedbackId)
+        XCTAssertNotEqual(t.state.id, t.state.feedbackId)
+        XCTAssertTrue(t.state.queue.isEmpty)
+        XCTAssertEqual(t.state.email, "")
+        let saved = try! JSONDecoder().decode(TelemetryState.self, from: Data(contentsOf: t.file))
+        XCTAssertEqual(saved.id, t.state.id)
+    }
+
+    func testAFailedForgetKeepsTheIdsAndTheWaitingMessages() async {
+        reply = { _ in -1 }
+        await t.sendFeedback(kind: "app", text: "ещё не ушло", card: nil, email: "", app: "1.4", os: "iOS 18.6")
+        let (id, feedbackId) = (t.state.id, t.state.feedbackId)
+        var forgotten = await t.forget()
+        XCTAssertFalse(forgotten)
+        reply = { _ in 503 }
+        forgotten = await t.forget()
+        XCTAssertFalse(forgotten)
+        XCTAssertEqual(t.state.id, id)
+        XCTAssertEqual(t.state.feedbackId, feedbackId)
+        XCTAssertEqual(t.state.queue.count, 1)
+    }
+
+    // The post of `suffix` waits until the returned closure is called.
+    private func hold(_ suffix: String) -> () -> Void {
+        var waiting: CheckedContinuation<Void, Never>?
+        var released = false
+        t.post = { [unowned self] url, body in
+            posts.append((url, try! JSONSerialization.jsonObject(with: body) as! [String: Any]))
+            if url.hasSuffix(suffix) && !released { await withCheckedContinuation { waiting = $0 } }
+            return 204
+        }
+        return {
+            released = true
+            waiting?.resume()
+        }
+    }
+
+    private func settle() async {
+        for _ in 0..<100 { await Task.yield() }
+    }
+
+    func testAMessageSentWhileAForgetIsOnItsWayDoesNotGoOutUnderTheOldId() async {
+        let release = hold("/forget")
+        let forgetting = Task { await t.forget() }
+        await settle()
+        let sending = Task { await t.sendFeedback(kind: "app", text: "во время удаления", card: nil, email: "", app: "1.4", os: "iOS 18.6") }
+        await settle()
+        XCTAssertFalse(posts.contains { $0.url.hasSuffix("/feedback") })
+        release()
+        let forgotten = await forgetting.value
+        _ = await sending.value
+        XCTAssertTrue(forgotten)
+        XCTAssertFalse(posts.contains { $0.url.hasSuffix("/feedback") })
+        XCTAssertTrue(t.state.queue.isEmpty)
+    }
+
+    func testAPingThatComesBackAfterAForgetDoesNotBringBackTheOldId() async {
+        let release = hold("/ping")
+        let pinging = Task { await ping() }
+        await settle()
+        let forgotten = await t.forget()
+        XCTAssertTrue(forgotten)
+        release()
+        _ = await pinging.value
+        XCTAssertNil(t.state.last)
+    }
+
     func testANewInstallHasTwoDifferentLowercaseIdsAndStatisticsOn() {
         XCTAssertNotNil(t.state.id.range(of: #"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$"#, options: .regularExpression))
         XCTAssertNotEqual(t.state.id, t.state.feedbackId)
