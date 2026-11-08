@@ -169,6 +169,35 @@ jobs:
           else
             echo "::notice::No App Store Connect key in the secrets, nothing is uploaded"
           fi
+      # One request to App Store Connect with the key: a wrong secret shows here, plainly, and
+      # not as a signing error deep in xcodebuild.
+      - name: Check the key with App Store Connect
+        if: steps.key.outputs.ok
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        shell: ruby {0}
+        run: |
+          require "base64"
+          require "json"
+          require "net/http"
+          require "openssl"
+          id, issuer = ENV["ASC_KEY_ID"], ENV["ASC_ISSUER_ID"]
+          puts "Key ID: #{id.length} characters, Issuer ID: #{issuer.length} characters (10 and 36 expected)"
+          key = OpenSSL::PKey.read(ENV["ASC_KEY_P8"])
+          b64 = ->(s) { Base64.urlsafe_encode64(s, padding: false) }
+          now = Time.now.to_i
+          data = [{ alg: "ES256", kid: id, typ: "JWT" },
+                  { iss: issuer, iat: now, exp: now + 600, aud: "appstoreconnect-v1" }].map { |h| b64.(h.to_json) }.join(".")
+          # JWT wants the two halves of the signature as they are, not in DER.
+          sig = OpenSSL::ASN1.decode(key.sign("SHA256", data)).value.map { |n| n.value.to_s(2).rjust(32, "\0") }.join
+          res = Net::HTTP.get_response(URI("https://api.appstoreconnect.apple.com/v1/apps?filter[bundleId]=rs.finist.reci"),
+                                       "Authorization" => "Bearer #{data}.#{b64.(sig)}")
+          puts "App Store Connect answers #{res.code}"
+          exit 0 if res.code == "200"
+          puts res.body[0, 500]
+          exit 1
       - uses: actions/checkout@v5
         if: steps.key.outputs.ok
         with:
