@@ -13,6 +13,20 @@ final class TextTests: XCTestCase {
         XCTAssertEqual(Translit.placeOnly("ку̏ћа"), "ку́ћа")
     }
 
+    func testExampleFollowsAccentSetting() {
+        let ex = "Имамо малу [ку̏ћу] на [сѐлу]."
+        XCTAssertEqual(Translit.showAccents(ex, 0), ex)
+        XCTAssertEqual(Translit.showAccents(ex, 1), "Имамо малу [ку́ћу] на [се́лу].")
+        XCTAssertEqual(Translit.showAccents(ex, 2), "Имамо малу [кућу] на [селу].")
+        XCTAssertEqual(Translit.toLatin(Translit.showAccents(ex, 1)), "Imamo malu [kúću] na [sélu].")
+    }
+
+    func testStripLeavesOtherMarksAlone() {
+        XCTAssertEqual(Translit.strip("йё ку̏ћа̄"), "йё кућа")
+        XCTAssertEqual(Translit.strip("кућа"), "кућа")
+        XCTAssertEqual(Translit.strip("ćevapi, kȕća, с́"), "ćevapi, kȕća, с́")
+    }
+
     func testHeadwordFollowsSettings() {
         let w = Fixtures.words.first { !$0.acc.isEmpty && $0.pos != "note" }!
         var p = Prefs()
