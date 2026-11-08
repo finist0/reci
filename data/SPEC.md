@@ -70,6 +70,24 @@ Topic: the main area of meaning. Use `basic` for function words and very general
 `actions` for general verbs that fit no specific topic, and `qualities` for general
 adjectives.
 
+## Comparisons and notes (`articles.jsonl`)
+
+A comparison (`pos` `compare`, key `cmp:<words>`) sets similar words side by side:
+- `cyr` lists them with ` · `, `meanings` holds the question shown as the title;
+- `related` has one object per compared word: its translation and, after ` — `, when to use it;
+- `examples`: at least one per compared word, the word in brackets;
+- `note` adds what `related` does not say (a trap, a false friend), never repeats it.
+
+A note (`pos` `note`, key `note:<slug>`) has a Russian title in `cyr` and its text in `note`:
+- `related` translates every Serbian word or phrase the text mentions;
+- `examples` are optional.
+
+The text of both is written to be read on a phone:
+- short paragraphs separated by an empty line (`\n\n`);
+- parallel facts as lines starting with `• `, steps as `1. `, `2. `;
+- the Serbian words it discusses may carry stress marks, a phrase either on all its words or on
+  none.
+
 ## Gold examples
 
 ```
