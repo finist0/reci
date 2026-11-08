@@ -78,8 +78,8 @@ requires that much testing before the app can be released to everyone.
 The rest is the same for both ways to install:
 
 1. Install the app from Google Play as above, or download `reci-release.apk` from the
-   Releases page and open it on the phone. For the APK, Android asks to allow installs from
-   this source.
+   [Releases](https://github.com/finist0/reci/releases/latest) page and open it on the
+   phone. For the APK, Android asks to allow installs from this source.
 
 2. Open the app's settings, the lock screen section:
    - turn on the card when the screen turns on;
