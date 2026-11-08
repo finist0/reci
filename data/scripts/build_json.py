@@ -73,6 +73,22 @@ SR_LETTERS = set("абвгдђежзијклљмнњопрстћуфхцчџш")
 RU_LETTERS = set("абвгдеёжзийклмнопрстуфхцчшщъыьэюя")
 
 
+STRESS_SET = set("\u030f\u0311\u0300\u0301\u0304")
+
+
+def unstressed(text):
+    """The text without stress marks, which examples and notes may carry."""
+    d = unicodedata.normalize("NFD", text)
+    out, vowel = [], False
+    for ch in d:
+        if ch not in STRESS_SET or not vowel:
+            out.append(ch)
+        if unicodedata.category(ch) != "Mn":
+            vowel = ch in "аеиоурАЕИОУР"
+    out = "".join(out)
+    return text if out == d else unicodedata.normalize("NFC", out)
+
+
 def stray(text, allowed):
     return sorted({ch for ch in text if ch.isalpha() and ch.lower() not in allowed})
 
@@ -90,7 +106,13 @@ def check(e):
         return errs
     errs = []
     sr_fields = [e.get("cyr", "")] + ([] if e.get("pos") == "phrase" else [e.get("forms", "")]) + e.get("syn", []) + e.get("ant", [])
-    sr_fields += [r.get("sr", "") for r in e.get("related", [])] + [x.get("sr", "") for x in e.get("examples", [])]
+    sr_fields += [r.get("sr", "") for r in e.get("related", [])]
+    # Stress marks are fine on the bracketed words of an example and nowhere else in it.
+    for x in e.get("examples", []):
+        outside = re.sub(r"\[[^\]]*\]", "", x.get("sr", ""))
+        if unstressed(outside) != outside:
+            errs.append(f"stress mark outside the brackets in {x['sr']!r}")
+        sr_fields.append(unstressed(x.get("sr", "")))
     ru_fields = list(e.get("meanings", [])) + [r.get("ru", "") for r in e.get("related", [])]
     ru_fields += [x.get("ru", "") for x in e.get("examples", [])]
     # Serbian glosses inside Russian text and Russian labels inside forms are fine;
@@ -99,9 +121,10 @@ def check(e):
     for t in sr_fields + ru_fields + [e.get("gram", "")]:
         if bad := stray(t, cyr):
             errs.append(f"foreign letters {bad} in {t!r}")
-    if bad := stray(e.get("note", ""), cyr | set("abcdefghijklmnopqrstuvwxyz")):
+    note = unstressed(e.get("note", ""))
+    if bad := stray(note, cyr | set("abcdefghijklmnopqrstuvwxyz")):
         errs.append(f"foreign letters {bad} in note {e.get('note')!r}")
-    for t in sr_fields + ru_fields + [e.get("note", "")]:
+    for t in sr_fields + ru_fields + [note]:
         if any(unicodedata.category(ch) == "Mn" for ch in t):
             errs.append(f"combining mark in {t!r}")
     for f in ("key", "cyr", "pos", "meanings", "topic", "rank"):
@@ -118,7 +141,7 @@ def check(e):
     # A phrase card keeps its literal Russian translation in forms.
     sr = [e.get("cyr", "")] + ([] if e.get("pos") == "phrase" else [e.get("forms", "")]) + e.get("syn", []) + e.get("ant", [])
     sr += [r.get("sr", "") for r in e.get("related", [])]
-    sr += [x.get("sr", "") for x in e.get("examples", [])]
+    sr += [unstressed(x.get("sr", "")) for x in e.get("examples", [])]
     for t in sr:
         if LATIN.search(t):
             errs.append(f"latin letters in Serbian text {t!r}")

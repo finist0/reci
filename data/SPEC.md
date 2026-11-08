@@ -53,7 +53,10 @@ Examples:
 - the headword's form in the sentence is wrapped in square brackets: `Наша [кућа] је близу мора.`
   Mark exactly one occurrence, the inflected form as it appears;
 - each example shows a different meaning or typical use where possible;
-- the Russian translation is natural Russian, not word-for-word.
+- the Russian translation is natural Russian, not word-for-word;
+- the bracketed words may carry stress marks, nothing else in the sentence does. They come from
+  `data/scripts/accent_examples.py <sh.jsonl>` (the kaikki.org dump), which marks a bracket only
+  when every word in it has one agreed accented form; words left bare are better than guesses.
 
 `note` is for things a Russian speaker gets wrong:
 - false friends: `позориште` is theatre, not «позорище»; `право` also means «прямо»;
