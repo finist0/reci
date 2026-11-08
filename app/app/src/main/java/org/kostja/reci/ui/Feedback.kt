@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
@@ -268,6 +269,7 @@ fun WhatSentDialog(onDismiss: () -> Unit) {
     val p = LocalPalette.current
     val ctx = LocalContext.current
     val last = Telemetry.last
+    var forgetting by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
         title = { Text("Анонимная статистика") },
@@ -290,14 +292,62 @@ fun WhatSentDialog(onDismiss: () -> Unit) {
                         modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(p.panel).padding(10.dp).testTag("packet"),
                     )
                 }
+                // Quoted when asking about a message or the deletion of the data.
+                SelectionContainer {
+                    Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text("Номер этой установки, для статистики", fontSize = 13.sp, color = p.secondary)
+                        Text(Telemetry.id, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = p.text,
+                             modifier = Modifier.testTag("installId"))
+                        Text("Номер для сообщений разработчику", fontSize = 13.sp, color = p.secondary,
+                             modifier = Modifier.padding(top = 6.dp))
+                        Text(Telemetry.feedbackId, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = p.text,
+                             modifier = Modifier.testTag("feedbackId"))
+                    }
+                }
                 Text(
                     "Политика конфиденциальности",
                     color = p.accent,
                     modifier = Modifier.clickable { openLink(ctx, Telemetry.PRIVACY) },
                 )
+                Text(
+                    "Удалить мои данные с сервера",
+                    fontSize = 13.sp,
+                    color = p.secondary,
+                    modifier = Modifier.clickable { forgetting = true },
+                )
             }
         },
         confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } },
+    )
+    if (forgetting) ForgetDialog { forgetting = false }
+}
+
+@Composable
+private fun ForgetDialog(onDismiss: () -> Unit) {
+    val ctx = LocalContext.current
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Удалить данные с сервера?") },
+        text = {
+            Text(
+                "С сервера разработчика удалятся статистика и сообщения, отправленные с этого телефона. Прогресс и " +
+                    "настройки на телефоне останутся. Приложение получит новые номера и дальше будет отправлять " +
+                    "статистику уже с ними, если она включена."
+            )
+        },
+        confirmButton = {
+            TextButton(onClick = {
+                Telemetry.forget { ok ->
+                    Toast.makeText(
+                        ctx,
+                        if (ok) "Данные удалены с сервера" else "Не удалось связаться с сервером. Попробуйте позже",
+                        Toast.LENGTH_LONG,
+                    ).show()
+                }
+                onDismiss()
+            }) { Text("Удалить") }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
     )
 }
 

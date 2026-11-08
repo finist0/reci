@@ -196,7 +196,8 @@ object Telemetry {
                         sp.edit {
                             putString("sent_day", day)
                             putString("counts", minus(counts(), sentCounts).toString())
-                            if (status in 200..299) putString("last", p.toString())
+                            // A forget that finished meanwhile gave the install a new id.
+                            if (status in 200..299 && p.getString("id") == id) putString("last", p.toString())
                         }
                     }
                     changed()
@@ -256,18 +257,48 @@ object Telemetry {
     fun sendFeedback(kind: String, text: String, card: JSONObject?, mail: String, env: JSONObject?, done: (Boolean) -> Unit = {}) {
         if (kind != "crash") email = mail
         val m = JSONObject()
-            .put("id", feedbackId).put("kind", kind).put("platform", "android").put("app", appVersion)
+            .put("kind", kind).put("platform", "android").put("app", appVersion)
             .put("os", osName)
         if (env != null) m.put("env", env)
         val clean = text.replace(CONTROL, "")
         if (clean.isNotEmpty()) m.put("text", clean)
         if (card != null) m.put("card", card)
         if (mail.isNotEmpty()) m.put("email", mail)
+        // The id is read under the lock forget takes, so a message never goes out with the id of
+        // an install that was just forgotten.
         synchronized(this) {
+            m.put("id", feedbackId)
             sp.edit(commit = true) { putString("queue", queue().put(m).toString()) }
         }
         changed()
         flush { done(it == 0) }
+    }
+
+    // Asks the server to delete what this install sent: the statistics by its id and the messages
+    // by theirs. On success the install starts afresh with new ids, so what it sends later is not
+    // tied to what was deleted, and the messages still waiting are dropped. The ids change on the
+    // network thread, before a flush queued behind could send a waiting message again.
+    fun forget(done: (Boolean) -> Unit) {
+        val body = JSONObject().put("id", id).put("feedbackId", feedbackId).toString()
+        io.execute {
+            val ok = post("$SERVER/forget", body) in 200..299
+            if (ok) {
+                synchronized(this) {
+                    sp.edit(commit = true) {
+                        putString("id", UUID.randomUUID().toString())
+                        putString("feedback_id", UUID.randomUUID().toString())
+                        remove("queue")
+                        remove("last")
+                        remove("email")
+                        remove("counts")
+                    }
+                }
+            }
+            main.post {
+                changed()
+                done(ok)
+            }
+        }
     }
 
     private fun httpPost(url: String, body: String): Int {
