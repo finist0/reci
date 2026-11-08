@@ -23,6 +23,7 @@ sealed interface Screen {
     data object Categories : Screen
     data object Search : Screen
     data object Settings : Screen
+    data object Schools : Screen
     data class Detail(val key: String, val report: Boolean = false) : Screen
     data class Words(val category: String) : Screen
     data object GrammarIndex : Screen
@@ -35,6 +36,7 @@ sealed interface Screen {
             Categories -> "categories"
             Search -> "search"
             Settings -> "settings"
+            Schools -> "schools"
             is Detail -> "detail"
             is Words -> "list"
             GrammarIndex -> "grammar"
@@ -46,6 +48,7 @@ sealed interface Screen {
             "categories" -> Categories
             "search" -> Search
             "settings" -> Settings
+            "schools" -> Schools
             "grammar" -> GrammarIndex
             else -> when {
                 route?.startsWith("report:") == true -> Detail(route.removePrefix("report:"), report = true)
@@ -100,6 +103,7 @@ class MainActivity : ComponentActivity() {
                             onSearch = { go(Screen.Search) },
                             onSettings = { go(Screen.Settings) },
                             onCategories = { go(Screen.Categories) },
+                            onSchools = { go(Screen.Schools) },
                             onGrammar = { id ->
                                 go(
                                     when {
@@ -115,8 +119,13 @@ class MainActivity : ComponentActivity() {
                     Screen.Categories -> CategoriesScreen(openList = { go(Screen.Words(it)) }, back = back)
                     is Screen.Words -> WordListScreen(s.category, open = { go(Screen.Detail(it)) }, back = back)
                     Screen.Search -> SearchScreen(open = { go(Screen.Detail(it)) }, back = back)
-                    Screen.Settings -> SettingsScreen(openCategories = { go(Screen.Categories) }, back = back)
-                    is Screen.Detail -> DetailScreen(s.key, back, s.report) { id ->
+                    Screen.Settings -> SettingsScreen(
+                        openCategories = { go(Screen.Categories) },
+                        openSchools = { go(Screen.Schools) },
+                        back = back,
+                    )
+                    Screen.Schools -> SchoolsScreen(back)
+                    is Screen.Detail -> DetailScreen(s.key, back, s.report, onSchools = { go(Screen.Schools) }) { id ->
                         go(
                             when {
                                 id.startsWith("cmp:") -> Screen.Detail(id)

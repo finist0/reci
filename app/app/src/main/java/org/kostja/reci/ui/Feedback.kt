@@ -111,6 +111,17 @@ fun StatsNotice() {
     }
 }
 
+// Opens "Куда пойти учиться?"; sits next to the flag at the bottom of a card.
+@Composable
+fun SchoolsButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    Box(
+        modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(painterResource(R.drawable.ic_school), "Куда пойти учиться", tint = LocalPalette.current.faint, modifier = Modifier.size(22.dp))
+    }
+}
+
 @Composable
 fun ReportFlag(modifier: Modifier = Modifier, onClick: () -> Unit) {
     Box(
@@ -354,7 +365,7 @@ private fun ForgetDialog(onDismiss: () -> Unit) {
 private const val PLAY = "https://play.google.com/store/apps/details?id=org.kostja.reci"
 private const val GITHUB = "https://github.com/finist0/reci"
 const val SHARE_TEXT = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, " +
-    "примерами и грамматикой. Бесплатно и без рекламы.\nAndroid: $PLAY\niPhone и компьютер: https://finist0.github.io/reci/web/"
+    "примерами и грамматикой. Бесплатно.\nAndroid: $PLAY\niPhone и компьютер: https://finist0.github.io/reci/web/"
 
 @Composable
 fun HelpDialog(onDismiss: () -> Unit) {
@@ -372,7 +383,7 @@ fun HelpDialog(onDismiss: () -> Unit) {
         title = { Text("Помочь автору") },
         text = {
             Column {
-                Text("Приложение бесплатное и без рекламы. Вот чем можно помочь:", color = p.secondary)
+                Text("Приложение бесплатное. Вот чем можно помочь:", color = p.secondary)
                 HelpRow("Поделиться с другом", "Ссылки на Android, iPhone и компьютер") {
                     Telemetry.count("opened", "share")
                     val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, SHARE_TEXT)

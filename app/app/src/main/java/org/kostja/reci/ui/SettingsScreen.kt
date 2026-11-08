@@ -100,7 +100,7 @@ private fun ignoresBattery(ctx: Context) =
     ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
 
 @Composable
-fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
+fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: () -> Unit) {
     Prefs.version.intValue
     Repo.version.intValue
     val p = LocalPalette.current
@@ -196,6 +196,8 @@ fun SettingsScreen(openCategories: () -> Unit, back: () -> Unit) {
                     "Через неделю, потом через 3\u00A0недели, 2\u00A0месяца, полгода и год",
                     Prefs.reviewKnown,
                 ) { Prefs.reviewKnown = it }
+                Line()
+                NavRow("Куда пойти учиться?", "Школы сербского языка", openSchools)
             }
 
             GroupTitle("Экран блокировки")

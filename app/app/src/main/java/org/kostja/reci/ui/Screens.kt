@@ -49,6 +49,7 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -305,6 +306,24 @@ private fun searchMatch(w: Word, q: String, byMeaning: Boolean): Boolean {
     return w.cyr.lowercase().startsWith(q) || Translit.toLatin(w.cyr).lowercase().startsWith(q)
 }
 
+// A place for Serbian language schools to tell about themselves; empty for now.
+@Composable
+fun SchoolsScreen(back: () -> Unit) {
+    val p = LocalPalette.current
+    Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
+        Header("Куда пойти учиться?", back)
+        Box(Modifier.weight(1f).fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
+            Text(
+                "Здесь могла быть реклама вашей школы сербского языка",
+                fontSize = 17.sp,
+                lineHeight = 24.sp,
+                color = p.secondary,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
+
 @Composable
 fun SearchScreen(open: (String) -> Unit, back: () -> Unit) {
     val p = LocalPalette.current
@@ -391,7 +410,13 @@ fun SearchScreen(open: (String) -> Unit, back: () -> Unit) {
 }
 
 @Composable
-fun DetailScreen(key: String, back: () -> Unit, report: Boolean = false, onGrammar: ((String) -> Unit)? = null) {
+fun DetailScreen(
+    key: String,
+    back: () -> Unit,
+    report: Boolean = false,
+    onSchools: (() -> Unit)? = null,
+    onGrammar: ((String) -> Unit)? = null,
+) {
     Repo.version.intValue
     Prefs.version.intValue
     val p = LocalPalette.current
@@ -415,6 +440,7 @@ fun DetailScreen(key: String, back: () -> Unit, report: Boolean = false, onGramm
                     .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 56.dp)
             ) { WordBody(w, slide = false, onGrammar = onGrammar) }
             ReportFlag(Modifier.align(Alignment.BottomEnd).padding(8.dp)) { reporting = true }
+            if (onSchools != null) SchoolsButton(Modifier.align(Alignment.BottomEnd).padding(end = 52.dp, bottom = 8.dp), onSchools)
         }
         var answered by remember(w.key) { mutableStateOf(Repo.answerOf(w)) }
         var learned by remember(w.key) { mutableStateOf(false) }

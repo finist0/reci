@@ -52,6 +52,7 @@ class LockActivity : ComponentActivity() {
                     onCategories = { openApp("categories") },
                     onGrammar = { id -> openApp(if (id == null) "grammar" else "grammar:$id") },
                     onReport = { key -> openApp("report:$key") },
+                    onSchools = { openApp("schools") },
                 )
             }
         }
