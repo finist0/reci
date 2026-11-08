@@ -119,6 +119,8 @@ test("a card is reported from the card itself, and the email is remembered", asy
     assert.match(await page.text(), /Что не так с карточкой\?/);
     assert.ok(await page.eval("document.querySelector('[data-act=sendreport]').disabled"));
     await page.tap('[data-act="problem"][data-arg="stress"]');
+    await page.tap('[data-act="sendreport"]');
+    assert.match(await page.text(), /Напишите, что не так/);
     await page.tap('[data-input="reporttext"]');
     await page.type("ударение на втором слоге");
     await page.tap('[data-input="reportemail"]');
@@ -138,6 +140,8 @@ test("a mistyped email is caught before sending", async t => {
     const page = await app(t);
     await page.tap('[data-act="report"]');
     await page.tap('[data-act="problem"][data-arg="translation"]');
+    await page.tap('[data-input="reporttext"]');
+    await page.type("не тот перевод");
     await page.tap('[data-input="reportemail"]');
     await page.type("me@example");
     await page.tap('[data-act="sendreport"]');
@@ -168,6 +172,8 @@ test("a word found by search is reported from its screen", async t => {
     await page.waitFor("document.querySelector('.detail')");
     await page.tap('[data-act="report"]');
     await page.tap('[data-act="problem"][data-arg="example"]');
+    await page.tap('[data-input="reporttext"]');
+    await page.type("пример без слова");
     await page.tap('[data-act="sendreport"]');
     await waitPosts(page, "feedback");
     assert.equal(posts("feedback")[0].card.word, "кућа");
@@ -178,6 +184,8 @@ test("without network a message waits and goes out when the network is back", as
     await page.offline(true);
     await page.tap('[data-act="report"]');
     await page.tap('[data-act="problem"][data-arg="other"]');
+    await page.tap('[data-input="reporttext"]');
+    await page.type("карточка повторяется");
     await page.tap('[data-act="sendreport"]');
     await page.waitFor("document.querySelector('.toast')?.textContent.includes('интернет')");
     await page.tap('[data-act="settings"]');
