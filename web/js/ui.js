@@ -55,6 +55,7 @@ const ICONS = {
     chevron_right: "M10,6L8.59,7.41 13.17,12l-4.58,4.59L10,18l6,-6z",
     expand_more: "M16.59,8.59L12,13.17 7.41,8.59 6,10l6,6 6,-6z",
     flag: "M14,6l-1,-2H5v17h2v-7h5l1,2h7V6h-6zM18,14h-4l-1,-2H7V6h5l1,2h5v6z",
+    school: "M2,7h20v3H2zM4,10h2v10H4zM18,10h2v10h-2zM8,10h8v4H8zM9,3h6v3H9z",
     search: "M15.5,14h-0.79l-0.28,-0.27C15.41,12.59 16,11.11 16,9.5 16,5.91 13.09,3 9.5,3S3,5.91 3,9.5 5.91,16 9.5,16c1.61,0 3.09,-0.59 4.23,-1.57l0.27,0.28v0.79l5,4.99L20.49,19l-4.99,-5zM9.5,14C7.01,14 5,11.99 5,9.5S7.01,5 9.5,5 14,7.01 14,9.5 11.99,14 9.5,14z",
     settings: "M19.14,12.94c0.04,-0.3 0.06,-0.61 0.06,-0.94c0,-0.32 -0.02,-0.64 -0.07,-0.94l2.03,-1.58c0.18,-0.14 0.23,-0.41 0.12,-0.61l-1.92,-3.32c-0.12,-0.22 -0.37,-0.29 -0.59,-0.22l-2.39,0.96c-0.5,-0.38 -1.03,-0.7 -1.62,-0.94L14.4,2.81c-0.04,-0.24 -0.24,-0.41 -0.48,-0.41h-3.84c-0.24,0 -0.43,0.17 -0.47,0.41L9.25,5.35C8.66,5.59 8.12,5.92 7.63,6.29L5.24,5.33c-0.22,-0.08 -0.47,0 -0.59,0.22L2.74,8.87C2.62,9.08 2.66,9.34 2.86,9.48l2.03,1.58C4.84,11.36 4.8,11.69 4.8,12s0.02,0.64 0.07,0.94l-2.03,1.58c-0.18,0.14 -0.23,0.41 -0.12,0.61l1.92,3.32c0.12,0.22 0.37,0.29 0.59,0.22l2.39,-0.96c0.5,0.38 1.03,0.7 1.62,0.94l0.36,2.54c0.05,0.24 0.24,0.41 0.48,0.41h3.84c0.24,0 0.44,-0.17 0.47,-0.41l0.36,-2.54c0.59,-0.24 1.13,-0.56 1.62,-0.94l2.39,0.96c0.22,0.08 0.47,0 0.59,-0.22l1.92,-3.32c0.12,-0.22 0.07,-0.47 -0.12,-0.61L19.14,12.94zM12,15.6c-1.98,0 -3.6,-1.62 -3.6,-3.6s1.62,-3.6 3.6,-3.6s3.6,1.62 3.6,3.6S13.98,15.6 12,15.6z",
     star: "M12,17.27L18.18,21l-1.64,-7.03L22,9.24l-7.19,-0.61L12,2 9.19,8.63 2,9.24l5.46,4.73L5.82,21z",
@@ -77,13 +78,13 @@ function headword(w) {
     return primary(w.acc ? D.showAccents(w.acc, prefs.accentMode) : w.cyr);
 }
 
-const secondary = cyr => (prefs.showBothScripts ? (prefs.latinFirst ? cyr : D.toLatin(cyr)) : null);
 // Serbian text that may carry stress marks: an example, a note.
 const marked = s => D.showAccents(s, prefs.accentMode);
 
 // A word a card refers to, with the stress of its own card when there is one.
 const linked = sr => primary(R.wordByCyr(sr)?.acc ? marked(R.wordByCyr(sr).acc) : sr);
 
+const secondary = cyr => (prefs.showBothScripts ? (prefs.latinFirst ? cyr : D.toLatin(cyr)) : null);
 
 // "[x]" marks the headword inside an example sentence.
 const highlighted = text => esc(text).replace(/\[([^\]]*)\]/g, '<b class="hl">$1</b>');
@@ -420,7 +421,8 @@ const statsNotice = () => {
 const WORD_PROBLEMS = [["translation", "Перевод"], ["stress", "Ударение"], ["example", "Пример"], ["forms", "Род или формы"], ["other", "Другое"]];
 const ARTICLE_PROBLEMS = [["text", "Ошибка в тексте"], ["other", "Другое"]];
 
-const flagButton = w => `<button class="flag" ${act("report", w.key)} aria-label="Сообщить об ошибке">${icon("flag")}</button>`;
+const flagButton = w => `<button class="flag" ${act("report", w.key)} aria-label="Сообщить об ошибке">${icon("flag")}</button>
+    <button class="flag schools" ${act("schools")} aria-label="Куда пойти учиться">${icon("school")}</button>`;
 
 const emailField = (name, value) =>
     `<input type="email" inputmode="email" autocomplete="email" data-input="${name}" placeholder="Почта для ответа, если нужен ответ" value="${esc(value)}">`;
@@ -471,7 +473,7 @@ function writeDialog(e) {
 const PLAY = "https://play.google.com/store/apps/details?id=org.kostja.reci";
 const GITHUB = "https://github.com/finist0/reci";
 const SHARE_TEXT = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, " +
-    `примерами и грамматикой. Бесплатно и без рекламы.\nAndroid: ${PLAY}\niPhone и компьютер: https://finist0.github.io/reci/web/`;
+    `примерами и грамматикой. Бесплатно.\nAndroid: ${PLAY}\niPhone и компьютер: https://finist0.github.io/reci/web/`;
 
 const linkRow = (title, summary, a, href) => `
     <a class="setting" href="${href}" target="_blank" rel="noopener" ${act(a)}>
@@ -483,7 +485,7 @@ function helpDialog(e) {
     if (!e.help) return "";
     return `<div class="modal"><div class="dialog form">
         <div class="dialog-title">Помочь автору</div>
-        <div class="dialog-text">Приложение бесплатное и без рекламы. Вот чем можно помочь:</div>
+        <div class="dialog-text">Приложение бесплатное. Вот чем можно помочь:</div>
         ${panel(navRow("Поделиться с другом", "Ссылки на Android, iPhone и компьютер", "share") + line +
             linkRow("Оценить приложение", "В Google Play, для Android", "rate", PLAY) + line +
             linkRow("Поставить звезду на GitHub", "Там лежит код приложения", "star", GITHUB))}
@@ -791,7 +793,8 @@ function settingsScreen(e) {
                 choice("Карточки", ["Обучение", "Перевод", "Слово"], prefs.cardMode, "cardmode") + `<div class="note">${esc(modeText)}</div>` + line +
                 choice("Слов в работе одновременно", sizes.map(String), Math.max(0, sizes.indexOf(prefs.activeSize)), "activesize") + line +
                 toggle("Кнопки «Не знаю / Знаю»", null, prefs.useMarks, "usemarks") + line +
-                toggle("Проверять выученные слова", "Через неделю, потом через 3\u00a0недели, 2\u00a0месяца, полгода и год", prefs.reviewKnown, "reviewknown"))}
+                toggle("Проверять выученные слова", "Через неделю, потом через 3\u00a0недели, 2\u00a0месяца, полгода и год", prefs.reviewKnown, "reviewknown") + line +
+                navRow("Куда пойти учиться?", "Школы сербского языка", "schools"))}
             ${groupTitle("Оформление")}
             ${panel(`<div class="choice"><div class="setting-title">Тема</div><div class="themes">${themes}</div></div>` + line +
                 choice("Алфавит", ["Кириллица", "Latinica"], prefs.latinFirst ? 1 : 0, "alphabet") + line +
@@ -849,7 +852,12 @@ function settingsScreen(e) {
     </div>`;
 }
 
+// A place for Serbian language schools to tell about themselves; empty for now.
+const schoolsScreen = () => `<div class="screen-col">${header("Куда пойти учиться?")}
+    <div class="schools-empty">Здесь могла быть реклама вашей школы сербского языка</div></div>`;
+
 const screens = {
+    schools: schoolsScreen,
     card: cardScreen, categories: categoriesScreen, search: searchScreen, detail: detailScreen, list: listScreen,
     grammar: grammarScreen, topic: topicScreen, settings: settingsScreen,
 };
@@ -926,6 +934,7 @@ const actions = {
     categories: () => go("categories"),
     search: () => go("search"),
     settings: () => go("settings"),
+    schools: () => go("schools"),
     ref: arg => openRef(arg),
     topic: arg => {
         stack[stack.length - 1] = { name: "topic", arg };
