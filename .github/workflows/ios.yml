@@ -9,6 +9,9 @@ on:
     paths: ["ios/**", "tests/**", "app/app/src/main/assets/**", ".github/workflows/ios.yml"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   core-linux:
     name: Learning logic on Linux

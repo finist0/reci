@@ -11,3 +11,7 @@ __pycache__/
 *.jks
 *.keystore
 keystore.properties
+*.p8
+*.p12
+*.cer
+*.mobileprovision
