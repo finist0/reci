@@ -158,6 +158,8 @@ final class FeedbackUITests: XCTestCase {
     func testACardIsReportedFromTheCard() {
         launch()
         report(problem: "stress")
+        app.buttons["send"].tap()
+        XCTAssertTrue(app.staticTexts["Напишите, что не так"].waitForExistence(timeout: 3))
         type("message", "ударение на втором слоге")
         type("email", "me@example.org")
         app.buttons["send"].tap()
@@ -171,6 +173,7 @@ final class FeedbackUITests: XCTestCase {
     func testAMistypedEmailIsCaughtBeforeSending() {
         launch()
         report(problem: "translation")
+        type("message", "не тот перевод")
         type("email", "me@example")
         app.buttons["send"].tap()
         XCTAssertTrue(app.staticTexts["Проверьте адрес почты"].waitForExistence(timeout: 3))
@@ -180,6 +183,7 @@ final class FeedbackUITests: XCTestCase {
     func testWithoutNetworkAMessageWaits() {
         launch(["-uitest-reset", "-uitest-offline"])
         report(problem: "other")
+        type("message", "карточка повторяется")
         app.buttons["send"].tap()
         let toast = app.descendants(matching: .any)["sentToast"].firstMatch
         XCTAssertTrue(toast.waitForExistence(timeout: 5))
