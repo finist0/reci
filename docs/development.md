@@ -197,12 +197,14 @@ python3 -m venv /path/to/venv
 | `android.yml` | каждый push | тесты на JVM, отладочный APK; тесты интерфейса на эмуляторах Android 9, 13, 15 и 17 и на планшете с Android 15 | `reci-debug-apk`, отчёты при ошибке |
 | `web.yml` | каждый push | правила обучения и файл прогресса в Node, интерфейс в Chrome | — |
 | `dict.yml` | каждый push | тесты сборки поправок; `dict/` совпадает со словарём и выпусками | — |
-| `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах трёх iPhone и iPad | `reci-unsigned-ipa`, `ios-test-results-<телефон>`, снимки экранов `ios-screenshots-<телефон>` |
+| `ios.yml` | push, который меняет `ios/`, `tests/` или словарь | логика на Linux; на macOS сборка, `.ipa`, тесты интерфейса в симуляторах четырёх iPhone и iPad; из `main` — подписанная сборка в App Store Connect ([docs/ios.md](ios.md)) | `reci-unsigned-ipa`, `ios-test-results-<телефон>`, снимки экранов `ios-screenshots-<телефон>` |
 
 Любой сценарий можно запустить и вручную: Actions → сценарий → Run workflow.
 
 Подписанный релизный APK на GitHub не собирается: ключ подписи остаётся только у
 владельца, релиз собирается `build.sh` и выкладывается на страницу Releases вручную.
+Приложение для iPhone, наоборот, подписывает и загружает в App Store Connect сам GitHub,
+ключом App Store Connect API из секретов репозитория.
 
 ### Как написать новый сценарий
 

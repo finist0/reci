@@ -140,3 +140,60 @@ jobs:
           name: ios-test-results-${{ matrix.slug }}
           path: ios/build/Reci.xcresult
           if-no-files-found: ignore
+
+  # A push to main that changes the app sends a build to App Store Connect: TestFlight gives it to
+  # testers, and the App Store takes it once it is chosen for a release there. The key of the
+  # App Store Connect API in the secrets ASC_KEY_P8, ASC_KEY_ID and ASC_ISSUER_ID signs it and
+  # lets Xcode make the certificate and profiles; without the key nothing is uploaded.
+  upload:
+    name: Upload to App Store Connect
+    needs: [core-linux, app-simulator]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && github.repository == 'finist0/reci'
+    # App Store Connect takes only builds made with the newest Xcode.
+    runs-on: macos-26
+    timeout-minutes: 60
+    # The key reaches only the steps that need it, not Homebrew and XcodeGen.
+    steps:
+      - name: Look for the App Store Connect key
+        id: key
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          if [ -n "$ASC_KEY_P8" ] && [ -n "$ASC_KEY_ID" ] && [ -n "$ASC_ISSUER_ID" ]; then
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::No App Store Connect key in the secrets, nothing is uploaded"
+          fi
+      - uses: actions/checkout@v5
+        if: steps.key.outputs.ok
+        with:
+          persist-credentials: false
+      - if: steps.key.outputs.ok
+        run: brew install xcodegen
+      - if: steps.key.outputs.ok
+        run: xcodegen
+        working-directory: ios
+      # The number of the run is the build number: it grows with every upload, as App Store
+      # Connect wants, while the version stays the one in project.yml.
+      - name: Archive, sign and upload
+        if: steps.key.outputs.ok
+        working-directory: ios
+        env:
+          BUILD: ${{ github.run_number }}
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          set -o pipefail
+          KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
+          trap 'rm -f "$KEY"' EXIT
+          (umask 077 && printf '%s\n' "$ASC_KEY_P8" > "$KEY")
+          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY"
+                -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
+          xcodebuild archive -project Reci.xcodeproj -scheme Reci -configuration Release \
+            -destination "generic/platform=iOS" -archivePath build/Reci.xcarchive \
+            CURRENT_PROJECT_VERSION="$BUILD" "${AUTH[@]}"
+          xcodebuild -exportArchive -archivePath build/Reci.xcarchive -exportOptionsPlist ExportOptions.plist \
+            -exportPath build/export "${AUTH[@]}"
