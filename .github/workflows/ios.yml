@@ -48,6 +48,13 @@ jobs:
             os: latest
             experimental: true
             main: false
+          # The largest iPhone and the iPad give the screenshots the App Store asks for.
+          - runner: macos-26
+            device: iPhone 17 Pro Max
+            slug: iphone-17-pro-max
+            os: latest
+            experimental: true
+            main: false
           # The iPad layout; its UI tests are not required to pass yet.
           - runner: macos-15
             device: iPad Pro 13-inch (M4)
