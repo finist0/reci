@@ -120,6 +120,21 @@ export function placeOnly(acc) {
     return out.normalize("NFC");
 }
 
+// Drops the marks of Cyrillic vowels and р only: the acute of ć or of Montenegrin с́ is part of the letter.
+export function strip(text) {
+    const s = text.normalize("NFD");
+    let out = "", vowel = false;
+    for (const ch of s) {
+        const mark = STRESS.has(ch) || ch === "̄";
+        if (!mark || !vowel) out += ch;
+        if (!/\p{Mn}/u.test(ch)) vowel = "аеиоурАЕИОУР".includes(ch);
+    }
+    return out.length === s.length ? text : out.normalize("NFC");
+}
+
+// Text with stress marks as the accent setting wants it: 0 as is, 1 the place only, 2 none.
+export const showAccents = (text, mode) => (mode === 0 ? text : mode === 1 ? placeOnly(text) : strip(text));
+
 export function esc(s) {
     return String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
 }

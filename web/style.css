@@ -377,7 +377,7 @@ input { font: inherit; color: var(--text); }
 
 .useful { margin-top: 20px; padding: 14px; border-radius: 14px; background: var(--panel); display: flex; flex-direction: column; gap: 8px; }
 .useful-title { font-size: 12px; font-weight: 700; color: var(--secondary); }
-.bullet { display: flex; font-size: 15px; line-height: 21px; }
+.bullet { display: flex; font-size: 15px; line-height: 21px; white-space: pre-line; }
 .bullet > span:first-child { color: var(--accent); width: 14px; flex: none; }
 
 .hidden-word { font: 600 26px var(--serif); color: var(--faint); margin-bottom: 8px; }
@@ -398,7 +398,7 @@ input { font: inherit; color: var(--text); }
 .item { display: flex; flex-direction: column; padding: 10px 14px; border-radius: 14px; background: var(--panel); }
 .item b { font: 600 19px var(--serif); color: var(--word); }
 .item span { font-size: 14px; line-height: 19px; }
-.article-text { font-size: 16px; line-height: 23px; margin: 14px 0 0; }
+.article-text { font-size: 16px; line-height: 23px; margin: 14px 0 0; white-space: pre-line; }
 
 /* --- Lists and screens --- */
 

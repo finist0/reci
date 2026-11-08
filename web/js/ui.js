@@ -74,15 +74,20 @@ const primary = s => (prefs.latinFirst ? D.toLatin(s) : s);
 function headword(w) {
     // A note's title is Russian; transliterating it would garble it.
     if (w.pos === "note") return w.cyr;
-    const shown = !w.acc || prefs.accentMode === 2 ? w.cyr : prefs.accentMode === 1 ? D.placeOnly(w.acc) : w.acc;
-    return primary(shown);
+    return primary(w.acc ? D.showAccents(w.acc, prefs.accentMode) : w.cyr);
 }
 
 const secondary = cyr => (prefs.showBothScripts ? (prefs.latinFirst ? cyr : D.toLatin(cyr)) : null);
+// Serbian text that may carry stress marks: an example, a note.
+const marked = s => D.showAccents(s, prefs.accentMode);
+
+// A word a card refers to, with the stress of its own card when there is one.
+const linked = sr => primary(R.wordByCyr(sr)?.acc ? marked(R.wordByCyr(sr).acc) : sr);
+
 
 // "[x]" marks the headword inside an example sentence.
 const highlighted = text => esc(text).replace(/\[([^\]]*)\]/g, '<b class="hl">$1</b>');
-const plain = text => text.replace(/[[\]]/g, "");
+const plain = text => D.strip(text.replace(/[[\]]/g, ""));
 
 // {сербский текст} is shown in the chosen script and in the word color, the part after
 // "|" inside braces is an ending and gets the accent color; **x** is bold.
@@ -216,25 +221,25 @@ function details(w) {
     if (w.examples.length) {
         out += divider + sectionLabel("Примеры") + '<div class="examples">' + w.examples.map(e => `
             <button class="example" ${act("say", plain(e.sr))}>
-                <span class="sr-text">${highlighted(primary(e.sr))}</span><span class="ru">${esc(e.ru)}</span>
+                <span class="sr-text">${highlighted(primary(marked(e.sr)))}</span><span class="ru">${esc(e.ru)}</span>
             </button>`).join("") + "</div>";
     }
     if (w.syn.length || w.ant.length) {
         out += divider;
         const chips = (items, cls) => `<div class="chips">${items.map(s =>
-            `<button class="wchip ${cls}" ${act("word", s)}>${esc(primary(s))}${more(s)}</button>`).join("")}</div>`;
+            `<button class="wchip ${cls}" ${act("word", s)}>${esc(linked(s))}${more(s)}</button>`).join("")}</div>`;
         if (w.syn.length) out += sectionLabel("Синонимы") + chips(w.syn, "syn");
         if (w.syn.length && w.ant.length) out += '<div class="gap"></div>';
         if (w.ant.length) out += sectionLabel("Антонимы") + chips(w.ant, "ant");
     }
     if (w.related.length) {
         out += divider + sectionLabel("Однокоренные") + '<div class="related">' + w.related.map(r => `
-            <button class="rel" ${act("word", r.sr)}><b>${esc(primary(r.sr))}</b>${more(r.sr)}<span class="dash">—</span>${esc(r.ru)}</button>`).join("") + "</div>";
+            <button class="rel" ${act("word", r.sr)}><b>${esc(linked(r.sr))}</b>${more(r.sr)}<span class="dash">—</span>${esc(r.ru)}</button>`).join("") + "</div>";
     }
     const notes = [w.note, ...w.tips].filter(Boolean);
     if (notes.length) {
         out += `<div class="useful"><div class="useful-title">Полезно знать</div>${notes.map(t =>
-            `<div class="bullet"><span>•</span><span>${esc(t)}</span></div>`).join("")}</div>`;
+            `<div class="bullet"><span>•</span><span>${esc(marked(t))}</span></div>`).join("")}</div>`;
     }
     return out;
 }
@@ -278,19 +283,19 @@ function articleBody(w) {
         `<div class="article-title">${esc(compare ? (w.meanings[0] || primary(w.cyr)) : w.cyr)}</div>`;
     if (compare) {
         out += '<div class="items">' + w.related.map(r => `
-            <button class="item" ${act("word", r.sr)}><b>${esc(primary(r.sr))}${more(r.sr)}</b><span>${esc(r.ru)}</span></button>`).join("") + "</div>";
-        if (w.note) out += `<p class="article-text">${esc(w.note)}</p>`;
+            <button class="item" ${act("word", r.sr)}><b>${esc(linked(r.sr))}${more(r.sr)}</b><span>${esc(r.ru)}</span></button>`).join("") + "</div>";
+        if (w.note) out += `<p class="article-text">${esc(marked(w.note))}</p>`;
     } else {
-        out += `<p class="article-text">${esc(w.note)}</p>`;
+        out += `<p class="article-text">${esc(marked(w.note))}</p>`;
         if (w.related.length) {
             out += sectionLabel("Слова") + '<div class="related">' + w.related.map(r => `
-                <button class="rel" ${act("word", r.sr)}><b>${esc(primary(r.sr))}</b><span class="dash">—</span>${esc(r.ru)}</button>`).join("") + "</div>";
+                <button class="rel" ${act("word", r.sr)}><b>${esc(linked(r.sr))}</b><span class="dash">—</span>${esc(r.ru)}</button>`).join("") + "</div>";
         }
     }
     if (w.examples.length) {
         out += divider + sectionLabel("Примеры") + '<div class="examples">' + w.examples.map(e => `
             <button class="example plain" ${act("say", plain(e.sr))}>
-                <span class="sr-text">${highlighted(primary(e.sr))}</span><span class="ru">${esc(e.ru)}</span>
+                <span class="sr-text">${highlighted(primary(marked(e.sr)))}</span><span class="ru">${esc(e.ru)}</span>
             </button>`).join("") + "</div>";
     }
     return out;
