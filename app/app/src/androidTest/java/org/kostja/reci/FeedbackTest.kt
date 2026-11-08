@@ -288,7 +288,8 @@ class FeedbackTest {
         val sent = FakeServer.of("forget").single()
         assertEquals(id, sent.getString("id"))
         assertEquals(feedbackId, sent.getString("feedbackId"))
-        compose.onNodeWithTag("installId").assert(hasText(Telemetry.id))
+        // The screen follows the new ids once the main thread has run changed().
+        compose.waitUntil(5000) { runCatching { compose.onNodeWithTag("installId").assert(hasText(Telemetry.id)) }.isSuccess }
         assertNotEquals(feedbackId, Telemetry.feedbackId)
     }
 
