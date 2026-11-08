@@ -152,6 +152,8 @@ class FeedbackTest {
         assertTrue(exists("Что не так с карточкой?"))
         compose.onNodeWithText("Отправить").assertIsNotEnabled()
         click("Ударение")
+        click("Отправить")
+        assertTrue(exists("Напишите, что не так"))
         compose.onNodeWithTag("comment").performTextInput("ударение на втором слоге")
         compose.onNodeWithTag("email").performTextInput("me@example.org")
         click("Отправить")
@@ -173,6 +175,7 @@ class FeedbackTest {
         launch()
         report()
         click("Перевод")
+        compose.onNodeWithTag("comment").performTextInput("не тот перевод")
         compose.onNodeWithTag("email").performTextInput("me@example")
         click("Отправить")
         assertTrue(exists("Проверьте адрес почты"))
@@ -195,6 +198,7 @@ class FeedbackTest {
         launch(route = "grammar:w:кућа")
         report()
         click("Пример")
+        compose.onNodeWithTag("comment").performTextInput("пример без слова")
         click("Отправить")
         waitPosts("feedback")
         assertEquals("кућа", FakeServer.of("feedback")[0].getJSONObject("card").getString("word"))
@@ -223,6 +227,7 @@ class FeedbackTest {
         FakeServer.status = -1
         report()
         click("Другое")
+        compose.onNodeWithTag("comment").performTextInput("карточка повторяется")
         click("Отправить")
         compose.waitUntil(10_000) { FakeServer.of("feedback").isNotEmpty() }
         assertEquals(1, Telemetry.waiting)
