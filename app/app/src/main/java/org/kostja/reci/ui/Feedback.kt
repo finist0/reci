@@ -176,7 +176,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
                 }
                 OutlinedTextField(
                     text, { if (it.length <= 2000) text = it },
-                    placeholder = { Text("Что именно не так, если хотите") },
+                    placeholder = { Text("Что именно не так") },
                     minLines = 4,
                     maxLines = 10,
                     modifier = Modifier.fillMaxWidth().testTag("comment"),
@@ -188,10 +188,12 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
         confirmButton = {
             TextButton(enabled = problem != null, onClick = {
                 val mail = email.trim()
-                if (mail.isNotEmpty() && !Telemetry.isEmail(mail)) {
-                    error = "Проверьте адрес почты"
-                    return@TextButton
+                error = when {
+                    text.isBlank() -> "Напишите, что не так"
+                    mail.isNotEmpty() && !Telemetry.isEmail(mail) -> "Проверьте адрес почты"
+                    else -> ""
                 }
+                if (error.isNotEmpty()) return@TextButton
                 val card = JSONObject()
                     .put("key", w.key.take(120)).put("word", w.cyr.take(120)).put("problem", problem)
                     .put("latin", Prefs.latinFirst).put("stress", Prefs.accentMode)
