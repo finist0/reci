@@ -211,7 +211,9 @@ export async function sendPing(app, learned, now = Date.now()) {
         });
         // A rejected ping would be rejected again: drop it with the sums, as if it was sent.
         if (res.ok || res.status === 400 || res.status === 413) {
-            Object.assign(state, { sentDay: day, counts: minus(state.counts, sent), last: res.ok ? p : state.last });
+            // A forget that finished meanwhile gave the install a new id.
+            const last = res.ok && p.id === state.id ? p : state.last;
+            Object.assign(state, { sentDay: day, counts: minus(state.counts, sent), last });
             save();
             return res.ok;
         }
@@ -244,11 +246,16 @@ export function closeNotice() {
 // --- Messages to the developer ---
 
 let flushing = null;
+let forgetting = null;
 
 // Sends the waiting messages in order. One that the server rejects is dropped; one that hit a
-// limit or no network waits for the next try. A call during a running flush waits for it.
+// limit or no network waits for the next try. A call during a running flush waits for it. A
+// forget on its way is let finish first: it drops the messages that carry the old id.
 export function flush() {
-    flushing ??= drain().finally(() => (flushing = null));
+    flushing ??= (async () => {
+        while (forgetting) await forgetting;
+        await drain();
+    })().finally(() => (flushing = null));
     return flushing;
 }
 
@@ -266,6 +273,31 @@ async function drain() {
         state.queue.shift();
         save();
     }
+}
+
+// Asks the server to delete what this install sent: the statistics by its id and the messages by
+// theirs. On success the install starts afresh with new ids, so what it sends later is not tied to
+// what was deleted, and the messages still waiting are dropped. A running flush is let finish
+// first, and a flush started meanwhile waits, so that no message goes out after the deletion.
+export function forget() {
+    forgetting ??= forgetNow().finally(() => (forgetting = null));
+    return forgetting;
+}
+
+async function forgetNow() {
+    if (flushing) await flushing;
+    let res;
+    try {
+        res = await fetch(server() + "/forget", {
+            method: "POST", body: JSON.stringify({ id: state.id, feedbackId: state.feedbackId }), signal: timeout(10000),
+        });
+    } catch {
+        return false;
+    }
+    if (!res.ok) return false;
+    Object.assign(state, { id: uuid(), feedbackId: uuid(), queue: [], last: null, email: "", counts: {} });
+    save();
+    return true;
 }
 
 // The server's check, so that a mistyped address is caught before the message is queued.

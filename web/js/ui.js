@@ -497,10 +497,25 @@ function whatSentDialog(e) {
             точное местоположение. Адрес IP сервер не сохраняет.</div>
         <div class="setting-title">${last ? `Последний пакет, ${esc(last.day)}` : "Пока ничего не отправлялось"}</div>
         ${last ? `<pre class="packet">${esc(JSON.stringify(last, null, 1))}</pre>` : ""}
+        <div class="ids">
+            <div class="setting-sub">Номер этой установки, для статистики</div>
+            <code data-id="install">${esc(T.state.id)}</code>
+            <div class="setting-sub">Номер для сообщений разработчику</div>
+            <code data-id="feedback">${esc(T.state.feedbackId)}</code>
+        </div>
         <a class="policy" href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
+        <button class="forget-link" ${act("forgetask")}>Удалить мои данные с сервера</button>
         <div class="dialog-buttons"><button ${act("closeform")}>Закрыть</button></div>
-    </div></div>`;
+    </div></div>${e.forget ? forgetDialog : ""}`;
 }
+
+const forgetDialog = `<div class="modal"><div class="dialog form">
+        <div class="dialog-title">Удалить данные с сервера?</div>
+        <div class="dialog-text">С сервера разработчика удалятся статистика и сообщения, отправленные из этого браузера.
+        Прогресс и настройки останутся. Приложение получит новые номера и дальше будет отправлять статистику уже с
+        ними, если она включена.</div>
+        <div class="dialog-buttons"><button ${act("forgetno")}>Отмена</button><button ${act("forgetyes")}>Удалить</button></div>
+    </div></div>`;
 
 const longPressHint = `
     <div class="tip"><span>Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.</span>
@@ -1039,7 +1054,7 @@ const actions = {
         schedule();
     },
     closeform: () => {
-        Object.assign(top(), { report: null, write: null, whatSent: false, help: false });
+        Object.assign(top(), { report: null, write: null, whatSent: false, forget: false, help: false });
         schedule();
     },
     stats: () => {
@@ -1049,6 +1064,20 @@ const actions = {
     whatsent: () => {
         top().whatSent = true;
         schedule();
+    },
+    forgetask: () => {
+        top().forget = true;
+        schedule();
+    },
+    forgetno: () => {
+        top().forget = false;
+        schedule();
+    },
+    forgetyes: async () => {
+        top().forget = false;
+        schedule();
+        const ok = await T.forget();
+        showSentToast(ok ? "Данные удалены с сервера" : "Не удалось связаться с сервером. Попробуйте позже");
     },
     help: () => {
         top().help = true;
