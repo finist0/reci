@@ -54,8 +54,11 @@ xcodegen
 open Reci.xcodeproj
 ```
 
-Для своего iPhone в Xcode нужно выбрать команду разработчика (Signing & Capabilities) у
-целей `Reci` и `ReciWidgets` и включить у обеих App Group `group.org.kostja.reci`.
+Проект подписывается командой разработчика, которой принадлежит приложение в App Store
+(`DEVELOPMENT_TEAM` в `ios/project.yml`). Чтобы поставить его на свой iPhone из Xcode, нужно
+войти в эту команду (Xcode → Settings → Accounts) или выбрать свою в Signing & Capabilities у
+целей `Reci` и `ReciWidgets`. Со своей командой идентификаторы `rs.finist.reci`,
+`rs.finist.reci.widget` и App Group `group.rs.finist.reci` придётся заменить своими.
 
 ## Тесты
 

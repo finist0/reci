@@ -6,13 +6,13 @@ import WidgetKit
 
 // What the app and the lock screen widgets share through the App Group container.
 enum LockDeck {
-    static let appGroup = "group.org.kostja.reci"
+    static let appGroup = "group.rs.finist.reci"
 
     static var dir: URL {
         guard let base = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: appGroup) else {
             // Without the entitlement the app and the widgets each get their own directory, and the
             // widgets never see a card.
-            Logger(subsystem: "org.kostja.reci", category: "store").error("no App Group \(appGroup, privacy: .public)")
+            Logger(subsystem: "rs.finist.reci", category: "store").error("no App Group \(appGroup, privacy: .public)")
             return FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
                 .appendingPathComponent("reci", isDirectory: true)
         }
