@@ -240,7 +240,8 @@ public final class Telemetry {
         guard (200..<300).contains(status) || status == 400 || status == 413 else { return false }
         state.sentDay = day
         state.counts = state.counts.minus(sent)
-        if (200..<300).contains(status) { state.last = p }
+        // A forget that finished meanwhile gave the install a new id.
+        if (200..<300).contains(status) && p.id == state.id { state.last = p }
         save()
         return (200..<300).contains(status)
     }
@@ -251,12 +252,23 @@ public final class Telemetry {
     }
 
     private var flushing: Task<Void, Never>?
+    private var forgetting: Task<Bool, Never>?
 
     // Sends the waiting messages in order. One that the server rejects is dropped; one that hit a
     // limit or no network waits for the next try. A call during a running flush waits for it and
-    // then sends what is still waiting.
+    // then sends what is still waiting. A forget on its way is let finish first: it drops the
+    // messages that carry the old id.
     public func flush() async {
-        while let running = flushing { await running.value }
+        // Either may start while the other is awaited, so both are checked again each time.
+        while true {
+            if let f = forgetting {
+                _ = await f.value
+            } else if let running = flushing {
+                await running.value
+            } else {
+                break
+            }
+        }
         guard !state.queue.isEmpty else { return }
         let task = Task {
             await drain()
@@ -273,6 +285,37 @@ public final class Telemetry {
             state.queue.removeFirst()
             save()
         }
+    }
+
+    // Asks the server to delete what this install sent: the statistics by its id and the messages
+    // by theirs. On success the install starts afresh with new ids, so what it sends later is not
+    // tied to what was deleted, and the messages still waiting are dropped. A running flush is let
+    // finish first, and a flush started meanwhile waits, so that no message goes out after the
+    // deletion.
+    @discardableResult
+    public func forget() async -> Bool {
+        if let f = forgetting { return await f.value }
+        let task = Task {
+            let ok = await forgetNow()
+            forgetting = nil
+            return ok
+        }
+        forgetting = task
+        return await task.value
+    }
+
+    private func forgetNow() async -> Bool {
+        while let running = flushing { await running.value }
+        guard let body = try? JSONEncoder().encode(["id": state.id, "feedbackId": state.feedbackId]) else { return false }
+        guard (200..<300).contains(await post(Self.server + "/forget", body)) else { return false }
+        state.id = UUID().uuidString.lowercased()
+        state.feedbackId = UUID().uuidString.lowercased()
+        state.queue = []
+        state.last = nil
+        state.email = ""
+        state.counts = Counts()
+        save()
+        return true
     }
 
     // Queues a message and tries to send it; true when it went out at once. It carries its own

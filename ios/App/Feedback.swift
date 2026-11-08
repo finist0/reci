@@ -200,6 +200,8 @@ struct WriteSheet: View {
 struct WhatSentSheet: View {
     @EnvironmentObject var model: AppModel
     @Environment(\.dismiss) private var dismiss
+    @State private var asking = false
+    @State private var result: String?
 
     var body: some View {
         let p = model.palette
@@ -219,9 +221,34 @@ struct WhatSentSheet: View {
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .background(RoundedRectangle(cornerRadius: 12).fill(p.panel))
                     }
+                    // Quoted when asking about a message or the deletion of the data.
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Номер этой установки, для статистики").font(.ui(13)).foregroundStyle(p.secondary)
+                        Text(model.telemetry.state.id).font(.ui(12, design: .monospaced)).foregroundStyle(p.text)
+                            .textSelection(.enabled).accessibilityIdentifier("installId")
+                        Text("Номер для сообщений разработчику").font(.ui(13)).foregroundStyle(p.secondary).padding(.top, 6)
+                        Text(model.telemetry.state.feedbackId).font(.ui(12, design: .monospaced)).foregroundStyle(p.text)
+                            .textSelection(.enabled).accessibilityIdentifier("feedbackId")
+                    }
                     Link("Политика конфиденциальности", destination: URL(string: Telemetry.privacy)!)
+                    Button("Удалить мои данные с сервера") { asking = true }
+                        .font(.ui(13)).foregroundStyle(p.secondary)
+                    if let result {
+                        Text(result).font(.ui(13)).foregroundStyle(p.text).accessibilityIdentifier("forgetResult")
+                    }
                 }
                 .padding(20)
+            }
+            .alert("Удалить данные с сервера?", isPresented: $asking) {
+                Button("Отмена", role: .cancel) {}
+                Button("Удалить", role: .destructive) {
+                    Task {
+                        result = await model.telemetry.forget()
+                            ? "Данные удалены с сервера" : "Не удалось связаться с сервером. Попробуйте позже"
+                    }
+                }
+            } message: {
+                Text("С сервера разработчика удалятся статистика и сообщения, отправленные с этого телефона. Прогресс и настройки на телефоне останутся. Приложение получит новые номера и дальше будет отправлять статистику уже с ними, если она включена.")
             }
             .background(p.card.ignoresSafeArea())
             .navigationTitle("Анонимная статистика")
