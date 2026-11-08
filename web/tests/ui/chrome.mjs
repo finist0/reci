@@ -18,9 +18,9 @@ const TYPES = {
 // The statistics server is faked at /srv: it keeps what it gets and answers with `status`.
 export function serve() {
     const posts = [];
-    const status = { ping: 204, feedback: 204 };
+    const status = { ping: 204, feedback: 204, forget: 204 };
     const server = createServer((req, res) => {
-        const srv = req.url.match(/^\/srv\/(ping|feedback)$/);
+        const srv = req.url.match(/^\/srv\/(ping|feedback|forget)$/);
         if (srv && req.method === "POST") {
             let body = "";
             req.on("data", c => (body += c));

@@ -296,3 +296,59 @@ test("the progress file carries no statistics ids", () => {
     assert.ok(!text.includes(T.state.id));
     assert.ok(!text.includes(T.state.feedbackId));
 });
+
+test("forget sends both ids, then starts afresh with new ones and drops waiting messages", async () => {
+    reply = () => new Error("offline");
+    await T.sendFeedback({ kind: "app", text: "ещё не ушло" }, "me@example.org", "1.4");
+    const { id, feedbackId } = T.state;
+    reply = () => 204;
+    assert.equal(await T.forget(), true);
+    const r = requests.at(-1);
+    assert.match(r.url, /\/forget$/);
+    assert.deepEqual(Object.keys(r.body).sort(), [...fields.forget.required].sort());
+    assert.deepEqual(r.body, { id, feedbackId });
+    assert.notEqual(T.state.id, id);
+    assert.notEqual(T.state.feedbackId, feedbackId);
+    assert.notEqual(T.state.id, T.state.feedbackId);
+    assert.deepEqual(T.state.queue, []);
+    assert.equal(T.state.email, "");
+    assert.equal(JSON.parse(storage.get("reci.telemetry")).id, T.state.id);
+});
+
+test("a failed forget keeps the ids and the waiting messages", async () => {
+    reply = () => new Error("offline");
+    await T.sendFeedback({ kind: "app", text: "ещё не ушло" }, "", "1.4");
+    const { id, feedbackId } = T.state;
+    assert.equal(await T.forget(), false);
+    reply = () => 503;
+    assert.equal(await T.forget(), false);
+    assert.equal(T.state.id, id);
+    assert.equal(T.state.feedbackId, feedbackId);
+    assert.equal(T.state.queue.length, 1);
+});
+
+test("a message sent while a forget is on its way does not go out under the old id", async () => {
+    let answer;
+    reply = url => (url.endsWith("/forget") ? new Promise(r => (answer = r)) : 204);
+    const forgetting = T.forget();
+    await new Promise(r => setTimeout(r, 0));
+    const sending = T.sendFeedback({ kind: "app", text: "во время удаления" }, "", "1.4");
+    await new Promise(r => setTimeout(r, 20));
+    assert.ok(!requests.some(r => r.url.endsWith("/feedback")));
+    answer(204);
+    assert.equal(await forgetting, true);
+    await sending;
+    assert.ok(!requests.some(r => r.url.endsWith("/feedback")));
+    assert.deepEqual(T.state.queue, []);
+});
+
+test("a ping that comes back after a forget does not bring back the old id", async () => {
+    let answer;
+    reply = url => (url.endsWith("/ping") ? new Promise(r => (answer = r)) : 204);
+    const pinging = T.sendPing("1.4", 0);
+    await new Promise(r => setTimeout(r, 20));
+    assert.equal(await T.forget(), true);
+    answer(204);
+    await pinging;
+    assert.equal(T.state.last, null);
+});

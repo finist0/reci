@@ -10,7 +10,7 @@ before(async () => (server = await serve()));
 after(() => server.close());
 beforeEach(() => {
     server.posts.length = 0;
-    Object.assign(server.status, { ping: 204, feedback: 204 });
+    Object.assign(server.status, { ping: 204, feedback: 204, forget: 204 });
 });
 
 async function app(t, opts) {
@@ -87,6 +87,29 @@ test("the statistics switch and what is sent", async t => {
     assert.ok(!(await has(page, '[data-act="stats"] .switch.on')));
     await page.tap('[data-act="stats"]');
     assert.equal((await telemetry(page)).enabled, true);
+});
+
+test("what is sent shows both ids and forgets them on request", async t => {
+    const page = await app(t);
+    await waitPosts(page, "ping");
+    const before = await telemetry(page);
+    await page.tap('[data-act="settings"]');
+    await page.tap('[data-act="whatsent"]');
+    assert.equal(await page.eval("document.querySelector('[data-id=install]').textContent"), before.id);
+    assert.equal(await page.eval("document.querySelector('[data-id=feedback]').textContent"), before.feedbackId);
+    await page.tap('[data-act="forgetask"]');
+    await page.tap('[data-act="forgetno"]');
+    assert.deepEqual(posts("forget"), []);
+    await page.tap('[data-act="forgetask"]');
+    await page.tap('[data-act="forgetyes"]');
+    await waitPosts(page, "forget");
+    assert.deepEqual(posts("forget")[0], { id: before.id, feedbackId: before.feedbackId });
+    for (let i = 0; i < 50 && (await telemetry(page)).id === before.id; i++) await page.sleep(50);
+    const after = await telemetry(page);
+    assert.notEqual(after.id, before.id);
+    assert.notEqual(after.feedbackId, before.feedbackId);
+    assert.match(await page.text(), /Данные удалены с сервера/);
+    assert.equal(await page.eval("document.querySelector('[data-id=install]').textContent"), after.id);
 });
 
 test("a card is reported from the card itself, and the email is remembered", async t => {
