@@ -155,6 +155,18 @@ test("Examples follow the stress setting", async t => {
     assert.ok(one && [...one.normalize("NFD").matchAll(marks)].every(m => m[0] === "\u0301"), one);
 });
 
+test("Schools open from the card and from the settings", async t => {
+    const page = await app(t);
+    const ad = "Здесь могла быть реклама вашей школы сербского языка";
+    await page.tap('.flag.schools');
+    assert.equal(await textOf(page, ".schools-empty"), ad);
+    await page.tap('[data-act="back"]');
+    assert.equal(await has(page, ".schools-empty"), false);
+    await page.tap('[data-act="settings"]');
+    await page.tap('.setting[data-act="schools"]');
+    assert.equal(await textOf(page, ".schools-empty"), ad);
+});
+
 test("Font size changes the headword", async t => {
     const page = await app(t);
     await page.tap('[data-act="settings"]');
