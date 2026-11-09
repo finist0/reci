@@ -63,9 +63,21 @@ The app's interface and translations are in Russian.
 
 How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/learning.md).
 
-## Installing on Android
+## Installing
 
-**The app is in closed testing on Google Play.** To install it from there:
+<table>
+<tr>
+<td align="center"><a href="#install-google-play"><img src="art/badges/google-play-en.png" alt="Google Play" height="44"></a><br><sub>Google Play: testing</sub></td>
+<td align="center"><a href="#install-testflight"><img src="art/badges/app-store-en.svg" alt="App Store" height="44"></a><br><sub>iPhone: testing in TestFlight</sub></td>
+<td align="center"><a href="#install-apk"><img src="art/badges/apk-en.svg" alt="Android APK" height="44"></a><br><sub>APK from the Releases page</sub></td>
+<td align="center"><a href="#install-web"><img src="art/badges/web-en.svg" alt="Web version" height="44"></a><br><sub>Web version in a browser</sub></td>
+</tr>
+</table>
+
+<a id="install-google-play"></a>
+### Google Play: testing
+
+The app is in closed testing on Google Play. To install it from there:
 
 1. Join the testers group: https://groups.google.com/g/reci-testing.
 2. Open https://play.google.com/apps/testing/org.kostja.reci and tap "Become a tester".
@@ -75,20 +87,54 @@ Use the same Google account as in Google Play on the phone. Updates then come fr
 Play by themselves. Please stay in the group and in the test for at least two weeks: Google
 requires that much testing before the app can be released to everyone.
 
-The rest is the same for both ways to install:
+Then [set it up on Android](#android-setup).
 
-1. Install the app from Google Play as above, or download `reci-release.apk` from the
-   [Releases](https://github.com/finist0/reci/releases/latest) page and open it on the
-   phone. For the APK, Android asks to allow installs from this source.
+<a id="install-testflight"></a>
+### iPhone: testing in TestFlight
 
-2. Open the app's settings, the lock screen section:
+1. Install TestFlight from the App Store.
+2. Open https://testflight.apple.com/join/3x3Hs9DV on the iPhone and install the app.
+   Updates then come through TestFlight.
+3. Open the app → Settings → "Карточка на экране блокировки" (lock screen card) → "Обои"
+   (wallpaper). The card becomes the lock screen wallpaper: the "Обои с карточкой" (card
+   wallpaper) action for the Shortcuts app draws it.
+4. Set up an automation in Shortcuts:
+   1. Shortcuts → Automation → New Automation → Time of Day, for example every hour →
+      Run Immediately.
+   2. Add the "Обои с карточкой" action (НЕРодная речь).
+   3. Add Set Wallpaper Photo → Lock Screen and turn off Show Preview.
+5. Add the round "Знаю" (I know) and "Не знаю" (I don't know) widgets to the lock screen:
+   touch and hold the lock screen → Customize → Lock Screen → the frame under the clock.
+
+A new wallpaper appears when the automation runs, not right after an answer.
+
+Widgets alone work too: choose "Виджеты" (widgets) in the same switch and also add the wide
+"Карточка" widget under the clock. Then an answer from a round widget shows the next word at
+once.
+
+iOS 17 or later is required.
+
+<a id="install-apk"></a>
+### Android APK
+
+1. Download `reci-release.apk` from the
+   [Releases](https://github.com/finist0/reci/releases/latest) page and open it on the phone.
+2. Android asks to allow installs from this source.
+
+New versions are downloaded from the Releases page the same way and installed over the old
+one; the progress is kept. Then [set it up on Android](#android-setup).
+
+<a id="android-setup"></a>
+### Setting up on Android
+
+1. Open the app's settings, the lock screen section:
    - turn on the card when the screen turns on;
    - grant "Display over other apps"; without it Android shows no card.
 
    Android also asks for permission to post notifications. The background service needs it,
    and it shows words to review in the notification shade.
 
-3. If the "Display over other apps" switch does not turn on, Android has restricted the
+2. If the "Display over other apps" switch does not turn on, Android has restricted the
    settings. This happens to apps installed outside Google Play. Lift the restriction:
    1. Settings → Apps → the app; its name is written in Cyrillic.
    2. ⋮ at the top right → Allow restricted settings.
@@ -98,7 +144,7 @@ The rest is the same for both ways to install:
    If the menu has no Allow restricted settings, first try to turn the permission on, then
    open the menu again.
 
-4. If cards stop appearing, in the same section:
+3. If cards stop appearing, in the same section:
    - lift the battery restrictions;
    - grant the calls permission. Without it a call is told by the audio mode, and a messenger
      that forgets to reset the ringing mode after its call turns the cards off. With it,
@@ -107,14 +153,16 @@ The rest is the same for both ways to install:
 
 Android 9 or later is required.
 
-## Web version: iPhone, desktop
+<a id="install-web"></a>
+### Web version
 
 The same cards, learning, search and reference, in a browser:
 **[finist0.github.io/reci/web](https://finist0.github.io/reci/web/)**
 
-There is no lock screen card there: iOS and browsers do not allow it.
+There is no lock screen card there: browsers do not allow it. On the iPhone it comes with the
+app from TestFlight.
 
-### Installing
+To install the web version as an app:
 
 - **iPhone:** open the link in Safari → Share → Add to Home Screen. In iOS 26 the Share
   button is in the "⋯" menu next to the address bar. The app then opens full screen from its
