@@ -143,14 +143,17 @@ jobs:
           path: ios/build/Reci.xcresult
           if-no-files-found: ignore
 
-  # A pushed release tag sends a build to App Store Connect: TestFlight gives it to
-  # testers, and the App Store takes it once it is chosen for a release there. The key of the
-  # App Store Connect API in the secrets ASC_KEY_P8, ASC_KEY_ID and ASC_ISSUER_ID signs it and
-  # lets Xcode make the certificate and profiles; without the key nothing is uploaded.
+  # A pushed release tag, or a run started by hand, sends a build to App Store Connect:
+  # TestFlight gives it to testers, and the App Store takes it once it is chosen for a release
+  # there. The key of the App Store Connect API in the secrets ASC_KEY_P8, ASC_KEY_ID and
+  # ASC_ISSUER_ID lets Xcode make the certificate and profiles; without the key nothing is
+  # uploaded.
   upload:
     name: Upload to App Store Connect
     needs: [core-linux, app-simulator]
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v') && github.repository == 'finist0/reci'
+    if: >-
+      github.repository == 'finist0/reci' &&
+      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
     # App Store Connect takes only builds made with the newest Xcode.
     runs-on: macos-26
     timeout-minutes: 60
@@ -208,7 +211,10 @@ jobs:
         working-directory: ios
       # The number of the run is the build number: it grows with every upload, as App Store
       # Connect wants, while the version stays the one in project.yml.
-      - name: Archive, sign and upload
+      # The archive is signed ad hoc: with an API key Xcode fails to make the development
+      # profiles an archive is signed with by default ("Authentication failed"), and the App
+      # Store needs none. The export signs it for the App Store.
+      - name: Archive and sign for the App Store
         if: steps.key.outputs.ok
         working-directory: ios
         env:
@@ -221,10 +227,34 @@ jobs:
           KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
           trap 'rm -f "$KEY"' EXIT
           (umask 077 && printf '%s\n' "$ASC_KEY_P8" > "$KEY")
-          AUTH=(-allowProvisioningUpdates -authenticationKeyPath "$KEY"
-                -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID")
           xcodebuild archive -project Reci.xcodeproj -scheme Reci -configuration Release \
             -destination "generic/platform=iOS" -archivePath build/Reci.xcarchive \
-            CURRENT_PROJECT_VERSION="$BUILD" "${AUTH[@]}"
+            CURRENT_PROJECT_VERSION="$BUILD" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES PROVISIONING_PROFILE_SPECIFIER=
           xcodebuild -exportArchive -archivePath build/Reci.xcarchive -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/export "${AUTH[@]}"
+            -exportPath build/export -allowProvisioningUpdates -authenticationKeyPath "$KEY" \
+            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+      # The widgets read the cards through the App Group: a signature without it would pass
+      # the review and leave them empty.
+      - name: The app and the widgets keep the App Group
+        if: steps.key.outputs.ok
+        working-directory: ios/build/export
+        run: |
+          unzip -q *.ipa
+          for b in Payload/*.app Payload/*.app/PlugIns/*.appex; do
+            codesign -d --entitlements - --xml "$b" | grep -q group.rs.finist.reci ||
+              { echo "::error::$b is signed without the App Group"; exit 1; }
+            codesign -dvv "$b" 2>&1 | grep '^Authority=' | head -1
+          done
+      - name: Upload
+        if: steps.key.outputs.ok
+        working-directory: ios/build/export
+        env:
+          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+        run: |
+          DIR="$HOME/.appstoreconnect/private_keys"
+          trap 'rm -rf "$DIR"' EXIT
+          (umask 077 && mkdir -p "$DIR" && printf '%s\n' "$ASC_KEY_P8" > "$DIR/AuthKey_$ASC_KEY_ID.p8")
+          xcrun altool --upload-app --type ios -f *.ipa --apiKey "$ASC_KEY_ID" --apiIssuer "$ASC_ISSUER_ID"
