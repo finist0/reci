@@ -9,7 +9,16 @@
 	<key>teamID</key>
 	<string>GD322FDC57</string>
 	<key>signingStyle</key>
-	<string>automatic</string>
+	<string>manual</string>
+	<key>signingCertificate</key>
+	<string>Apple Distribution</string>
+	<key>provisioningProfiles</key>
+	<dict>
+		<key>rs.finist.reci</key>
+		<string>Reci App Store CI</string>
+		<key>rs.finist.reci.widget</key>
+		<string>Reci Widget App Store CI</string>
+	</dict>
 	<key>manageAppVersionAndBuildNumber</key>
 	<false/>
 	<key>uploadSymbols</key>

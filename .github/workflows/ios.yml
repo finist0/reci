@@ -146,8 +146,10 @@ jobs:
   # A pushed release tag, or a run started by hand, sends a build to App Store Connect:
   # TestFlight gives it to testers, and the App Store takes it once it is chosen for a release
   # there. The key of the App Store Connect API in the secrets ASC_KEY_P8, ASC_KEY_ID and
-  # ASC_ISSUER_ID lets Xcode make the certificate and profiles; without the key nothing is
-  # uploaded.
+  # ASC_ISSUER_ID uploads it. It is signed with the Apple Distribution certificate in
+  # ASC_DIST_P12 (base64, password in ASC_DIST_P12_PASSWORD) and the App Store profiles in
+  # ASC_PROFILE_APP and ASC_PROFILE_WIDGET (base64); all of them expire after a year. Without
+  # the key nothing is uploaded.
   upload:
     name: Upload to App Store Connect
     needs: [core-linux, app-simulator]
@@ -211,29 +213,51 @@ jobs:
         working-directory: ios
       # The number of the run is the build number: it grows with every upload, as App Store
       # Connect wants, while the version stays the one in project.yml.
-      # The archive is signed ad hoc: with an API key Xcode fails to make the development
-      # profiles an archive is signed with by default ("Authentication failed"), and the App
-      # Store needs none. The export signs it for the App Store.
+      # The archive is signed ad hoc and the export signs it with the certificate and the
+      # profiles from the secrets: with an API key Xcode fails to make profiles itself
+      # ("Authentication failed").
       - name: Archive and sign for the App Store
         if: steps.key.outputs.ok
         working-directory: ios
         env:
           BUILD: ${{ github.run_number }}
-          ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
-          ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
-          ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+          ASC_DIST_P12: ${{ secrets.ASC_DIST_P12 }}
+          ASC_DIST_P12_PASSWORD: ${{ secrets.ASC_DIST_P12_PASSWORD }}
+          ASC_PROFILE_APP: ${{ secrets.ASC_PROFILE_APP }}
+          ASC_PROFILE_WIDGET: ${{ secrets.ASC_PROFILE_WIDGET }}
         run: |
           set -o pipefail
-          KEY="$RUNNER_TEMP/AuthKey_$ASC_KEY_ID.p8"
-          trap 'rm -f "$KEY"' EXIT
-          (umask 077 && printf '%s\n' "$ASC_KEY_P8" > "$KEY")
+          if [ -z "$ASC_DIST_P12" ] || [ -z "$ASC_PROFILE_APP" ] || [ -z "$ASC_PROFILE_WIDGET" ]; then
+            echo "::error::No signing certificate or profiles in the secrets"
+            exit 1
+          fi
+          KC="$RUNNER_TEMP/signing.keychain-db"
+          P12="$RUNNER_TEMP/dist.p12"
+          KCPASS=$(openssl rand -hex 16)
+          trap 'security delete-keychain "$KC" 2>/dev/null; rm -f "$P12"' EXIT
+          (umask 077 && printf '%s' "$ASC_DIST_P12" | base64 -d > "$P12")
+          security create-keychain -p "$KCPASS" "$KC"
+          security set-keychain-settings -lut 3600 "$KC"
+          security unlock-keychain -p "$KCPASS" "$KC"
+          security import "$P12" -k "$KC" -P "$ASC_DIST_P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$KCPASS" "$KC" > /dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          # Xcode 16 and later look in the first directory, older ones in the second.
+          for d in "$HOME/Library/Developer/Xcode/UserData/Provisioning Profiles" \
+                   "$HOME/Library/MobileDevice/Provisioning Profiles"; do
+            mkdir -p "$d"
+            for p in "$ASC_PROFILE_APP" "$ASC_PROFILE_WIDGET"; do
+              printf '%s' "$p" | base64 -d > "$RUNNER_TEMP/p.mobileprovision"
+              uuid=$(security cms -D -i "$RUNNER_TEMP/p.mobileprovision" | plutil -extract UUID raw -)
+              cp "$RUNNER_TEMP/p.mobileprovision" "$d/$uuid.mobileprovision"
+            done
+          done
           xcodebuild archive -project Reci.xcodeproj -scheme Reci -configuration Release \
             -destination "generic/platform=iOS" -archivePath build/Reci.xcarchive \
             CURRENT_PROJECT_VERSION="$BUILD" CODE_SIGN_STYLE=Manual CODE_SIGN_IDENTITY=- \
             AD_HOC_CODE_SIGNING_ALLOWED=YES PROVISIONING_PROFILE_SPECIFIER=
           xcodebuild -exportArchive -archivePath build/Reci.xcarchive -exportOptionsPlist ExportOptions.plist \
-            -exportPath build/export -allowProvisioningUpdates -authenticationKeyPath "$KEY" \
-            -authenticationKeyID "$ASC_KEY_ID" -authenticationKeyIssuerID "$ASC_ISSUER_ID"
+            -exportPath build/export
       # The widgets read the cards through the App Group: a signature without it would pass
       # the review and leave them empty.
       - name: The app and the widgets keep the App Group
