@@ -13,6 +13,8 @@ jobs:
   tests:
     name: Learning rules and UI tests
     runs-on: ubuntu-24.04
+    # A Chrome that stops answering would otherwise hold the job for hours.
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v5
       - uses: actions/setup-node@v5
@@ -24,4 +26,4 @@ jobs:
       - name: Let Chrome start its sandbox
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: UI tests in headless Chrome
-        run: node --test "web/tests/ui/*.test.mjs"
+        run: node --test --test-timeout=120000 "web/tests/ui/*.test.mjs"
