@@ -185,11 +185,23 @@ fun CardScreen(
             if (learnedToast > 0) LearnedToast(Modifier.align(Alignment.BottomCenter))
         }
         if (onDone == null && w != null && !Telemetry.noticeClosed) StatsNotice()
-        if (Prefs.useMarks && w != null) {
-            if (hint) LongPressHint { hint = false; Prefs.hintDone = true }
-            MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer)
+        if (Prefs.useMarks && w != null && hint) LongPressHint { hint = false; Prefs.hintDone = true }
+        if (short() && Prefs.useMarks && w != null) {
+            // The lock card drops «›» here: «✓» shows the next word and closes the card.
+            OneRow(
+                answered,
+                Repo.isArticle(w),
+                onAnswer,
+                onPrev = { Repo.step(-1) },
+                onNext = onDone ?: onNext,
+                done = onDone != null,
+            )
+        } else {
+            if (Prefs.useMarks && w != null) {
+                MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer)
+            }
+            BottomNav(onPrev = { Repo.step(-1) }, onNext = onNext, onDone = onDone)
         }
-        BottomNav(onPrev = { Repo.step(-1) }, onNext = onNext, onDone = onDone)
     }
     reporting?.let { ReportDialog(it) { reporting = null } }
 }
@@ -576,6 +588,37 @@ private fun BottomNav(onPrev: () -> Unit, onNext: () -> Unit, onDone: (() -> Uni
             }
         }
         if (onDone != null) NavCircle(R.drawable.ic_chevron_right, "Следующее слово", height, onNext)
+    }
+}
+
+@Composable
+private fun OneRow(
+    answered: State?,
+    article: Boolean,
+    onAnswer: (State, Boolean) -> Unit,
+    onPrev: () -> Unit,
+    onNext: () -> Unit,
+    done: Boolean,
+) {
+    val p = LocalPalette.current
+    Row(
+        Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, top = 4.dp, bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        NavCircle(R.drawable.ic_chevron_left, "Предыдущее слово", 46.dp, onPrev)
+        MarksRow(answered, article, Modifier.weight(1f), onAnswer)
+        Box(
+            Modifier.size(46.dp).clip(CircleShape).background(p.accent).clickable(onClick = onNext),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painterResource(if (done) R.drawable.ic_check else R.drawable.ic_arrow_forward),
+                if (done) "Готово" else "Дальше",
+                tint = Color.White,
+                modifier = Modifier.size(22.dp),
+            )
+        }
     }
 }
 
