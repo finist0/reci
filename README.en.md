@@ -21,6 +21,7 @@ The app's interface and translations are in Russian.
   <img src="screenshots/6-settings.png" width="250" alt="Settings">
 </p>
 
+<a id="why-it-works"></a>
 ## Why it works
 
 - **No time to set aside.** The card is already on the lock screen: learning fits into
@@ -36,6 +37,7 @@ The app's interface and translations are in Russian.
     *problema* is feminine;
   - false friends: Serbian *prazan* means "empty", not "idle" like the Russian *prazdny*.
 
+<a id="whats-inside"></a>
 ## What is inside
 
 - **Over 10,000 cards:**
@@ -49,6 +51,7 @@ The app's interface and translations are in Russian.
 - **Eight colour themes**, light and dark.
 - **No sign-up, no text messages.** Open source.
 
+<a id="how-to-learn"></a>
 ## How learning works
 
 - A new word is shown in full. After "Know" you recall it from the translation; after three
@@ -63,6 +66,7 @@ The app's interface and translations are in Russian.
 
 How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/learning.md).
 
+<a id="install"></a>
 ## Installing
 
 <table>
@@ -170,6 +174,7 @@ To install the web version as an app:
 - **Android:** Chrome → ⋮ menu → Install app.
 - **Desktop:** Chrome or Edge → the install icon in the address bar. A plain tab works too.
 
+<a id="moving-progress"></a>
 ## Moving your progress
 
 Progress is kept on the device: in the app or in the browser. It can be moved to another
@@ -182,6 +187,7 @@ device, including between Android, iPhone and a computer:
 Favourites and the learning and appearance settings move along with the progress. Lock
 screen settings stay on the phone.
 
+<a id="stats-and-feedback"></a>
 ## Statistics and feedback
 
 - **Anonymous statistics.** Once a day the app sends how many cards were shown and answers
@@ -195,6 +201,7 @@ screen settings stay on the phone.
 - **Help the author:** Settings, "Help the author": share the app, rate it, star it on
   GitHub.
 
+<a id="for-developers"></a>
 ## For developers
 
 Building, signing, the dictionary, the web version and tests (in Russian):
@@ -203,6 +210,7 @@ Building, signing, the dictionary, the web version and tests (in Russian):
 The cards were written with the help of a language model and spot-checked. Mistakes are
 possible; corrections are welcome, most easily through the flag on the card.
 
+<a id="licenses"></a>
 ## Licenses
 
 | What | License |
