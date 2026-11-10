@@ -48,6 +48,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -294,7 +295,7 @@ private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -
     }
     val date = Date(now)
     val narrow = narrow()
-
+    val density = LocalDensity.current
     Row(
         Modifier
             .fillMaxWidth()
@@ -302,16 +303,18 @@ private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
+        // The clock and the date keep their size with a larger system font: the bar has no room
+        // for them to grow.
         Column {
             Text(
                 formats[0].format(date),
-                fontSize = if (narrow) 26.sp else 32.sp,
+                fontSize = with(density) { (if (narrow) 26.dp else 32.dp).toSp() },
                 fontWeight = FontWeight.Medium,
                 color = p.text,
-                lineHeight = if (narrow) 28.sp else 34.sp,
+                lineHeight = with(density) { (if (narrow) 28.dp else 34.dp).toSp() },
                 maxLines = 1,
             )
-            Text(formats[1].format(date), fontSize = 13.sp, color = p.secondary, maxLines = 1)
+            Text(formats[1].format(date), fontSize = with(density) { 13.dp.toSp() }, color = p.secondary, maxLines = 1)
         }
         // The font's internal leading puts the clock digits a little below the box top. The
         // icons never shrink: the deck chip gives up its width first.
