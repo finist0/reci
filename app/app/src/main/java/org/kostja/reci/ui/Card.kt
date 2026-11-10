@@ -198,7 +198,7 @@ fun CardScreen(
             )
         } else {
             if (Prefs.useMarks && w != null) {
-                MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer)
+                MarksRow(answered, Repo.isArticle(w), Modifier.padding(horizontal = 14.dp, vertical = 4.dp), onAnswer = onAnswer)
             }
             BottomNav(onPrev = { Repo.step(-1) }, onNext = onNext, onDone = onDone)
         }
@@ -499,8 +499,17 @@ private fun LongPressHint(onClose: () -> Unit) {
 // Long-press on «Знаю» marks a word the user already knows as learned at once. Articles are
 // read, not learned, so their buttons only say whether to show them again.
 @Composable
-fun MarksRow(answered: State?, article: Boolean, modifier: Modifier = Modifier, onAnswer: (State, Boolean) -> Unit) {
+fun MarksRow(
+    answered: State?,
+    article: Boolean,
+    modifier: Modifier = Modifier,
+    // In the one-row bar of a small screen the labels keep their size with a larger system font.
+    fixedText: Boolean = false,
+    onAnswer: (State, Boolean) -> Unit,
+) {
     val p = LocalPalette.current
+    val density = LocalDensity.current
+    val style = if (fixedText) MARK_STYLE.copy(fontSize = with(density) { 14.dp.toSp() }) else MARK_STYLE
     Row(
         modifier
             .fillMaxWidth()
@@ -514,16 +523,20 @@ fun MarksRow(answered: State?, article: Boolean, modifier: Modifier = Modifier, 
             answered == State.DONT_KNOW,
             if (article) p.secondary else MarkDontKnow,
             Modifier.weight(1f),
+            style,
         ) { onAnswer(State.DONT_KNOW, false) }
         Mark(
             if (article) "Не показывать" else "Знаю",
             answered == State.KNOWN,
             p.known,
             Modifier.weight(1f),
+            style,
             onLongClick = if (article) null else ({ onAnswer(State.KNOWN, true) }),
         ) { onAnswer(State.KNOWN, false) }
     }
 }
+
+private val MARK_STYLE = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
 
 @Composable
 private fun Mark(
@@ -531,6 +544,7 @@ private fun Mark(
     selected: Boolean,
     color: Color,
     modifier: Modifier,
+    style: TextStyle,
     onLongClick: (() -> Unit)? = null,
     onClick: () -> Unit,
 ) {
@@ -547,9 +561,9 @@ private fun Mark(
         Spacer(Modifier.width(7.dp))
         Text(
             label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
+            style = style,
             color = if (selected) Color.White else LocalPalette.current.text,
+            maxLines = 1,
         )
     }
 }
@@ -607,7 +621,7 @@ private fun OneRow(
         verticalAlignment = Alignment.CenterVertically,
     ) {
         NavCircle(R.drawable.ic_chevron_left, "Предыдущее слово", 46.dp, onPrev)
-        MarksRow(answered, article, Modifier.weight(1f), onAnswer)
+        MarksRow(answered, article, Modifier.weight(1f), fixedText = true, onAnswer = onAnswer)
         Box(
             Modifier.size(46.dp).clip(CircleShape).background(p.accent).clickable(onClick = onNext),
             contentAlignment = Alignment.Center,
