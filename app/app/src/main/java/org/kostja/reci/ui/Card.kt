@@ -6,12 +6,16 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -44,6 +48,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.Lifecycle
@@ -152,11 +157,11 @@ fun CardScreen(
                 onPauseOrDispose {}
             }
             key(w.key, showId) {
-                Column(
-                    Modifier
-                        .fillMaxSize()
-                        .verticalScroll(rememberScrollState())
-                        .padding(start = 24.dp, end = 24.dp, top = 22.dp, bottom = 56.dp)
+                CardText(
+                    top = 22.dp,
+                    onReport = { if (onReport != null) onReport(w.key) else reporting = w },
+                    onSchools = onSchools,
+                    star = { Star(w, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp)) },
                 ) {
                     if (stage != null) {
                         Text(stage, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, color = p.accent)
@@ -171,11 +176,6 @@ fun CardScreen(
                     )
                 }
             }
-            Star(w, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp))
-            ReportFlag(Modifier.align(Alignment.BottomEnd).padding(8.dp)) {
-                if (onReport != null) onReport(w.key) else reporting = w
-            }
-            SchoolsButton(Modifier.align(Alignment.BottomEnd).padding(end = 52.dp, bottom = 8.dp), onSchools)
             if (learnedToast > 0) LearnedToast(Modifier.align(Alignment.BottomCenter))
         }
         if (onDone == null && w != null && !Telemetry.noticeClosed) StatsNotice()
@@ -186,6 +186,35 @@ fun CardScreen(
         BottomNav(onPrev = { Repo.step(-1) }, onNext = onNext, onDone = onDone)
     }
     reporting?.let { ReportDialog(it) { reporting = null } }
+}
+
+// The scrolling text of a card. The star, the flag and the school button scroll with it; the
+// flag and the school button come after the text, in the bottom corner of a short card and at
+// the end of a long one.
+@Composable
+fun CardText(
+    top: Dp,
+    onReport: () -> Unit,
+    onSchools: (() -> Unit)?,
+    star: @Composable BoxScope.() -> Unit = {},
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = maxHeight)) {
+            Box(Modifier.fillMaxWidth()) {
+                Column(Modifier.padding(start = 24.dp, end = 24.dp, top = top), content = content)
+                star()
+            }
+            Spacer(Modifier.weight(1f))
+            Row(
+                Modifier.fillMaxWidth().padding(top = 4.dp, end = 8.dp, bottom = 8.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                if (onSchools != null) SchoolsButton(onClick = onSchools)
+                ReportFlag(onClick = onReport)
+            }
+        }
+    }
 }
 
 // What the user is asked to do with this card, shown above it.

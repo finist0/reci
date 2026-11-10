@@ -254,7 +254,7 @@ class SettingsScreenTest {
     @Test
     fun schoolsOpenFromTheCardAndFromSettings() {
         val ad = "Здесь могла быть реклама вашей школы сербского языка"
-        compose.onNodeWithContentDescription("Куда пойти учиться").performClick()
+        compose.onNodeWithContentDescription("Куда пойти учиться").performScrollTo().performClick()
         compose.waitForIdle()
         assertTrue(exists(ad))
         back()

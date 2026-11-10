@@ -196,7 +196,7 @@ screen settings stay on the phone.
   - To turn them off: Settings, "Anonymous statistics".
   - To see what is sent: Settings, "What is sent".
   - [Privacy policy](https://finist0.github.io/reci/web/privacy.html) (in Russian).
-- **A mistake in a card:** the flag in the bottom right corner of the card.
+- **A mistake in a card:** the flag at the bottom of the card, below the text.
 - **Anything else:** Settings, "Write to the developer". Leave an email if you want a reply.
 - **Help the author:** Settings, "Help the author": share the app, rate it, star it on
   GitHub.

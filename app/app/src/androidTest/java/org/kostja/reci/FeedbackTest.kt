@@ -13,6 +13,7 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.performTextInput
 import androidx.test.core.app.ActivityScenario
@@ -87,7 +88,8 @@ class FeedbackTest {
     }
 
     private fun report() {
-        compose.onAllNodesWithContentDescription("Сообщить об ошибке")[0].performClick()
+        // The flag sits after the text of a long card.
+        compose.onAllNodesWithContentDescription("Сообщить об ошибке")[0].performScrollTo().performClick()
         compose.waitForIdle()
     }
 

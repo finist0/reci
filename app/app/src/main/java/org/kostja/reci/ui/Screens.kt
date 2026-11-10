@@ -433,14 +433,9 @@ fun DetailScreen(
                 .clip(RoundedCornerShape(28.dp))
                 .background(p.card)
         ) {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .verticalScroll(rememberScrollState())
-                    .padding(start = 24.dp, end = 24.dp, top = 24.dp, bottom = 56.dp)
-            ) { WordBody(w, slide = false, onGrammar = onGrammar) }
-            ReportFlag(Modifier.align(Alignment.BottomEnd).padding(8.dp)) { reporting = true }
-            if (onSchools != null) SchoolsButton(Modifier.align(Alignment.BottomEnd).padding(end = 52.dp, bottom = 8.dp), onSchools)
+            CardText(top = 24.dp, onReport = { reporting = true }, onSchools = onSchools) {
+                WordBody(w, slide = false, onGrammar = onGrammar)
+            }
         }
         var answered by remember(w.key) { mutableStateOf(Repo.answerOf(w)) }
         var learned by remember(w.key) { mutableStateOf(false) }
