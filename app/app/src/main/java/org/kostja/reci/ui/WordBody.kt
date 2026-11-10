@@ -31,6 +31,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
@@ -148,16 +149,20 @@ fun WordBody(
 @Composable
 private fun Meaning(n: Int, text: String) {
     val p = LocalPalette.current
+    // The circle is sized in sp so it grows with the system font and stays centred on the first line.
+    val circle = with(LocalDensity.current) { 22.sp.toDp() }
+    val top = with(LocalDensity.current) { 1.5.sp.toDp() }
     Row(verticalAlignment = Alignment.Top) {
         Box(
             Modifier
-                .padding(top = 2.dp)
-                .size(22.dp)
+                .padding(top = top)
+                .size(circle)
                 .clip(CircleShape)
                 .background(p.highlight),
             contentAlignment = Alignment.Center,
         ) {
-            Text("$n", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = p.accent)
+            // The theme's taller line would push the digit below the centre of the circle.
+            Text("$n", fontSize = 12.sp, lineHeight = 12.sp, fontWeight = FontWeight.Bold, color = p.accent)
         }
         Spacer(Modifier.width(12.dp))
         Text(text, fontSize = 19.sp, color = p.meaning, lineHeight = 25.sp)
