@@ -50,8 +50,11 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
@@ -508,31 +511,41 @@ fun MarksRow(
     onAnswer: (State, Boolean) -> Unit,
 ) {
     val p = LocalPalette.current
+    val measurer = rememberTextMeasurer()
     val density = LocalDensity.current
     val style = if (fixedText) MARK_STYLE.copy(fontSize = with(density) { 14.dp.toSp() }) else MARK_STYLE
-    Row(
-        modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(18.dp))
-            .background(p.card)
-            .padding(4.dp),
-        horizontalArrangement = Arrangement.spacedBy(4.dp),
-    ) {
-        Mark(
-            if (article) "Перечитать позже" else "Не знаю",
-            answered == State.DONT_KNOW,
-            if (article) p.secondary else MarkDontKnow,
-            Modifier.weight(1f),
-            style,
-        ) { onAnswer(State.DONT_KNOW, false) }
-        Mark(
-            if (article) "Не показывать" else "Знаю",
-            answered == State.KNOWN,
-            p.known,
-            Modifier.weight(1f),
-            style,
-            onLongClick = if (article) null else ({ onAnswer(State.KNOWN, true) }),
-        ) { onAnswer(State.KNOWN, false) }
+    BoxWithConstraints(modifier.fillMaxWidth()) {
+        // Each mark gets half the row; an article label that does not fit there gives way to
+        // its short form.
+        val half = (maxWidth - 12.dp) / 2
+        fun fit(full: String, brief: String) =
+            if (with(density) { measurer.measure(full, style).size.width.toDp() } + 27.dp <= half) full else brief
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(18.dp))
+                .background(p.card)
+                .padding(4.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            Mark(
+                if (article) "Перечитать позже" else "Не знаю",
+                if (article) fit("Перечитать позже", "Позже") else "Не знаю",
+                answered == State.DONT_KNOW,
+                if (article) p.secondary else MarkDontKnow,
+                Modifier.weight(1f),
+                style,
+            ) { onAnswer(State.DONT_KNOW, false) }
+            Mark(
+                if (article) "Не показывать" else "Знаю",
+                if (article) fit("Не показывать", "Скрыть") else "Знаю",
+                answered == State.KNOWN,
+                p.known,
+                Modifier.weight(1f),
+                style,
+                onLongClick = if (article) null else ({ onAnswer(State.KNOWN, true) }),
+            ) { onAnswer(State.KNOWN, false) }
+        }
     }
 }
 
@@ -540,6 +553,7 @@ private val MARK_STYLE = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.Sem
 
 @Composable
 private fun Mark(
+    name: String,
     label: String,
     selected: Boolean,
     color: Color,
@@ -564,6 +578,8 @@ private fun Mark(
             style = style,
             color = if (selected) Color.White else LocalPalette.current.text,
             maxLines = 1,
+            // A short label still reads out in full.
+            modifier = if (label == name) Modifier else Modifier.semantics { contentDescription = name },
         )
     }
 }
