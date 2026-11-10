@@ -43,6 +43,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -199,8 +200,10 @@ fun CardText(
     star: @Composable BoxScope.() -> Unit = {},
     content: @Composable ColumnScope.() -> Unit,
 ) {
+    val p = LocalPalette.current
+    val scroll = rememberScrollState()
     BoxWithConstraints(Modifier.fillMaxSize()) {
-        Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).heightIn(min = maxHeight)) {
+        Column(Modifier.fillMaxWidth().verticalScroll(scroll).heightIn(min = maxHeight)) {
             Box(Modifier.fillMaxWidth()) {
                 Column(Modifier.padding(start = 24.dp, end = 24.dp, top = top), content = content)
                 star()
@@ -213,6 +216,16 @@ fun CardText(
                 if (onSchools != null) SchoolsButton(onClick = onSchools)
                 ReportFlag(onClick = onReport)
             }
+        }
+        // Text cut by the card edge fades out instead of ending mid-line.
+        if (scroll.canScrollForward) {
+            Box(
+                Modifier
+                    .align(Alignment.BottomCenter)
+                    .fillMaxWidth()
+                    .height(16.dp)
+                    .background(Brush.verticalGradient(listOf(Color.Transparent, p.card)))
+            )
         }
     }
 }
