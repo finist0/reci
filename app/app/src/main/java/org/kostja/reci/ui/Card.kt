@@ -140,7 +140,7 @@ fun CardScreen(
             Modifier
                 .weight(1f)
                 .fillMaxWidth()
-                .padding(horizontal = 14.dp, vertical = 8.dp)
+                .padding(horizontal = 14.dp, vertical = if (short()) 5.dp else 8.dp)
                 .shadow(3.dp, RoundedCornerShape(28.dp), clip = false)
                 .clip(RoundedCornerShape(28.dp))
                 .background(p.card)
@@ -164,7 +164,7 @@ fun CardScreen(
             }
             key(w.key, showId) {
                 CardText(
-                    top = 22.dp,
+                    top = if (short()) 16.dp else 22.dp,
                     onReport = { if (onReport != null) onReport(w.key) else reporting = w },
                     onSchools = onSchools,
                     star = { Star(w, Modifier.align(Alignment.TopEnd).padding(top = 10.dp, end = 10.dp)) },
@@ -271,9 +271,12 @@ private fun Empty(onCategories: () -> Unit) {
 
 private val BAR_HEIGHT = 44.dp
 
-// On a narrow screen the top bar gets tighter, so its icons keep their room.
+// On a small screen the bars around the card get tighter, so the card keeps room for its text.
 @Composable
 private fun narrow() = LocalConfiguration.current.screenWidthDp < 400
+
+@Composable
+private fun short() = LocalConfiguration.current.screenHeightDp < 700
 
 @Composable
 private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -> Unit, onCategories: () -> Unit) {
@@ -299,7 +302,7 @@ private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = if (narrow) 16.dp else 20.dp, end = 12.dp, top = 6.dp, bottom = 2.dp),
+            .padding(start = if (narrow) 16.dp else 20.dp, end = 12.dp, top = if (short()) 2.dp else 6.dp, bottom = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
@@ -524,7 +527,7 @@ private fun Mark(
             .clip(RoundedCornerShape(14.dp))
             .background(if (selected) color else Color.Transparent)
             .combinedClickable(onLongClick = onLongClick, onClick = onClick)
-            .padding(vertical = 11.dp),
+            .padding(vertical = if (short()) 8.dp else 11.dp),
         horizontalArrangement = Arrangement.Center,
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -542,19 +545,21 @@ private fun Mark(
 @Composable
 private fun BottomNav(onPrev: () -> Unit, onNext: () -> Unit, onDone: (() -> Unit)?) {
     val p = LocalPalette.current
+    val short = short()
+    val height = if (short) 46.dp else 54.dp
     Row(
         Modifier
             .fillMaxWidth()
-            .padding(start = 14.dp, end = 14.dp, top = 6.dp, bottom = 12.dp),
+            .padding(start = 14.dp, end = 14.dp, top = if (short) 4.dp else 6.dp, bottom = if (short) 8.dp else 12.dp),
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NavCircle(R.drawable.ic_chevron_left, "Предыдущее слово", onPrev)
+        NavCircle(R.drawable.ic_chevron_left, "Предыдущее слово", height, onPrev)
         Row(
             Modifier
                 .weight(1f)
-                .height(54.dp)
-                .clip(RoundedCornerShape(27.dp))
+                .height(height)
+                .clip(RoundedCornerShape(height / 2))
                 .background(p.accent)
                 .clickable(onClick = onDone ?: onNext),
             horizontalArrangement = Arrangement.Center,
@@ -570,16 +575,16 @@ private fun BottomNav(onPrev: () -> Unit, onNext: () -> Unit, onDone: (() -> Uni
                 Icon(painterResource(R.drawable.ic_arrow_forward), null, tint = Color.White, modifier = Modifier.size(20.dp))
             }
         }
-        if (onDone != null) NavCircle(R.drawable.ic_chevron_right, "Следующее слово", onNext)
+        if (onDone != null) NavCircle(R.drawable.ic_chevron_right, "Следующее слово", height, onNext)
     }
 }
 
 @Composable
-private fun NavCircle(icon: Int, description: String, onClick: () -> Unit) {
+private fun NavCircle(icon: Int, description: String, size: Dp, onClick: () -> Unit) {
     val p = LocalPalette.current
     Box(
         Modifier
-            .size(54.dp)
+            .size(size)
             .clip(CircleShape)
             .background(p.card)
             .clickable(onClick = onClick),
