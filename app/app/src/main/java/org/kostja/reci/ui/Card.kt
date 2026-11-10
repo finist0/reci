@@ -45,10 +45,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -266,6 +270,10 @@ private fun Empty(onCategories: () -> Unit) {
 
 private val BAR_HEIGHT = 44.dp
 
+// On a narrow screen the top bar gets tighter, so its icons keep their room.
+@Composable
+private fun narrow() = LocalConfiguration.current.screenWidthDp < 400
+
 @Composable
 private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -> Unit, onCategories: () -> Unit) {
     val p = LocalPalette.current
@@ -285,19 +293,33 @@ private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -
         listOf("HH:mm", "EEE, d MMM").map { SimpleDateFormat(it, ru) }
     }
     val date = Date(now)
+    val narrow = narrow()
 
     Row(
-        Modifier.fillMaxWidth().padding(start = 20.dp, end = 12.dp, top = 6.dp, bottom = 2.dp),
+        Modifier
+            .fillMaxWidth()
+            .padding(start = if (narrow) 16.dp else 20.dp, end = 12.dp, top = 6.dp, bottom = 2.dp),
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.Top,
     ) {
         Column {
-            Text(formats[0].format(date), fontSize = 32.sp, fontWeight = FontWeight.Medium, color = p.text, lineHeight = 34.sp)
-            Text(formats[1].format(date), fontSize = 13.sp, color = p.secondary)
+            Text(
+                formats[0].format(date),
+                fontSize = if (narrow) 26.sp else 32.sp,
+                fontWeight = FontWeight.Medium,
+                color = p.text,
+                lineHeight = if (narrow) 28.sp else 34.sp,
+                maxLines = 1,
+            )
+            Text(formats[1].format(date), fontSize = 13.sp, color = p.secondary, maxLines = 1)
         }
-        // The font's internal leading puts the clock digits a little below the box top.
-        Row(Modifier.padding(top = 4.dp), verticalAlignment = Alignment.CenterVertically) {
-            DeckChip(onCategories, Modifier.height(BAR_HEIGHT).widthIn(max = 150.dp))
+        // The font's internal leading puts the clock digits a little below the box top. The
+        // icons never shrink: the deck chip gives up its width first.
+        Row(
+            Modifier.weight(1f, fill = false).padding(start = 8.dp, top = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            DeckChip(onCategories, Modifier.weight(1f, fill = false).height(BAR_HEIGHT).widthIn(max = 150.dp))
             Spacer(Modifier.width(8.dp))
             Row(
                 Modifier
@@ -319,7 +341,7 @@ private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -
 private fun BarIcon(icon: Int, description: String, onClick: () -> Unit) {
     Box(
         Modifier
-            .size(42.dp)
+            .size(if (narrow()) 40.dp else 42.dp)
             .clip(CircleShape)
             .clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
@@ -337,7 +359,8 @@ private fun DeckChip(onCategories: () -> Unit, modifier: Modifier) {
         first == null -> "—"
         first.startsWith("L") -> Labels.category(first).substringBefore(' ')
         else -> Labels.category(first)
-    } + if (cats.size > 1) " +${cats.size - 1}" else ""
+    }
+    val more = if (cats.size > 1) " +${cats.size - 1}" else ""
     // Known words out of all words in the chosen sections, the marked ones included.
     val (known, total) = remember(Repo.version.intValue, cats) {
         var k = 0
@@ -349,25 +372,45 @@ private fun DeckChip(onCategories: () -> Unit, modifier: Modifier) {
         }
         k to t
     }
-    Row(
-        modifier
+    // Short of room, the chip drops the count, then the "+N" of further sections, and only
+    // then cuts the title.
+    val style = TextStyle(fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+    Layout(
+        content = {
+            Text(
+                title,
+                style = style,
+                color = p.accent,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            Icon(painterResource(R.drawable.ic_expand_more), null, tint = p.accent, modifier = Modifier.size(18.dp))
+            Text(more, style = style, color = p.accent, maxLines = 1)
+            if (Repo.isLoaded) Text("  $known/$total", fontSize = 13.sp, color = p.secondary, maxLines = 1)
+        },
+        modifier = modifier
             .clip(RoundedCornerShape(50))
             .background(p.card)
             .clickable(onClick = onCategories)
             .padding(start = 14.dp, end = 8.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(
-            title,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = p.accent,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f, fill = false),
-        )
-        if (Repo.isLoaded) Text("  $known/$total", fontSize = 13.sp, color = p.secondary, maxLines = 1)
-        Icon(painterResource(R.drawable.ic_expand_more), null, tint = p.accent, modifier = Modifier.size(18.dp))
+    ) { items, c ->
+        val icon = items[1].measure(Constraints())
+        val titleWidth = items[0].maxIntrinsicWidth(c.maxHeight)
+        val moreWidth = items[2].maxIntrinsicWidth(c.maxHeight)
+        val count = items.getOrNull(3)
+            ?.takeIf { titleWidth + moreWidth + it.maxIntrinsicWidth(c.maxHeight) + icon.width <= c.maxWidth }
+            ?.measure(Constraints())
+        val plus = items[2].takeIf { titleWidth + moreWidth + icon.width <= c.maxWidth }?.measure(Constraints())
+        val room = c.maxWidth - icon.width - (count?.width ?: 0) - (plus?.width ?: 0)
+        val text = items[0].measure(Constraints(maxWidth = room.coerceAtLeast(0)))
+        val height = maxOf(c.minHeight, text.height, icon.height)
+        layout(text.width + (plus?.width ?: 0) + (count?.width ?: 0) + icon.width, height) {
+            var x = 0
+            for (item in listOfNotNull(text, plus, count, icon)) {
+                item.placeRelative(x, (height - item.height) / 2)
+                x += item.width
+            }
+        }
     }
 }
 
