@@ -16,7 +16,8 @@ const TYPES = {
 };
 
 // The statistics server is faked at /srv: it keeps what it gets and answers with `status`.
-export function serve() {
+// `files` stands in for repository files: "/app/app/build.gradle.kts" -> its text.
+export function serve({ files = {} } = {}) {
     const posts = [];
     const status = { ping: 204, feedback: 204, forget: 204 };
     const server = createServer((req, res) => {
@@ -33,6 +34,11 @@ export function serve() {
         }
         let path = normalize(decodeURIComponent(new URL(req.url, "http://x").pathname));
         if (path.endsWith("/")) path += "index.html";
+        if (path in files) {
+            res.writeHead(200, { "content-type": TYPES[extname(path)] ?? "text/plain" });
+            res.end(files[path]);
+            return;
+        }
         const file = join(ROOT, path);
         try {
             if (!file.startsWith(ROOT) || !statSync(file).isFile()) throw new Error();
