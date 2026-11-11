@@ -109,6 +109,7 @@ python3 -m venv /path/to/venv
 | `app/app/src/test/…/BackupTest.kt` | файл прогресса |
 | `app/app/src/test/…/LockSettingsTest.kt` | настройки экрана блокировки: пауза, звонки с разрешением «Звонки» и без него, новое слово, шторка, озвучка |
 | `app/app/src/androidTest/…/CardScreenTest.kt` | карточка: долгое нажатие, смена ответа, подсказка, статьи |
+| `app/app/src/androidTest/…/CardLayoutTest.kt` | карточка на маленьком и обычном экране, с крупным шрифтом; флажок и звёздочка при прокрутке |
 | `app/app/src/androidTest/…/SettingsScreenTest.kt` | каждая настройка на экране настроек и карточка на экране блокировки |
 | `app/app/src/test/…/TelemetryTest.kt` | статистика и очередь сообщений: поля, раз в день, без сети |
 | `app/app/src/test/…/DictUpdateTest.kt` | поправки словаря: общие случаи, что и когда скачивается, что отвергается, сеть не задерживает карточку |
