@@ -347,8 +347,8 @@ const dateFmt = new Intl.DateTimeFormat("ru", { weekday: "short", day: "numeric"
 function deckChip() {
     const cats = prefs.categories;
     const first = [...cats].sort()[0];
-    const title = (first === undefined ? "—" : first.startsWith("L") ? D.category(first).split(" ")[0] : D.category(first)) +
-        (cats.length > 1 ? ` +${cats.length - 1}` : "");
+    const title = first === undefined ? "—" : first.startsWith("L") ? D.category(first).split(" ")[0] : D.category(first);
+    const more = cats.length > 1 ? `<span class="deck-more">+${cats.length - 1}</span>` : "";
     // Known words out of all words in the chosen sections, the marked ones included.
     let k = 0, t = 0;
     for (const w of R.words) {
@@ -356,7 +356,7 @@ function deckChip() {
         t++;
         if (R.progress(w).state === KNOWN) k++;
     }
-    return `<button class="deck" ${act("categories")}><span class="deck-title">${esc(title)}</span>
+    return `<button class="deck" ${act("categories")}><span class="deck-title">${esc(title)}</span>${more}
         <span class="deck-count">${k}/${t}</span>${icon("expand_more")}</button>`;
 }
 
@@ -890,8 +890,17 @@ function render() {
     fit();
 }
 
-// What CSS cannot do: a card with more text below fades out at its edge.
+// What CSS cannot do: the deck chip drops its count, its "+N" and its arrow before it cuts the
+// title; a card with more text below fades out at its edge.
 function fit() {
+    for (const deck of root.querySelectorAll(".deck")) {
+        const steps = ["no-count", "no-more", "no-arrow"];
+        deck.classList.remove(...steps);
+        const title = deck.querySelector(".deck-title");
+        for (const step of steps) {
+            if (title.scrollWidth > title.clientWidth) deck.classList.add(step);
+        }
+    }
     for (const el of root.querySelectorAll(".card-scroll")) fade(el);
 }
 

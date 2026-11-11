@@ -109,7 +109,9 @@ input { font: inherit; color: var(--text); }
 }
 
 .deck-title { font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; }
-.deck-count { font-size: 13px; color: var(--secondary); padding-left: 6px; }
+.deck-more { font-size: 14px; font-weight: 600; padding-left: 4px; flex: none; }
+.deck-count { font-size: 13px; color: var(--secondary); padding-left: 6px; flex: none; }
+.deck.no-count .deck-count, .deck.no-more .deck-more, .deck.no-arrow .ic { display: none; }
 .deck .ic { width: 18px; height: 18px; }
 
 .icons { display: flex; height: 44px; align-items: center; padding: 0 2px; border-radius: 22px; background: var(--card); }
