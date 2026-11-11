@@ -226,30 +226,42 @@ struct MarksRow: View {
     let onAnswer: (Int, Bool) -> Void
 
     var body: some View {
+        // Short of room, article buttons take short labels, and then the buttons drop their dots.
+        ViewThatFits(in: .horizontal) {
+            row(brief: false, dots: true)
+            if article { row(brief: true, dots: true) }
+            row(brief: article, dots: false)
+        }
+        .padding(4)
+        .background(Capsule().fill(model.palette.panel))
+    }
+
+    private func row(brief: Bool, dots: Bool) -> some View {
         let p = model.palette
-        HStack(spacing: 4) {
-            mark(article ? "Перечитать позже" : "Не знаю", id: "markDontKnow", on: answered == Mark.dontKnow, color: article ? p.secondary : markDontKnow)
+        return HStack(spacing: 4) {
+            mark(article ? "Перечитать позже" : "Не знаю", brief: brief ? "Позже" : nil, dot: dots,
+                 id: "markDontKnow", on: answered == Mark.dontKnow, color: article ? p.secondary : markDontKnow)
                 .onTapGesture { onAnswer(Mark.dontKnow, false) }
-            mark(article ? "Не показывать" : "Знаю", id: "markKnow", on: answered == Mark.known, color: p.known)
+            mark(article ? "Не показывать" : "Знаю", brief: brief ? "Скрыть" : nil, dot: dots,
+                 id: "markKnow", on: answered == Mark.known, color: p.known)
                 .gesture(
                     LongPressGesture(minimumDuration: 0.5)
                         .onEnded { _ in if !article { onAnswer(Mark.known, true) } }
                         .exclusively(before: TapGesture().onEnded { onAnswer(Mark.known, false) })
                 )
         }
-        .padding(4)
-        .background(Capsule().fill(p.panel))
     }
 
-    private func mark(_ title: String, id: String, on: Bool, color: Color) -> some View {
+    private func mark(_ title: String, brief: String?, dot: Bool, id: String, on: Bool, color: Color) -> some View {
         HStack(spacing: 8) {
-            Circle().fill(on ? .white : color).frame(width: 8, height: 8)
-            Text(title).font(.ui(16, .semibold)).foregroundStyle(on ? .white : model.palette.text)
+            if dot { Circle().fill(on ? .white : color).frame(width: 8, height: 8) }
+            Text(brief ?? title).font(.ui(16, .semibold)).foregroundStyle(on ? .white : model.palette.text).lineLimit(1)
         }
         .frame(maxWidth: .infinity).padding(.vertical, compact ? 8 : 12)
         .background(Capsule().fill(on ? color : .clear))
         .contentShape(Capsule())
         .accessibilityElement(children: .combine)
+        .accessibilityLabel(title)
         .accessibilityAddTraits(.isButton)
         .accessibilityAddTraits(on ? .isSelected : [])
         .accessibilityIdentifier(id)
