@@ -8,40 +8,50 @@ struct CardScreen: View {
 
     var body: some View {
         let p = model.palette
-        VStack(spacing: 0) {
-            TopBar()
-            ZStack(alignment: .topTrailing) {
-                RoundedRectangle(cornerRadius: 28).fill(p.card).shadow(color: .black.opacity(0.08), radius: 4, y: 2)
-                if let s = model.showing, let w = model.repo.word(s.key) {
-                    CardText(w: w, top: 22, onReport: { reporting = w }) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            if let stage = s.stage {
-                                Text(stage).font(.ui(12, .semibold)).foregroundStyle(p.accent)
-                                    .accessibilityIdentifier("stage")
+        // On a short screen the bars around the card get tighter, so the card keeps room for its text.
+        GeometryReader { screen in
+            let short = screen.size.height < 700
+            VStack(spacing: 0) {
+                TopBar()
+                ZStack(alignment: .topTrailing) {
+                    RoundedRectangle(cornerRadius: 28).fill(p.card).shadow(color: .black.opacity(0.08), radius: 4, y: 2)
+                    if let s = model.showing, let w = model.repo.word(s.key) {
+                        CardText(w: w, top: short ? 16 : 22, onReport: { reporting = w }) {
+                            VStack(alignment: .leading, spacing: 6) {
+                                if let stage = s.stage {
+                                    Text(stage).font(.ui(12, .semibold)).foregroundStyle(p.accent)
+                                        .accessibilityIdentifier("stage")
+                                }
+                                WordBody(w: w, covered: s.covered, hideWord: s.recall && !s.revealed,
+                                         onUncover: { model.uncover() }, onReveal: { model.reveal() })
                             }
-                            WordBody(w: w, covered: s.covered, hideWord: s.recall && !s.revealed,
-                                     onUncover: { model.uncover() }, onReveal: { model.reveal() })
                         }
+                        .id(s.id)
+                        if model.learnedToast {
+                            LearnedToast().frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
+                        } else if let t = model.sentToast {
+                            SentToast(text: t).frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
+                        }
+                    } else if model.repo.exhausted {
+                        Empty().frame(maxWidth: .infinity, maxHeight: .infinity)
                     }
-                    .id(s.id)
-                    if model.learnedToast {
-                        LearnedToast().frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
-                    } else if let t = model.sentToast {
-                        SentToast(text: t).frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
+                }
+                .clipShape(RoundedRectangle(cornerRadius: 28))
+                .padding(.horizontal, 14).padding(.vertical, short ? 5 : 8)
+                if model.showing != nil && !model.telemetry.state.noticeClosed { StatsNotice() }
+                if model.prefs.useMarks, let s = model.showing, let w = model.repo.word(s.key) {
+                    if s.hint { LongPressHint() }
+                    if short {
+                        OneRow(answered: s.answered, article: w.isArticle)
+                    } else {
+                        MarksRow(answered: s.answered, article: w.isArticle) { a, learned in model.answer(a, learned: learned) }
+                            .padding(.horizontal, 14).padding(.vertical, 4)
+                        BottomNav()
                     }
-                } else if model.repo.exhausted {
-                    Empty().frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    BottomNav()
                 }
             }
-            .clipShape(RoundedRectangle(cornerRadius: 28))
-            .padding(.horizontal, 14).padding(.vertical, 8)
-            if model.showing != nil && !model.telemetry.state.noticeClosed { StatsNotice() }
-            if model.prefs.useMarks, let s = model.showing, let w = model.repo.word(s.key) {
-                if s.hint { LongPressHint() }
-                MarksRow(answered: s.answered, article: w.isArticle) { a, learned in model.answer(a, learned: learned) }
-                    .padding(.horizontal, 14).padding(.vertical, 4)
-            }
-            BottomNav()
         }
         .background(p.bg.ignoresSafeArea())
         .onAppear { model.syncShowing() }
@@ -211,6 +221,8 @@ struct MarksRow: View {
     @EnvironmentObject var model: AppModel
     let answered: Int?
     let article: Bool
+    // Lower buttons, for the one row of a short screen.
+    var compact = false
     let onAnswer: (Int, Bool) -> Void
 
     var body: some View {
@@ -234,7 +246,7 @@ struct MarksRow: View {
             Circle().fill(on ? .white : color).frame(width: 8, height: 8)
             Text(title).font(.ui(16, .semibold)).foregroundStyle(on ? .white : model.palette.text)
         }
-        .frame(maxWidth: .infinity).padding(.vertical, 12)
+        .frame(maxWidth: .infinity).padding(.vertical, compact ? 8 : 12)
         .background(Capsule().fill(on ? color : .clear))
         .contentShape(Capsule())
         .accessibilityElement(children: .combine)
@@ -265,6 +277,32 @@ struct BottomNav: View {
             .accessibilityIdentifier("next")
         }
         .padding(.horizontal, 14).padding(.top, 6).padding(.bottom, 12)
+    }
+}
+
+// A short screen puts "back", the answers and a round "next" in one row.
+struct OneRow: View {
+    @EnvironmentObject var model: AppModel
+    let answered: Int?
+    let article: Bool
+
+    var body: some View {
+        let p = model.palette
+        HStack(spacing: 8) {
+            Button { model.step(-1) } label: {
+                Image(systemName: "chevron.left").font(.ui(18, .semibold)).foregroundStyle(p.text)
+                    .frame(width: 46, height: 46).background(Circle().fill(p.card))
+            }
+            .accessibilityLabel("Предыдущее слово")
+            MarksRow(answered: answered, article: article, compact: true) { a, learned in model.answer(a, learned: learned) }
+            Button { model.step(1) } label: {
+                Image(systemName: "arrow.right").font(.ui(18, .semibold)).foregroundStyle(.white)
+                    .frame(width: 46, height: 46).background(Circle().fill(p.accent))
+            }
+            .accessibilityLabel("Дальше")
+            .accessibilityIdentifier("next")
+        }
+        .padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 8)
     }
 }
 
