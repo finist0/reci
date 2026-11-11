@@ -26,7 +26,10 @@ final class ReciUITests: XCTestCase {
 
     // Settings rows below the fold are not hittable until scrolled to.
     private func reach(_ el: XCUIElement) -> XCUIElement {
-        for _ in 0..<12 where !(el.exists && el.isHittable) { app.swipeUp() }
+        for _ in 0..<12 {
+            if el.exists && el.isHittable { break }
+            app.swipeUp()
+        }
         return el
     }
 
@@ -70,7 +73,10 @@ final class ReciUITests: XCTestCase {
     }
 
     func testArticleButtonsKeepTheirFullNamesForVoiceOver() {
-        for _ in 0..<6 where !app.staticTexts["articleTitle"].exists { app.buttons["next"].tap() }
+        for _ in 0..<6 {
+            if app.staticTexts["articleTitle"].exists { break }
+            app.buttons["next"].tap()
+        }
         XCTAssertTrue(app.staticTexts["articleTitle"].waitForExistence(timeout: 5), "no article in the first cards")
         XCTAssertEqual(mark("markDontKnow").label, "Перечитать позже")
         XCTAssertEqual(mark("markKnow").label, "Не показывать")
@@ -138,7 +144,10 @@ final class FeedbackUITests: XCTestCase {
     }
 
     private func reach(_ el: XCUIElement) -> XCUIElement {
-        for _ in 0..<15 where !(el.exists && el.isHittable) { app.swipeUp() }
+        for _ in 0..<15 {
+            if el.exists && el.isHittable { break }
+            app.swipeUp()
+        }
         return el
     }
 
@@ -327,7 +336,10 @@ final class ScreenshotUITests: XCTestCase {
         }
         shot("1-card-with-notice")
         let flag = app.buttons["Сообщить об ошибке"].firstMatch
-        for _ in 0..<15 where !flag.isHittable { app.swipeUp() }
+        for _ in 0..<15 {
+            if flag.isHittable { break }
+            app.swipeUp()
+        }
         flag.tap()
         _ = app.navigationBars["Что не так?"].waitForExistence(timeout: 5)
         app.buttons["problem:stress"].tap()
@@ -349,7 +361,10 @@ final class ScreenshotUITests: XCTestCase {
         app.buttons["Настройки"].tap()
         _ = app.staticTexts["Настройки"].waitForExistence(timeout: 5)
         shot("6-settings")
-        for _ in 0..<15 where !app.buttons["Помочь автору"].isHittable { app.swipeUp() }
+        for _ in 0..<15 {
+            if app.buttons["Помочь автору"].isHittable { break }
+            app.swipeUp()
+        }
         shot("7-settings-feedback")
         app.buttons["Что отправляется"].tap()
         _ = app.staticTexts["packet"].waitForExistence(timeout: 5)
