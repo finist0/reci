@@ -722,3 +722,17 @@ a.setting { color: inherit; text-decoration: none; }
     .icons button { width: 36px; height: 36px; }
     .deck { padding: 0 6px 0 10px; }
 }
+
+@media (max-height: 699px) {
+    .topbar { padding-top: 2px; }
+    .card-wrap { margin: 5px 14px; }
+    .card-scroll { padding-top: 16px; }
+    .mark { padding: 8px 0; }
+    /* The answers and the arrows share one row. */
+    .controls { display: flex; gap: 8px; align-items: center; padding: 4px 14px 8px; }
+    .controls .bottom { display: contents; }
+    .controls .marks { flex: 1; min-width: 0; margin: 0; order: 1; }
+    .controls .circle { width: 46px; height: 46px; }
+    .controls .next { flex: none; width: 46px; height: 46px; border-radius: 50%; order: 2; }
+    .controls .next-label { display: none; }
+}

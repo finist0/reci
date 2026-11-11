@@ -399,8 +399,10 @@ function cardScreen() {
         </div>
         ${statsNotice()}
         ${prefs.useMarks && s.hint ? longPressHint : ""}
-        ${prefs.useMarks ? marksRow(s.answered, R.isArticle(w)) : ""}
-        ${bottomNav()}
+        <div class="controls">
+            ${prefs.useMarks ? marksRow(s.answered, R.isArticle(w)) : ""}
+            ${bottomNav()}
+        </div>
         ${reportDialog(top())}`;
 }
 
@@ -574,7 +576,7 @@ function showSentToast(text) {
 const bottomNav = () => `
     <nav class="bottom">
         <button class="circle" ${act("prev")} aria-label="Предыдущее слово">${icon("chevron_left")}</button>
-        <button class="next" ${act("next")}>Дальше ${icon("arrow_forward")}</button>
+        <button class="next" ${act("next")} aria-label="Дальше"><span class="next-label">Дальше</span> ${icon("arrow_forward")}</button>
     </nav>`;
 
 // --- Categories (ui/Screens.kt CategoriesScreen) ---
