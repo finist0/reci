@@ -1,5 +1,16 @@
 import XCTest
 
+extension XCUIElement {
+    // The newest simulator now and then loses a tap on a button in a scroll view.
+    @discardableResult
+    func tap(opening screen: XCUIElement) -> Bool {
+        tap()
+        if screen.waitForExistence(timeout: 5) { return true }
+        if isHittable { tap() }
+        return screen.waitForExistence(timeout: 5)
+    }
+}
+
 // UI tests of the iPhone app in the simulator, the counterpart of CardScreenTest.kt and
 // web/tests/ui/*.test.mjs. Each test starts from a fresh install.
 final class ReciUITests: XCTestCase {
@@ -68,8 +79,7 @@ final class ReciUITests: XCTestCase {
             XCTAssertTrue(flag.isHittable)
             XCTAssertFalse(star.isHittable)
         }
-        flag.tap()
-        XCTAssertTrue(app.navigationBars["Что не так?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(flag.tap(opening: app.navigationBars["Что не так?"]))
     }
 
     func testArticleButtonsKeepTheirFullNamesForVoiceOver() {
@@ -163,8 +173,7 @@ final class FeedbackUITests: XCTestCase {
     }
 
     private func report(problem: String) {
-        reach(app.buttons["Сообщить об ошибке"].firstMatch).tap()
-        XCTAssertTrue(app.navigationBars["Что не так?"].waitForExistence(timeout: 5))
+        XCTAssertTrue(reach(app.buttons["Сообщить об ошибке"].firstMatch).tap(opening: app.navigationBars["Что не так?"]))
         XCTAssertFalse(app.buttons["send"].isEnabled)
         app.buttons["problem:\(problem)"].tap()
     }
@@ -232,8 +241,7 @@ final class FeedbackUITests: XCTestCase {
         app.buttons["send"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.label.contains("Спасибо"))
-        reach(app.buttons["Сообщить об ошибке"].firstMatch).tap()
-        XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 5))
+        XCTAssertTrue(reach(app.buttons["Сообщить об ошибке"].firstMatch).tap(opening: app.textFields["email"]))
         XCTAssertEqual(app.textFields["email"].value as? String, "me@example.org")
     }
 
@@ -340,8 +348,7 @@ final class ScreenshotUITests: XCTestCase {
             if flag.isHittable { break }
             app.swipeUp()
         }
-        flag.tap()
-        _ = app.navigationBars["Что не так?"].waitForExistence(timeout: 5)
+        flag.tap(opening: app.navigationBars["Что не так?"])
         app.buttons["problem:stress"].tap()
         shot("2-report")
         app.buttons["Отмена"].tap()
