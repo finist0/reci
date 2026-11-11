@@ -37,6 +37,45 @@ final class ReciUITests: XCTestCase {
         XCTAssertNotEqual(headword, first)
     }
 
+    // CI runs this on an iPhone SE, below 700pt with one row of buttons, and on larger iPhones.
+    func testTheCardScreenFitsTheScreen() {
+        let screen = app.windows.firstMatch.frame
+        for icon in ["Поиск", "Грамматика", "Настройки"] {
+            XCTAssertLessThanOrEqual(app.buttons[icon].frame.maxX, screen.maxX, "\(icon) sticks out of the screen")
+        }
+        let know = mark("markKnow").frame, next = app.buttons["next"].frame
+        let sameRow = know.minY < next.maxY && next.minY < know.maxY
+        if screen.height < 700 {
+            XCTAssertTrue(sameRow)
+            XCTAssertTrue(app.buttons["Предыдущее слово"].frame.minY < know.maxY)
+        } else if screen.height > 760 {
+            XCTAssertFalse(sameRow)
+        }
+        let first = headword
+        app.buttons["next"].tap()
+        XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 5))
+        XCTAssertNotEqual(headword, first)
+    }
+
+    func testTheFlagComesAfterTheTextAndTheStarScrollsAway() {
+        let flag = app.buttons["Сообщить об ошибке"].firstMatch, star = app.buttons["Избранное"].firstMatch
+        XCTAssertTrue(star.isHittable)
+        if !flag.isHittable {
+            reach(flag)
+            XCTAssertTrue(flag.isHittable)
+            XCTAssertFalse(star.isHittable)
+        }
+        flag.tap()
+        XCTAssertTrue(app.navigationBars["Что не так?"].waitForExistence(timeout: 5))
+    }
+
+    func testArticleButtonsKeepTheirFullNamesForVoiceOver() {
+        for _ in 0..<6 where !app.staticTexts["articleTitle"].exists { app.buttons["next"].tap() }
+        XCTAssertTrue(app.staticTexts["articleTitle"].waitForExistence(timeout: 5), "no article in the first cards")
+        XCTAssertEqual(mark("markDontKnow").label, "Перечитать позже")
+        XCTAssertEqual(mark("markKnow").label, "Не показывать")
+    }
+
     func testLongPressOnKnowShowsToastAndMovesOn() {
         let first = headword
         mark("markKnow").press(forDuration: 1.0)
