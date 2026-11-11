@@ -16,6 +16,7 @@ import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.Telemetry
+import org.kostja.reci.data.WhatsNew
 import org.kostja.reci.lock.LockService
 
 sealed interface Screen {
@@ -71,6 +72,7 @@ class MainActivity : ComponentActivity() {
         @Suppress("DEPRECATION")
         setTaskDescription(ActivityManager.TaskDescription(getString(R.string.app_name)))
         LockService.sync(this)
+        WhatsNew.checkOnce(this)
         handle(intent)
         setContent {
             Prefs.version.intValue
@@ -142,6 +144,7 @@ class MainActivity : ComponentActivity() {
                     is Screen.GrammarTopic -> GrammarTopicScreen(s.id, open = { go(Screen.GrammarTopic(it)) }, back = back)
                 }
                 }
+                WhatsNewDialog()
                 CrashDialog()
             }
         }

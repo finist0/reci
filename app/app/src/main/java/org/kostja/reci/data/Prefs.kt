@@ -193,6 +193,11 @@ object Prefs {
         get() = sp.getString("pending_answer", "") ?: ""
         set(v) = sp.edit { putString("pending_answer", v) }
 
+    // The app version whose news the user was last shown (WhatsNew).
+    var whatsNewSeen: String?
+        get() = sp.getString("whats_new_seen", null)
+        set(v) = sp.edit { putString("whats_new_seen", v) }
+
     // The showing counted last, "<key>#<card number>": the lock card and the app show the same
     // card, and a showing must count once.
     val lastShown: String
