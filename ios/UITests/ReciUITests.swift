@@ -195,6 +195,24 @@ final class FeedbackUITests: XCTestCase {
         XCTAssertFalse(app.alerts["Приложение закрылось с ошибкой"].waitForExistence(timeout: 3))
     }
 
+    func testTheNewsOfAnUpdateAreShownOnce() {
+        let news = { self.app.alerts.matching(NSPredicate(format: "label BEGINSWITH 'Что нового'")).firstMatch }
+        launch(["-uitest-reset", "-uitest-whatsnew"])
+        XCTAssertTrue(news().waitForExistence(timeout: 10))
+        XCTAssertTrue(news().staticTexts.matching(NSPredicate(format: "label CONTAINS '• '")).firstMatch.exists)
+        news().buttons["Понятно"].tap()
+        let gone = expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: news())
+        wait(for: [gone], timeout: 5)
+        app.terminate()
+        launch(["-uitest"])
+        XCTAssertFalse(news().waitForExistence(timeout: 3))
+    }
+
+    func testAFreshInstallIsNotToldAboutChanges() {
+        launch()
+        XCTAssertFalse(app.alerts.matching(NSPredicate(format: "label BEGINSWITH 'Что нового'")).firstMatch.waitForExistence(timeout: 3))
+    }
+
     func testACardIsReportedFromTheCard() {
         launch()
         report(problem: "stress")
