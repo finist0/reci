@@ -81,7 +81,8 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
 ### На GitHub
 
 Сценарий `.github/workflows/ios.yml` запускается сам при push тега выпуска `v*`. Его можно
-запустить и вручную: Actions → iOS → Run workflow.
+запустить и вручную: Actions → iOS → Run workflow. Ручной запуск только гоняет тесты; сборку
+в App Store Connect он загружает, лишь если отметить «Upload the build to App Store Connect».
 
 1. **Learning logic on Linux:** тесты логики в контейнере со Swift.
 2. **App and UI tests on …:** на машине macOS от GitHub ставит XcodeGen, генерирует
@@ -100,8 +101,9 @@ docker run --rm --user "$(id -u):$(id -g)" -e HOME=/tmp \
    Образ macos-26 может быть доступен не всем; если его нет, эти строки падают, не мешая
    остальным. Тесты на iPad тоже пока не обязаны проходить. Снимки экранов iPhone 17 Pro Max
    и iPad нужны ещё и App Store: он просит снимки iPhone 6,9 дюйма и iPad 13 дюймов.
-3. **Upload to App Store Connect:** после тестов собирает, подписывает и загружает сборку
-   в App Store Connect. См. «Выпуск в App Store» ниже.
+3. **Upload to App Store Connect:** если все обязательные тесты зелёные, собирает,
+   подписывает и загружает сборку в App Store Connect: после тега, а при ручном запуске
+   только с галочкой «Upload». См. «Выпуск в App Store» ниже.
 
 Результаты тестов интерфейса сохраняются как артефакты `ios-test-results-<телефон>`, по
 одному на устройство: `iphone-16`, `iphone-se`, `iphone-17-pro`, `iphone-17-pro-max`,
@@ -156,8 +158,9 @@ Developer Mode, и виджеты точно работают.
 
 ### Сборка и загрузка
 
-Делает GitHub, Mac не нужен. Каждый push тега выпуска `v*` и каждый ручной запуск (Actions →
-iOS → Run workflow) после тестов запускают задачу **Upload to App Store Connect**:
+Делает GitHub, Mac не нужен. Каждый push тега выпуска `v*` и ручной запуск (Actions → iOS →
+Run workflow) с отмеченной галочкой «Upload the build to App Store Connect» после зелёных
+тестов запускают задачу **Upload to App Store Connect**:
 
 1. собирает архив приложения с виджетами на самом новом Xcode (`macos-26`) с временной
    подписью;
@@ -219,10 +222,11 @@ CI только загружает сборку в App Store Connect. Внешн
    прежней.
 
 Первую сборку каждой новой версии Apple проверяет. Следующие сборки той же версии, например из
-ручного запуска, чаще проходят без проверки, но шаги 3-5 для них те же.
+ручного запуска с загрузкой, чаще проходят без проверки, но шаги 3-5 для них те же.
 
 Сборка в TestFlight работает 90 дней. Если выпусков долго нет, ручной запуск Actions → iOS →
-Run workflow загрузит свежую сборку той же версии.
+Run workflow с галочкой «Upload the build to App Store Connect» загрузит свежую сборку той же
+версии.
 
 Если у роли в App Store Connect нет кнопки «+» в группе или Submit for Review, то же самое
 делает ключ API: добавить сборку в группу (`POST /v1/betaGroups/{id}/relationships/builds`)

@@ -7,6 +7,11 @@ on:
   push:
     tags: ["v*"]
   workflow_dispatch:
+    inputs:
+      upload:
+        description: Upload the build to App Store Connect
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -143,7 +148,8 @@ jobs:
           path: ios/build/Reci.xcresult
           if-no-files-found: ignore
 
-  # A pushed release tag, or a run started by hand, sends a build to App Store Connect:
+  # A pushed release tag, or a run started by hand with "upload" ticked, sends a build to
+  # App Store Connect once the tests are green:
   # TestFlight gives it to testers, and the App Store takes it once it is chosen for a release
   # there. The key of the App Store Connect API in the secrets ASC_KEY_P8, ASC_KEY_ID and
   # ASC_ISSUER_ID uploads it. It is signed with the Apple Distribution certificate in
@@ -155,7 +161,7 @@ jobs:
     needs: [core-linux, app-simulator]
     if: >-
       github.repository == 'finist0/reci' &&
-      (github.event_name == 'workflow_dispatch' || startsWith(github.ref, 'refs/tags/v'))
+      (github.event_name == 'push' || inputs.upload)
     # App Store Connect takes only builds made with the newest Xcode.
     runs-on: macos-26
     timeout-minutes: 60
