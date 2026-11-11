@@ -180,14 +180,19 @@ const chip = (text, selected, a, arg, opts = {}) => `
         ${opts.dot ? `<span class="dot" style="background:${selected ? "#fff" : opts.dot}"></span>` : ""}${esc(text)}
     </button>`;
 
-// Articles are read, not learned, so their buttons only say whether to show them again.
+// Articles are read, not learned, so their buttons only say whether to show them again. Their
+// labels are long: fit() swaps in the short one when the full one does not fit.
+const mark = (on, color, state, label, brief, extra = "") => `
+        <button class="mark ${on ? "on" : ""}" style="--c:${color}" ${act("mark", state)} ${extra}
+            ${brief ? `aria-label="${label}" data-brief="${brief}"` : ""}><span class="dot"></span><span class="mark-text">${label}</span></button>`;
+
 function marksRow(answered, article) {
     return `
-    <div class="marks">
-        <button class="mark ${answered === DONT_KNOW ? "on" : ""}" style="--c:${article ? "var(--secondary)" : "var(--red)"}" ${act("mark", DONT_KNOW)}>
-            <span class="dot"></span>${article ? "Перечитать позже" : "Не знаю"}</button>
-        <button class="mark ${answered === KNOWN ? "on" : ""}" style="--c:var(--known)" ${act("mark", KNOWN)} ${article ? "" : 'data-long="learned"'}>
-            <span class="dot"></span>${article ? "Не показывать" : "Знаю"}</button>
+    <div class="marks">${article
+        ? mark(answered === DONT_KNOW, "var(--secondary)", DONT_KNOW, "Перечитать позже", "Позже") +
+          mark(answered === KNOWN, "var(--known)", KNOWN, "Не показывать", "Скрыть")
+        : mark(answered === DONT_KNOW, "var(--red)", DONT_KNOW, "Не знаю") +
+          mark(answered === KNOWN, "var(--known)", KNOWN, "Знаю", "", 'data-long="learned"')}
     </div>`;
 }
 
@@ -893,7 +898,8 @@ function render() {
 }
 
 // What CSS cannot do: the deck chip drops its count, its "+N" and its arrow before it cuts the
-// title; a card with more text below fades out at its edge.
+// title; a row of answer buttons too narrow for its labels takes the short ones, then drops the
+// dots; a card with more text below fades out at its edge.
 function fit() {
     for (const deck of root.querySelectorAll(".deck")) {
         const steps = ["no-count", "no-more", "no-arrow"];
@@ -902,6 +908,12 @@ function fit() {
         for (const step of steps) {
             if (title.scrollWidth > title.clientWidth) deck.classList.add(step);
         }
+    }
+    for (const row of root.querySelectorAll(".marks")) {
+        row.classList.remove("tight", "nodot");
+        const cut = () => [...row.children].some(b => b.scrollWidth > b.clientWidth);
+        if (row.querySelector("[data-brief]") && cut()) row.classList.add("tight");
+        if (cut()) row.classList.add("nodot");
     }
     for (const el of root.querySelectorAll(".card-scroll")) fade(el);
 }

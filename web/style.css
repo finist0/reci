@@ -222,8 +222,13 @@ input { font: inherit; color: var(--text); }
     border-radius: 14px;
     font-size: 14px;
     font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
 }
 
+.marks.tight .mark-text { display: none; }
+.marks.tight .mark::after { content: attr(data-brief); }
+.marks.nodot .dot { display: none; }
 .mark .dot { background: var(--c); }
 .mark.on { background: var(--c); color: #fff; }
 .mark.on .dot { background: #fff; }
