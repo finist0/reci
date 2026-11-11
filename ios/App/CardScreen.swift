@@ -51,14 +51,17 @@ struct CardScreen: View {
 
 // The scrolling text of a card. The star, the flag and the school button scroll with it; the
 // flag and the school button come after the text, in the bottom corner of a short card and at
-// the end of a long one.
+// the end of a long one. Text cut by the card edge fades out instead of ending mid-line.
 struct CardText<Content: View>: View {
+    @EnvironmentObject var model: AppModel
     let w: Word
     let top: CGFloat
     let onReport: () -> Void
     @ViewBuilder let content: () -> Content
+    @State private var more = false
 
     var body: some View {
+        let p = model.palette
         GeometryReader { box in
             ScrollView {
                 VStack(spacing: 0) {
@@ -75,9 +78,26 @@ struct CardText<Content: View>: View {
                     .padding(8)
                 }
                 .frame(minHeight: box.size.height)
+                .background(GeometryReader { text in
+                    Color.clear.preference(key: TextBottom.self, value: text.frame(in: .named("cardText")).maxY)
+                })
+            }
+            .coordinateSpace(.named("cardText"))
+            .onPreferenceChange(TextBottom.self) { more = $0 > box.size.height + 1 }
+            .overlay(alignment: .bottom) {
+                if more {
+                    LinearGradient(colors: [p.card.opacity(0), p.card], startPoint: .top, endPoint: .bottom)
+                        .frame(height: 16).allowsHitTesting(false)
+                }
             }
         }
     }
+}
+
+// Where the bottom of a card's text is, in the coordinates of its scroll view.
+private struct TextBottom: PreferenceKey {
+    static var defaultValue: CGFloat = 0
+    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) { value = nextValue() }
 }
 
 struct TopBar: View {
