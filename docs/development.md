@@ -119,6 +119,7 @@ python3 -m venv /path/to/venv
 | `web/tests/backup.test.mjs` | файл прогресса |
 | `web/tests/ui/app.test.mjs` | карточка, поиск, справочник, тема, прогресс, запуск из кэша |
 | `web/tests/ui/settings.test.mjs` | каждая настройка на экране настроек |
+| `web/tests/ui/layout.test.mjs` | карточка на маленьком и обычном экране; флажок и звёздочка при прокрутке |
 | `web/tests/telemetry.test.mjs` | статистика и очередь сообщений: поля, раз в день, без сети |
 | `web/tests/ui/feedback.test.mjs` | уведомление о статистике, флажок, сообщения, «Помочь автору» |
 | `ios/ReciCore/Tests/…/LearningScenariosTests.swift` | правила обучения по сценариям |
