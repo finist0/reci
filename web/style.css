@@ -91,7 +91,7 @@ input { font: inherit; color: var(--text); }
 }
 
 .time { font-size: 32px; font-weight: 500; line-height: 34px; color: var(--text); font-variant-numeric: tabular-nums; }
-.date { font-size: 13px; color: var(--secondary); }
+.date { font-size: 13px; color: var(--secondary); white-space: nowrap; }
 
 .bar { display: flex; align-items: center; gap: 8px; padding-top: 4px; min-width: 0; }
 
@@ -708,3 +708,17 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px;
 .ids code { font-size: 12px; color: var(--text); word-break: break-all; user-select: all; margin-bottom: 6px; }
 .forget-link { align-self: flex-start; padding: 0; border: none; background: none; color: var(--secondary); font: inherit; font-size: 13px; cursor: pointer; }
 a.setting { color: inherit; text-decoration: none; }
+
+/* --- Small screens: the card keeps room for its text --- */
+
+@media (max-width: 399px) {
+    .topbar { padding-left: 16px; }
+    .bar { padding-left: 8px; }
+    .time { font-size: 26px; line-height: 28px; }
+    .icons button { width: 40px; height: 40px; }
+}
+
+@media (max-width: 339px) {
+    .icons button { width: 36px; height: 36px; }
+    .deck { padding: 0 6px 0 10px; }
+}
