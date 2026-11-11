@@ -14,8 +14,8 @@ android {
         applicationId = "org.kostja.reci"
         minSdk = 28
         targetSdk = 37
-        versionCode = 18
-        versionName = "1.6"
+        versionCode = 19
+        versionName = "1.7"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
