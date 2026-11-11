@@ -391,12 +391,10 @@ function cardScreen() {
     const fav = R.progress(w).fav;
     return head + `
         <div class="card-wrap">
-            <div class="card-scroll" data-scroll="card-${esc(s.id)}">
+            ${cardScroll(`card-${esc(s.id)}`, w, `
                 ${s.stage ? `<div class="stage">${esc(s.stage)}</div>` : ""}
-                ${wordBody(w, { slide: prefs.cardMode === 2 && !R.isArticle(w), covered: s.covered, hideWord: s.recall && !s.revealed })}
-            </div>
-            <button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>
-            ${flagButton(w)}
+                ${wordBody(w, { slide: prefs.cardMode === 2 && !R.isArticle(w), covered: s.covered, hideWord: s.recall && !s.revealed })}`,
+                `<button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>`)}
             ${learnedToast ? toast("Слово отмечено выученным") : sentToast ? toast(sentToast) : ""}
         </div>
         ${statsNotice()}
@@ -421,8 +419,15 @@ const statsNotice = () => {
 const WORD_PROBLEMS = [["translation", "Перевод"], ["stress", "Ударение"], ["example", "Пример"], ["forms", "Род или формы"], ["other", "Другое"]];
 const ARTICLE_PROBLEMS = [["text", "Ошибка в тексте"], ["other", "Другое"]];
 
-const flagButton = w => `<button class="flag" ${act("report", w.key)} aria-label="Сообщить об ошибке">${icon("flag")}</button>
-    <button class="flag schools" ${act("schools")} aria-label="Куда пойти учиться">${icon("school")}</button>`;
+// The text of a card. The star, the flag and the school button scroll with it; the flag and the
+// school button come after the text, in the bottom corner of a short card and at the end of a
+// long one.
+const cardScroll = (id, w, body, star = "") => `<div class="card-scroll" data-scroll="${id}">
+    <div class="card-body">${body}</div>${star}
+    <div class="card-icons">
+        <button class="flag schools" ${act("schools")} aria-label="Куда пойти учиться">${icon("school")}</button>
+        <button class="flag" ${act("report", w.key)} aria-label="Сообщить об ошибке">${icon("flag")}</button>
+    </div></div>`;
 
 const emailField = (name, value) =>
     `<input type="email" inputmode="email" autocomplete="email" data-input="${name}" placeholder="Почта для ответа, если нужен ответ" value="${esc(value)}">`;
@@ -653,8 +658,7 @@ function detailScreen(e) {
     if (!w) return `<div class="screen-col">${header("")}</div>`;
     e.answered ??= R.answerOf(w);
     return `<div class="screen-col">${header("")}
-        <div class="card-wrap detail"><div class="card-scroll" data-scroll="detail">${wordBody(w)}</div>
-            ${flagButton(w)}
+        <div class="card-wrap detail">${cardScroll("detail", w, wordBody(w))}
             ${e.learned ? toast("Слово отмечено выученным") : sentToast ? toast(sentToast) : ""}</div>
         ${marksRow(e.answered, R.isArticle(w))}
         ${reportDialog(e)}

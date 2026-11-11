@@ -135,9 +135,17 @@ input { font: inherit; color: var(--text); }
     -webkit-overflow-scrolling: touch;
     padding: 22px 24px 20px;
     scrollbar-width: thin;
+    position: relative;
+    display: flex;
+    flex-direction: column;
 }
 
+.card-scroll > * { flex: none; }
 .detail .card-scroll { padding: 24px; }
+
+/* At the bottom of a short card, after the text of a long one; 8px from the card edge. */
+.card-icons { display: flex; margin: auto -16px -12px auto; padding-top: 4px; }
+.detail .card-icons { margin-bottom: -16px; }
 
 .star {
     position: absolute;
@@ -652,9 +660,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px;
 
 /* Report a card, write to the developer, the statistics notice. */
 .flag {
-    position: absolute;
-    right: 8px;
-    bottom: 8px;
     width: 44px;
     height: 44px;
     border-radius: 50%;
@@ -664,9 +669,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px;
 }
 
 .flag .ic { width: 22px; height: 22px; }
-.flag.schools { right: 52px; }
 .schools-empty { flex: 1; display: grid; place-items: center; padding: 32px; text-align: center; font-size: 17px; line-height: 24px; color: var(--secondary); }
-.card-wrap .card-scroll { padding-bottom: 56px; }
 
 .dialog.form { display: flex; flex-direction: column; gap: 12px; max-height: 100%; overflow-y: auto; }
 .dialog.form .dialog-title, .dialog.form .dialog-buttons { margin: 0; }
