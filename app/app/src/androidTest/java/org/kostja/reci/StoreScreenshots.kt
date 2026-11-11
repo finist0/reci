@@ -82,13 +82,58 @@ class StoreScreenshots {
         }
     }
 
+    // The card screens alone, for checking the layout on a given screen and font size.
+    private fun cardShots() {
+        compose.onAllNodesWithContentDescription("Сообщить об ошибке")[0].performScrollTo()
+        shot("1-card-end")
+        Repo.setCategories(setOf("X:phrase"))
+        compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == false }
+        shot("1-short")
+        Repo.setCategories(setOf("X:compare"))
+        compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == true }
+        shot("1-article")
+    }
+
+    private fun storeShots(theme: Int) {
+        compose.onAllNodesWithContentDescription("Сообщить об ошибке")[0].performScrollTo().performClick()
+        click("Ударение")
+        shot("7-report")
+        click("Отмена")
+
+        compose.onNodeWithContentDescription("Грамматика").performClick()
+        compose.waitForIdle()
+        click("Падежи: обзор")
+        shot("5-grammar")
+        compose.onNodeWithContentDescription("Назад").performClick()
+        compose.onNodeWithContentDescription("Назад").performClick()
+
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        shot("6-settings")
+        compose.onNodeWithText("Помочь автору").performScrollTo()
+        shot("8-feedback")
+        compose.onNodeWithContentDescription("Назад").performClick()
+
+        Repo.setCategories(setOf("X:compare"))
+        compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == true }
+        shot("3-compare")
+
+        Repo.setCategories(setOf("L3", "L4"))
+        Prefs.theme = 5
+        compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == false }
+        shot("4-dark")
+        Prefs.theme = theme
+    }
+
     @Test
     fun takeScreenshots() {
         // A skipped test shows as failed in the Gradle report, so without the argument it passes empty.
         if (InstrumentationRegistry.getArguments().getString("screenshots") != "true") return
         out.mkdirs()
-        shell("wm size 1080x2160")
-        shell("wm density 420")
+        val args = InstrumentationRegistry.getArguments()
+        shell("wm size ${args.getString("size") ?: "1080x2160"}")
+        shell("wm density ${args.getString("density") ?: "420"}")
+        shell("settings put system font_scale ${args.getString("fontScale") ?: "1.0"}")
+        val cardOnly = args.getString("cardOnly") == "true"
         demoStatusBar()
         val theme = Prefs.theme
         try {
@@ -101,34 +146,7 @@ class StoreScreenshots {
             var activity = ActivityScenario.launch(MainActivity::class.java)
             compose.waitUntil(10_000) { Repo.current() != null }
             shot("1-card")
-
-            compose.onAllNodesWithContentDescription("Сообщить об ошибке")[0].performClick()
-            click("Ударение")
-            shot("7-report")
-            click("Отмена")
-
-            compose.onNodeWithContentDescription("Грамматика").performClick()
-            compose.waitForIdle()
-            click("Падежи: обзор")
-            shot("5-grammar")
-            compose.onNodeWithContentDescription("Назад").performClick()
-            compose.onNodeWithContentDescription("Назад").performClick()
-
-            compose.onNodeWithContentDescription("Настройки").performClick()
-            shot("6-settings")
-            compose.onNodeWithText("Помочь автору").performScrollTo()
-            shot("8-feedback")
-            compose.onNodeWithContentDescription("Назад").performClick()
-
-            Repo.setCategories(setOf("X:compare"))
-            compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == true }
-            shot("3-compare")
-
-            Repo.setCategories(setOf("L3", "L4"))
-            Prefs.theme = 5
-            compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == false }
-            shot("4-dark")
-            Prefs.theme = theme
+            if (cardOnly) cardShots() else storeShots(theme)
 
             Repo.setCategories(setOf("X:phrase"))
             activity.close()
@@ -162,6 +180,7 @@ class StoreScreenshots {
             shell("settings put global sysui_demo_allowed 0")
             shell("wm size reset")
             shell("wm density reset")
+            shell("settings put system font_scale 1.0")
         }
     }
 }
