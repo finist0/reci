@@ -67,7 +67,8 @@ final class ReciUITests: XCTestCase {
 
     func testSchoolsOpenFromTheCardAndFromTheSettings() {
         let empty = app.staticTexts["schoolsEmpty"]
-        app.buttons["Куда пойти учиться"].firstMatch.tap()
+        // The school button and the flag come after the text of a long card.
+        reach(app.buttons["Куда пойти учиться"].firstMatch).tap()
         XCTAssertTrue(empty.waitForExistence(timeout: 5))
         back()
         XCTAssertFalse(empty.waitForExistence(timeout: 2))
@@ -114,7 +115,7 @@ final class FeedbackUITests: XCTestCase {
     }
 
     private func report(problem: String) {
-        app.buttons["Сообщить об ошибке"].firstMatch.tap()
+        reach(app.buttons["Сообщить об ошибке"].firstMatch).tap()
         XCTAssertTrue(app.navigationBars["Что не так?"].waitForExistence(timeout: 5))
         XCTAssertFalse(app.buttons["send"].isEnabled)
         app.buttons["problem:\(problem)"].tap()
@@ -165,7 +166,7 @@ final class FeedbackUITests: XCTestCase {
         app.buttons["send"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.waitForExistence(timeout: 5))
         XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.label.contains("Спасибо"))
-        app.buttons["Сообщить об ошибке"].firstMatch.tap()
+        reach(app.buttons["Сообщить об ошибке"].firstMatch).tap()
         XCTAssertTrue(app.textFields["email"].waitForExistence(timeout: 5))
         XCTAssertEqual(app.textFields["email"].value as? String, "me@example.org")
     }
@@ -268,7 +269,9 @@ final class ScreenshotUITests: XCTestCase {
             self.add(a)
         }
         shot("1-card-with-notice")
-        app.buttons["Сообщить об ошибке"].firstMatch.tap()
+        let flag = app.buttons["Сообщить об ошибке"].firstMatch
+        for _ in 0..<15 where !flag.isHittable { app.swipeUp() }
+        flag.tap()
         _ = app.navigationBars["Что не так?"].waitForExistence(timeout: 5)
         app.buttons["problem:stress"].tap()
         shot("2-report")

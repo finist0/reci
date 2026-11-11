@@ -13,7 +13,7 @@ struct CardScreen: View {
             ZStack(alignment: .topTrailing) {
                 RoundedRectangle(cornerRadius: 28).fill(p.card).shadow(color: .black.opacity(0.08), radius: 4, y: 2)
                 if let s = model.showing, let w = model.repo.word(s.key) {
-                    ScrollView {
+                    CardText(w: w, top: 22, onReport: { reporting = w }) {
                         VStack(alignment: .leading, spacing: 6) {
                             if let stage = s.stage {
                                 Text(stage).font(.ui(12, .semibold)).foregroundStyle(p.accent)
@@ -22,13 +22,8 @@ struct CardScreen: View {
                             WordBody(w: w, covered: s.covered, hideWord: s.recall && !s.revealed,
                                      onUncover: { model.uncover() }, onReveal: { model.reveal() })
                         }
-                        .padding(.horizontal, 24).padding(.top, 22).padding(.bottom, 56)
-                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                     .id(s.id)
-                    Star(w: w).padding(10)
-                    FlagButton { reporting = w }.padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    SchoolsButton().padding(.trailing, 48).padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
                     if model.learnedToast {
                         LearnedToast().frame(maxHeight: .infinity, alignment: .bottom).frame(maxWidth: .infinity).padding(.bottom, 14)
                     } else if let t = model.sentToast {
@@ -51,6 +46,37 @@ struct CardScreen: View {
         .background(p.bg.ignoresSafeArea())
         .onAppear { model.syncShowing() }
         .sheet(item: $reporting) { w in ReportSheet(w: w).environmentObject(model) }
+    }
+}
+
+// The scrolling text of a card. The star, the flag and the school button scroll with it; the
+// flag and the school button come after the text, in the bottom corner of a short card and at
+// the end of a long one.
+struct CardText<Content: View>: View {
+    let w: Word
+    let top: CGFloat
+    let onReport: () -> Void
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        GeometryReader { box in
+            ScrollView {
+                VStack(spacing: 0) {
+                    content()
+                        .padding(.horizontal, 24).padding(.top, top)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .overlay(alignment: .topTrailing) { Star(w: w).padding(10) }
+                    Spacer(minLength: 4)
+                    HStack(spacing: 0) {
+                        Spacer()
+                        SchoolsButton()
+                        FlagButton(action: onReport)
+                    }
+                    .padding(8)
+                }
+                .frame(minHeight: box.size.height)
+            }
+        }
     }
 }
 

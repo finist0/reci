@@ -14,17 +14,10 @@ struct DetailScreen: View {
         VStack(spacing: 0) {
             Header(title: "")
             if let w = model.repo.word(key) {
-                ZStack(alignment: .topTrailing) {
-                    ScrollView {
-                        WordBody(w: w).padding(.horizontal, 24).padding(.top, 24).padding(.bottom, 56)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                    }
+                CardText(w: w, top: 24, onReport: { reporting = true }) { WordBody(w: w) }
                     .background(RoundedRectangle(cornerRadius: 28).fill(p.card))
-                    Star(w: w).padding(10)
-                    FlagButton { reporting = true }.padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                    SchoolsButton().padding(.trailing, 48).padding(8).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomTrailing)
-                }
-                .padding(.horizontal, 14)
+                    .clipShape(RoundedRectangle(cornerRadius: 28))
+                    .padding(.horizontal, 14)
                 if learned { LearnedToast().padding(.top, 10) } else if let t = model.sentToast { SentToast(text: t).padding(.top, 10) }
                 MarksRow(answered: answered, article: w.isArticle) { a, l in
                     if model.repo.answer(w, a, learned: l) { model.countAnswer(w, a, learned: l) }
