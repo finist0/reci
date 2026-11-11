@@ -887,7 +887,19 @@ function render() {
         input?.setSelectionRange?.(input.value.length, input.value.length);
     }
     rendered = e;
+    fit();
 }
+
+// What CSS cannot do: a card with more text below fades out at its edge.
+function fit() {
+    for (const el of root.querySelectorAll(".card-scroll")) fade(el);
+}
+
+const fade = el => el.parentElement.classList.toggle("more", el.scrollTop + el.clientHeight < el.scrollHeight - 1);
+
+addEventListener("resize", fit);
+document.fonts?.ready.then(fit);
+root.addEventListener("scroll", ev => ev.target.classList?.contains("card-scroll") && fade(ev.target), true);
 
 let pending = false;
 

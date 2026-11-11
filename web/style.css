@@ -147,6 +147,17 @@ input { font: inherit; color: var(--text); }
 .card-icons { display: flex; margin: auto -16px -12px auto; padding-top: 4px; }
 .detail .card-icons { margin-bottom: -16px; }
 
+.card-wrap.more::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 16px;
+    background: linear-gradient(transparent, var(--card));
+    pointer-events: none;
+}
+
 .star {
     position: absolute;
     top: 10px;
