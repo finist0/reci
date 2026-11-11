@@ -692,6 +692,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px;
 .dialog.form { display: flex; flex-direction: column; gap: 12px; max-height: 100%; overflow-y: auto; }
 .dialog.form .dialog-title, .dialog.form .dialog-buttons { margin: 0; }
 
+/* The news of an update. */
+.news-version { font-weight: 600; }
+.news-items { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 21px; }
+.news-items li::marker { color: var(--accent); }
+
 .dialog textarea, .dialog input[type="email"] {
     width: 100%;
     padding: 10px 12px;

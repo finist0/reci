@@ -3,9 +3,10 @@
 
 import * as D from "./data.js";
 import * as R from "./repo.js";
-import { prefs, setPref, setPrefs, onChange, exportData, importData, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
+import { prefs, setPref, setPrefs, onChange, exportData, importData, hasProgress, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
 import { speak, voiceName, onVoices, canSpeak } from "./speech.js";
 import * as T from "./telemetry.js";
+import * as W from "./whatsnew.js";
 
 const esc = D.esc;
 
@@ -469,6 +470,20 @@ const crashDialog = () => (crashOffer === null ? "" : `<div class="modal"><div c
         <div class="dialog-buttons"><button ${act("dropcrash")}>Не отправлять</button><button ${act("sendcrash")}>Отправить</button></div>
     </div></div>`);
 
+// The news of an update, shown once after the report of an error, if any.
+let news = [];
+
+function newsDialog() {
+    if (!news.length || crashOffer !== null) return "";
+    const one = news.length === 1;
+    return `<div class="modal"><div class="dialog form news">
+        <div class="dialog-title">${one ? `Что нового в версии ${esc(news[0].version)}` : "Что нового"}</div>
+        ${news.map(e => `${one ? "" : `<div class="news-version">Версия ${esc(e.version)}</div>`}
+            <ul class="news-items">${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("")}
+        <div class="dialog-buttons"><button ${act("closenews")}>Понятно</button></div>
+    </div></div>`;
+}
+
 function writeDialog(e) {
     const f = e.write;
     if (!f) return "";
@@ -884,7 +899,7 @@ function render() {
     if (rendered === e) saveScroll(e);
     const focused = document.activeElement?.dataset?.input;
     applyTheme();
-    root.innerHTML = `<div class="screen ${e.name}">${screens[e.name](e)}</div>${crashDialog()}`;
+    root.innerHTML = `<div class="screen ${e.name}">${screens[e.name](e)}</div>${crashDialog()}${newsDialog()}`;
     for (const el of root.querySelectorAll("[data-scroll]")) el.scrollTop = e.scroll?.[el.dataset.scroll] ?? 0;
     if (rendered !== e) {
         root.querySelector("[autofocus]")?.focus();
@@ -1106,6 +1121,10 @@ const actions = {
         T.clearCrash();
         send({ kind: "crash", text }, "");
     },
+    closenews: () => {
+        news = [];
+        schedule();
+    },
     dropcrash: () => {
         crashOffer = null;
         T.clearCrash();
@@ -1310,11 +1329,17 @@ window.addEventListener("online", () => T.flush());
 export async function start() {
     history.replaceState({ depth: 1 }, "");
     crashOffer = T.pendingCrash();
+    // Showing the first card already counts as progress.
+    const fresh = !hasProgress();
     // Messages need no app version, so they do not wait for it.
     T.flush();
     fetch("../app/app/build.gradle.kts").then(r => r.text()).then(t => {
         appVersion = t.match(/versionName\s*=\s*"([^"]+)"/)?.[1] ?? "";
         sendStats();
+        return appVersion && fetch(R.ASSETS + "whatsnew.json").then(r => r.json()).then(all => {
+            news = W.check(all, appVersion, fresh);
+            if (news.length) schedule();
+        });
     }).catch(() => {});
     render();
 }

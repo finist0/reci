@@ -74,6 +74,9 @@ export const emptyProgress = { state: NEW, fav: false, seen: 0, last: 0, due: 0,
 
 export const getProgress = key => progress.get(key);
 
+// Nothing touched yet: a fresh start rather than an update.
+export const hasProgress = () => progress.size > 0;
+
 let saveTimer = 0;
 
 function saveProgress() {
