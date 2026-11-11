@@ -27,6 +27,11 @@ struct ReciApp: App {
         NavigationStack(path: $router.path) {
             CardScreen()
                 .toolbar(.hidden, for: .navigationBar)
+                .alert(newsTitle, isPresented: Binding(get: { !model.news.isEmpty }, set: { if !$0 { model.news = [] } })) {
+                    Button("Понятно") { model.news = [] }
+                } message: {
+                    Text(newsText)
+                }
                 .navigationDestination(for: Route.self) { route in
                     Group {
                         switch route {
@@ -61,6 +66,18 @@ struct ReciApp: App {
                  "В отчёте место в коде, где случилась ошибка, модель телефона, версия iOS и настройки приложения. " +
                  "Слова и прогресс не отправляются.")
         }
+    }
+}
+
+extension ReciApp {
+    private var newsTitle: String {
+        model.news.count == 1 ? "Что нового в версии \(model.news[0].version)" : "Что нового"
+    }
+
+    private var newsText: String {
+        model.news.map { e in
+            (model.news.count == 1 ? [] : ["Версия \(e.version)"]) + e.items.map { "• \($0)" }
+        }.map { $0.joined(separator: "\n") }.joined(separator: "\n\n")
     }
 }
 

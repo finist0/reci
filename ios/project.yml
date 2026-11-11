@@ -26,6 +26,8 @@ targets:
         buildPhase: resources
       - path: ../app/app/src/main/assets/grammar.json
         buildPhase: resources
+      - path: ../app/app/src/main/assets/whatsnew.json
+        buildPhase: resources
       - path: ../app/app/src/main/res/font/literata.ttf
         buildPhase: resources
       - path: ../app/app/src/main/res/font/ruslan_display.ttf

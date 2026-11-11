@@ -37,6 +37,8 @@ final class AppModel: ObservableObject {
     // The report of the last crash while the user has not answered whether to send it.
     @Published private(set) var crashOffer: String?
     private var crashWatcher: CrashWatcher?
+    // The news of an update, shown once over the main screen until closed.
+    @Published var news: [WhatsNew.Entry] = []
 
     init() {
         let crash = CrashReport(dir: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -46,6 +48,7 @@ final class AppModel: ObservableObject {
         if ProcessInfo.processInfo.arguments.contains("-uitest-reset") {
             try? FileManager.default.removeItem(at: LockDeck.dir)
             try? FileManager.default.removeItem(at: Dict.dir)
+            UserDefaults.standard.removeObject(forKey: Self.newsSeen)
             crash.clear()
         }
         // UI tests cannot crash the app on purpose; "-uitest-crash" stands for a crash at the last start.
@@ -58,6 +61,7 @@ final class AppModel: ObservableObject {
         LockDeck.writeDeck(words)
         telemetry = Telemetry(file: Self.telemetryFile(), post: Self.transport())
         crashOffer = crash.pending
+        news = Self.checkNews(fresh: repo.store.progress.isEmpty)
         crashWatcher = CrashWatcher { [weak self] text in
             Task { @MainActor in
                 guard let self else { return }
@@ -65,6 +69,23 @@ final class AppModel: ObservableObject {
                 self.crashOffer = self.crash.pending
             }
         }
+    }
+
+    private static let newsSeen = "whatsNewSeen"
+
+    // The news after the version seen last; the running version counts as seen from now on.
+    private static func checkNews(fresh: Bool) -> [WhatsNew.Entry] {
+        var version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
+        var seen = UserDefaults.standard.string(forKey: newsSeen)
+        var fresh = fresh
+        // UI tests: "-uitest-whatsnew" stands for an update from before the window to a version past all the news.
+        if ProcessInfo.processInfo.arguments.contains("-uitest-whatsnew") {
+            (version, seen, fresh) = ("999", WhatsNew.before, false)
+        }
+        guard !version.isEmpty, let url = Bundle.main.url(forResource: "whatsnew", withExtension: "json"),
+              let data = try? Data(contentsOf: url) else { return [] }
+        UserDefaults.standard.set(version, forKey: newsSeen)
+        return WhatsNew.pick(WhatsNew.parse(data, platform: "ios"), version: version, seen: seen, fresh: fresh)
     }
 
     func answerCrash(send: Bool) {
