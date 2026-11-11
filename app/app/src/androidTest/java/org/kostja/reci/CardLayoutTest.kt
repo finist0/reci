@@ -86,6 +86,8 @@ class CardLayoutTest {
             val conf = Configuration(LocalConfiguration.current).apply {
                 screenWidthDp = width
                 screenHeightDp = height
+                // A tablet's own value would scale the layout up for a tablet.
+                smallestScreenWidthDp = minOf(width, height)
             }
             CompositionLocalProvider(
                 LocalConfiguration provides conf,
