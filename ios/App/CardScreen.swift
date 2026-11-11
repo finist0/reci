@@ -107,7 +107,7 @@ struct TopBar: View {
     var body: some View {
         let p = model.palette
         HStack {
-            DeckChip()
+            DeckChip().layoutPriority(1)
             Spacer()
             ForEach([("magnifyingglass", "Поиск", Route.search), ("book", "Грамматика", Route.grammar), ("gearshape", "Настройки", Route.settings)],
                     id: \.1) { item in
@@ -129,17 +129,29 @@ struct DeckChip: View {
         let p = model.palette
         let cats = model.prefs.categories
         let first = cats.sorted().first
-        let title = (first.map { $0.hasPrefix("L") ? Labels.category($0).components(separatedBy: " ")[0] : Labels.category($0) } ?? "—")
-            + (cats.count > 1 ? " +\(cats.count - 1)" : "")
+        let title = first.map { $0.hasPrefix("L") ? Labels.category($0).components(separatedBy: " ")[0] : Labels.category($0) } ?? "—"
+        let more = cats.count > 1 ? " +\(cats.count - 1)" : ""
         let (k, t) = counts(cats)
         Button { router.go(.categories) } label: {
-            HStack(spacing: 6) {
-                Text(title).font(.ui(15, .semibold)).foregroundStyle(p.text)
-                Text("\(k)/\(t)").font(.ui(13)).foregroundStyle(p.secondary).accessibilityIdentifier("deckCount")
-                Image(systemName: "chevron.down").font(.ui(12)).foregroundStyle(p.secondary)
+            // Short of room, the chip drops the count, then the "+N" and the arrow, and only then
+            // cuts the title.
+            ViewThatFits(in: .horizontal) {
+                chip(title + more, count: "\(k)/\(t)", arrow: true)
+                chip(title + more, count: nil, arrow: true)
+                chip(title, count: nil, arrow: true)
+                chip(title, count: nil, arrow: false)
             }
             .padding(.horizontal, 14).padding(.vertical, 8)
             .background(Capsule().fill(p.card))
+        }
+    }
+
+    private func chip(_ title: String, count: String?, arrow: Bool) -> some View {
+        let p = model.palette
+        return HStack(spacing: 6) {
+            Text(title).font(.ui(15, .semibold)).foregroundStyle(p.text).lineLimit(1)
+            if let count { Text(count).font(.ui(13)).foregroundStyle(p.secondary).accessibilityIdentifier("deckCount") }
+            if arrow { Image(systemName: "chevron.down").font(.ui(12)).foregroundStyle(p.secondary) }
         }
     }
 
