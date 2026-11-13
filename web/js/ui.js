@@ -240,7 +240,7 @@ function details(w) {
         if (w.ant.length) out += sectionLabel("Антонимы") + chips(w.ant, "ant");
     }
     if (w.related.length) {
-        out += divider + sectionLabel("Однокоренные") + '<div class="related">' + w.related.map(r => `
+        out += divider + sectionLabel("Связанные слова") + '<div class="related">' + w.related.map(r => `
             <button class="rel" ${act("word", r.sr)}><b>${esc(linked(r.sr))}</b>${more(r.sr)}<span class="dash">—</span>${esc(r.ru)}</button>`).join("") + "</div>";
     }
     const notes = [w.note, ...w.tips].filter(Boolean);
