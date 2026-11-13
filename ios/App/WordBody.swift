@@ -267,7 +267,7 @@ struct Details: View {
             }
             if !w.related.isEmpty {
                 Divider().overlay(p.divider).padding(.vertical, 16)
-                SectionLabel(text: "Однокоренные")
+                SectionLabel(text: "Связанные слова")
                 RelatedList(items: w.related, from: w.key)
             }
             let notes = ([w.note] + w.tips).filter { !$0.isEmpty }
