@@ -39,7 +39,7 @@ class WhatsNewUiTest {
     @Before
     fun start() {
         FakeServer.install(closeNotice = true)
-        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().commit()
+        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").commit()
         val done = CountDownLatch(1)
         Repo.afterLoad { done.countDown() }
         assertTrue("dictionary did not load", done.await(60, TimeUnit.SECONDS))

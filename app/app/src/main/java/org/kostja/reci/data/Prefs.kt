@@ -64,11 +64,15 @@ object Prefs {
             changed()
         }
 
-    // The interface language: "ru", "sr" or "en"; "" speaks the native language of the deck.
+    // The interface language: "ru", "sr" or "en". A first start takes the phone's; an earlier
+    // user keeps the native language of the deck, which the interface spoke before there was a
+    // choice. Once stored, it changes only in the settings.
     var uiLang: String
         get() {
             version.intValue
-            return sp.getString("ui_lang", "") ?: ""
+            sp.getString("ui_lang", null)?.takeIf { it.isNotEmpty() }?.let { return it }
+            val earlier = sp.all.keys.any { it == "current_key" || it.endsWith(".current_key") }
+            return (if (earlier) Decks.current.native else Decks.guessUi()).also { l -> sp.edit { putString("ui_lang", l) } }
         }
         set(v) {
             sp.edit { putString("ui_lang", v) }

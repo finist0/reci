@@ -103,7 +103,7 @@ internal fun afterCallsRequest(activity: Activity, granted: Boolean) {
 }
 
 // The values of Prefs.uiLang in the order of the interface language choice.
-private val uiLangs = listOf("", "ru", "sr", "en")
+private val uiLangs = listOf("ru", "sr", "en")
 
 private fun ignoresBattery(ctx: Context) =
     ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
@@ -182,7 +182,7 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 Line()
                 // Each language is named in itself, so that a user who cannot read the
                 // interface finds their own.
-                val uiNames = listOf(t("Как у колоды"), "Русский", "Српски", "English")
+                val uiNames = listOf("Русский", "Српски", "English")
                 MenuChoice(t("Язык интерфейса"), "uilang", uiLangs, Prefs.uiLang, { uiNames[uiLangs.indexOf(it).coerceAtLeast(0)] }) {
                     Prefs.uiLang = it
                 }

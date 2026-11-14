@@ -1,5 +1,6 @@
 package org.kostja.reci
 
+import android.content.Context
 import android.os.Looper
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotNull
@@ -16,8 +17,10 @@ import org.kostja.reci.data.WordJson
 import org.kostja.reci.data.plural
 import org.kostja.reci.data.t
 import org.robolectric.RobolectricTestRunner
+import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
+import java.util.Locale
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -64,14 +67,14 @@ class DeckTest {
     }
 
     @Test
-    fun theRussianDeckSpeaksSerbianAndKeepsItsOwnProgress() {
+    fun theRussianDeckKeepsItsOwnProgress() {
         waitIo()
         val sr = Repo.words.first { it.key == "кућа" }
         Repo.answer(sr, State.KNOWN, learned = true)
         waitIo()
 
         switchTo("ru-sr")
-        assertEquals("Подешавања", t("Настройки"))
+        assertEquals("the interface is not the deck's", "Настройки", t("Настройки"))
         val ru = Repo.words.first { it.key == "дом" }
         assertTrue("Russian examples carry the headword", ru.examples.all { it.text.contains("[") })
         assertTrue(ru.examples.all { it.tr.isNotBlank() })
@@ -164,9 +167,53 @@ class DeckTest {
         }
     }
 
+    private val prefs get() = RuntimeEnvironment.getApplication().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+
+    // A start with no interface language stored, on a phone set to the locale; `card` is the
+    // key of the place in the cards an earlier user has.
+    private fun start(locale: String, stored: String? = null, card: String? = null): String {
+        val e = prefs.edit()
+        prefs.all.keys.filter { it.endsWith("current_key") }.forEach { e.remove(it) }
+        if (stored == null) e.remove("ui_lang") else e.putString("ui_lang", stored)
+        if (card != null) e.putString(card, "кућа")
+        e.commit()
+        Locale.setDefault(Locale.forLanguageTag(locale))
+        return Prefs.uiLang
+    }
+
+    @Test
+    fun aFirstStartTakesTheInterfaceLanguageFromThePhoneAndKeepsIt() {
+        waitIo()
+        val was = Locale.getDefault()
+        try {
+            assertEquals("ru", start("ru-RU"))
+            assertEquals("sr", start("sr-RS"))
+            assertEquals("sr", start("hr-HR"))
+            assertEquals("en", start("de-DE"))
+            assertEquals("Settings", t("Настройки"))
+
+            Locale.setDefault(Locale.forLanguageTag("ru-RU"))
+            assertEquals("the stored language stays", "en", Prefs.uiLang)
+            switchTo("ru-sr")
+            assertEquals("en", Prefs.uiLang)
+            switchTo("sr-ru")
+            assertEquals("Settings", t("Настройки"))
+
+            assertEquals("an empty value of an early build counts as none", "sr", start("sr-RS", stored = ""))
+            assertEquals("an earlier user keeps the interface of the deck", "ru", start("en-US", card = "current_key"))
+            assertEquals("ru", start("sr-RS", stored = "ru"))
+            prefs.edit().putString("deck", "ru-sr").commit()
+            assertEquals("sr", start("en-US", card = "ru-sr.current_key"))
+            prefs.edit().putString("deck", "sr-ru").commit()
+        } finally {
+            Locale.setDefault(was)
+            Prefs.uiLang = "ru"
+        }
+    }
+
     @Test
     fun theInterfaceLanguageIsChosenApartFromTheDeck() {
-        assertEquals("", Prefs.uiLang)
+        assertEquals("ru", Prefs.uiLang)
         Prefs.uiLang = "en"
         assertEquals("Settings", t("Настройки"))
         assertEquals("cards", plural(5, "карточку", "карточки", "карточек"))
@@ -177,11 +224,7 @@ class DeckTest {
         assertEquals("the choice is not the deck's", "Settings", t("Настройки"))
         assertEquals("word in Serbian", Decks.meaningHint)
 
-        Prefs.uiLang = ""
-        assertEquals("Подешавања", t("Настройки"))
         switchTo("sr-ru")
-        assertEquals("Настройки", t("Настройки"))
-
         Prefs.uiLang = "sr"
         I18n.langOverride = "en"
         try {
@@ -191,7 +234,7 @@ class DeckTest {
         }
         assertEquals("Подешавања", t("Настройки"))
         assertTrue("Serbian on screen needs the script setting", Decks.hasSerbian)
-        Prefs.uiLang = ""
+        Prefs.uiLang = "ru"
     }
 
     @Test

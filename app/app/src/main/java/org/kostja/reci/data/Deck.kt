@@ -5,8 +5,8 @@ import java.util.Locale
 import org.json.JSONArray
 import org.json.JSONObject
 
-// A pair of languages: the one learned (target) and the user's own (native), which the
-// interface speaks unless the user picked another one (Prefs.uiLang). Decks are listed in assets/decks.json, so a new pair needs data only.
+// A pair of languages: the one learned (target) and the user's own (native), the language of
+// the translations. Decks are listed in assets/decks.json, so a new pair needs data only.
 data class Deck(val id: String, val target: String, val native: String, val words: String, val grammar: String) {
     // The first deck keeps the storage names it had before there were others.
     val isFirst: Boolean get() = id == Decks.FIRST
@@ -47,10 +47,20 @@ object Decks {
     val current: Deck
         get() = all.firstOrNull { it.id == Prefs.deck } ?: all.first()
 
+    // Serbian and the languages close to it.
+    private val serbian = setOf("sr", "hr", "bs", "sh", "cnr", "mk", "sl")
+
     // A first start on a phone set to Serbian or a close language opens Russian for Serbs.
     fun guess(): String {
         val lang = Locale.getDefault().language
-        return if (lang in setOf("sr", "hr", "bs", "sh", "cnr", "mk", "sl") && all.any { it.id == "ru-sr" }) "ru-sr" else FIRST
+        return if (lang in serbian && all.any { it.id == "ru-sr" }) "ru-sr" else FIRST
+    }
+
+    // The interface language of a first start: the phone's, if the interface speaks it.
+    fun guessUi(lang: String = Locale.getDefault().language) = when (lang) {
+        "ru" -> "ru"
+        in serbian -> "sr"
+        else -> "en"
     }
 
     // Storage names of what belongs to one deck: the first deck keeps the old names.
@@ -155,7 +165,7 @@ object I18n {
     internal var langOverride: String? = null
 
     val lang: String
-        get() = langOverride ?: Prefs.uiLang.ifEmpty { Decks.current.native }
+        get() = langOverride ?: Prefs.uiLang
 
     fun t(ru: String): String = tIn(lang, ru)
 

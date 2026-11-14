@@ -66,7 +66,7 @@ class SettingsScreenTest {
     fun freshStart() {
         FakeServer.install(closeNotice = true)
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().commit()
+        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").commit()
         waitIo()
         Repo.resetAll()
         waitIo()
@@ -139,6 +139,12 @@ class SettingsScreenTest {
         tap("target:ru")
         try {
             compose.waitUntil(10_000) { Decks.current.id == "ru-sr" && Repo.isLoaded }
+            compose.onNodeWithText("Настройки").assertExists()
+            compose.onNodeWithTag("uilang").assert(hasText("Русский"))
+            tap("uilang")
+            for (l in listOf("ru", "sr", "en")) compose.onNodeWithTag("uilang:$l").assertExists()
+            compose.onNodeWithTag("uilang:").assertDoesNotExist()
+            tap("uilang:sr")
             compose.onNodeWithText("Подешавања").assertExists()
             compose.onNodeWithTag("target").assert(hasText("Учим")).assert(hasText("Руски"))
             // Only one deck learns Russian: its menu has one option.
@@ -158,6 +164,7 @@ class SettingsScreenTest {
             assertFalse("a Russian card has no Serbian-only letters", Regex("[ђјљњћџ]").containsMatchIn(w.cyr))
         } finally {
             Prefs.latinFirst = false
+            Prefs.uiLang = "ru"
             Repo.switchDeck("sr-ru")
             compose.waitUntil(10_000) { Decks.current.id == "sr-ru" && Repo.isLoaded }
         }
