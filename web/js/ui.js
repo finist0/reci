@@ -779,9 +779,9 @@ const toggle = (title, summary, on, a) => `
         <span class="switch ${on ? "on" : ""}"></span>
     </button>`;
 
-const choice = (title, options, selected, a, cls = "") => `
+const choice = (title, options, selected, a) => `
     <div class="choice"><div class="setting-title">${esc(title)}</div>
-        <div class="segments ${cls}">${options.map((o, i) => `<button class="${i === selected ? "on" : ""}" ${act(a, i)}>${esc(o)}</button>`).join("")}</div>
+        <div class="segments">${options.map((o, i) => `<button class="${i === selected ? "on" : ""}" ${act(a, i)}>${esc(o)}</button>`).join("")}</div>
     </div>`;
 
 const navRow = (title, summary, a, arg = "") => `
@@ -790,11 +790,15 @@ const navRow = (title, summary, a, arg = "") => `
         ${icon("arrow_forward", "faint")}
     </button>`;
 
-// A language of the deck: a choice among several, a plain row when there is nothing to choose.
-const langChoice = (title, langs, lang, a) => (langs.length > 1
-    ? choice(title, langs.map(Decks.name), langs.indexOf(lang), a, "wrap")
-    : `<div class="setting" data-lang="${a}"><span class="setting-main"><span class="setting-title">${esc(title)}</span></span>
-        <span class="setting-value">${esc(Decks.name(lang))}</span></div>`);
+// A choice that grows with the languages: the row shows the value, and a native menu over the
+// whole row offers the options; picking one goes to menus[name].
+const menu = (title, values, value, label, name) => `
+    <label class="setting menu">
+        <span class="setting-main"><span class="setting-title">${esc(title)}</span></span>
+        <span class="setting-value">${esc(label(value))}</span>${icon("expand_more", "faint")}
+        <select data-menu="${name}" aria-label="${esc(title)}">${values.map(v =>
+            `<option value="${esc(v)}"${v === value ? " selected" : ""}>${esc(label(v))}</option>`).join("")}</select>
+    </label>`;
 
 // The values of prefs.uiLang in the order of the interface language choice.
 const UI_LANGS = ["", "ru", "sr", "en"];
@@ -826,11 +830,12 @@ function settingsScreen(e) {
         <b>Android:</b> ${t("в Chrome меню ⋮ → «Добавить на главный экран» или «Установить приложение».")}<br>
         <b>${t("Компьютер:")}</b> ${t("в Chrome или Edge значок установки в адресной строке.")}<br>
         ${t("Прогресс хранится в этом браузере на этом устройстве.")}</div>`);
-    // Each language is named in itself, so that a user who cannot read the interface finds their own.
     const deck = Decks.current();
-    const languages = groupTitle(t("Язык")) + panel(langChoice(t("Учу"), Decks.targets(), deck.target, "target") + line +
-        langChoice(t("Перевод на"), Decks.natives(deck.target), deck.native, "native") + line +
-        choice(t("Язык интерфейса"), [t("Как у колоды"), "Русский", "Српски", "English"], Math.max(0, UI_LANGS.indexOf(prefs.uiLang)), "uilang", "wrap"));
+    // Each language is named in itself, so that a user who cannot read the interface finds their own.
+    const uiNames = [t("Как у колоды"), "Русский", "Српски", "English"];
+    const languages = groupTitle(t("Язык")) + panel(menu(t("Учу"), Decks.targets(), deck.target, Decks.name, "target") + line +
+        menu(t("Перевод на"), Decks.natives(deck.target), deck.native, Decks.name, "native") + line +
+        menu(t("Язык интерфейса"), UI_LANGS, prefs.uiLang, v => uiNames[Math.max(0, UI_LANGS.indexOf(v))], "uilang"));
     const accents = serbian ? choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode, "accents")
         // One kind of mark only: "with" is mode 1, "without" is mode 2.
         : choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode === 2 ? 1 : 0, "stressplace");
@@ -1086,15 +1091,9 @@ const actions = {
     reviewknown: () => setPref("reviewKnown", !prefs.reviewKnown),
     theme: arg => setPref("theme", Number(arg)),
     alphabet: arg => setPref("latinFirst", arg === "1"),
-    uilang: arg => setPref("uiLang", UI_LANGS[Number(arg)]),
     bothscripts: () => setPref("showBothScripts", !prefs.showBothScripts),
     accents: arg => setPref("accentMode", Number(arg)),
     stressplace: arg => setPref("accentMode", Number(arg) + 1),
-    target: arg => switchDeck(Decks.pick(Decks.targets()[Number(arg)], Decks.current().native)),
-    native: arg => {
-        const target = Decks.current().target;
-        switchDeck(Decks.pick(target, Decks.natives(target)[Number(arg)]));
-    },
     autospeak: () => setPref("autoSpeak", !prefs.autoSpeak),
     testvoice: () => speak(Decks.greeting()),
     export: exportProgress,
@@ -1326,7 +1325,14 @@ root.addEventListener("input", ev => {
     if (results) results.innerHTML = { search: searchResults, list: listResults, grammar: grammarResults }[name](e);
 });
 
+const menus = {
+    target: v => switchDeck(Decks.pick(v, Decks.current().native)),
+    native: v => switchDeck(Decks.pick(Decks.current().target, v)),
+    uilang: v => setPref("uiLang", v),
+};
+
 root.addEventListener("change", async ev => {
+    menus[ev.target.dataset.menu]?.(ev.target.value);
     const name = ev.target.dataset.input;
     if (name === "wordsize") setPref("wordSize", Number(ev.target.value));
     if (name === "importfile") {

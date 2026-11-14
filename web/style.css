@@ -596,6 +596,10 @@ input { font: inherit; color: var(--text); }
 .setting-sub { font-size: 13px; line-height: 17px; color: var(--secondary); }
 .setting.danger { color: var(--red); padding: 15px 18px; }
 .setting-value { font-size: 16px; color: var(--secondary); }
+.setting.menu { position: relative; gap: 4px; padding-right: 12px; cursor: pointer; }
+.setting.menu .setting-main { margin-right: 8px; }
+/* The native menu lies over the row, unseen: a tap anywhere on the row opens it. */
+.setting.menu select { position: absolute; inset: 0; width: 100%; opacity: 0; font-size: 16px; cursor: pointer; }
 
 .switch {
     width: 52px;
@@ -634,9 +638,6 @@ input { font: inherit; color: var(--text); }
     color: var(--secondary);
     white-space: nowrap;
 }
-
-/* A long option takes two lines; the others stretch to its height. */
-.segments.wrap button { white-space: normal; padding: 9px 2px; }
 
 .segments button.on { background: var(--card); color: var(--accent); font-weight: 600; }
 
