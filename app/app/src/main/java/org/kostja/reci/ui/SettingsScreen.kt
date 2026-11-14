@@ -19,6 +19,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -73,6 +74,7 @@ import kotlinx.coroutines.withContext
 import org.kostja.reci.R
 import org.kostja.reci.data.Backup
 import org.kostja.reci.data.Decks
+import org.kostja.reci.data.I18n
 import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
@@ -98,6 +100,9 @@ internal fun afterCallsRequest(activity: Activity, granted: Boolean) {
     if (granted || ActivityCompat.shouldShowRequestPermissionRationale(activity, Manifest.permission.READ_PHONE_STATE)) return
     activity.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${activity.packageName}")))
 }
+
+// The values of Prefs.uiLang in the order of the interface language choice.
+private val uiLangs = listOf("", "ru", "sr", "en")
 
 private fun ignoresBattery(ctx: Context) =
     ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
@@ -163,14 +168,21 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             ProgressCard()
 
-            if (Decks.all.size > 1) {
-                GroupTitle(t("Язык"))
-                Panel {
-                    Decks.all.forEachIndexed { i, d ->
-                        if (i > 0) Line()
+            GroupTitle(t("Язык"))
+            Panel {
+                if (Decks.all.size > 1) {
+                    Decks.all.forEach { d ->
                         DeckRow(Decks.title(d), d.id == Decks.current.id) { Repo.switchDeck(d.id) }
+                        Line()
                     }
                 }
+                // Each language is named in itself, so that a user who cannot read the
+                // interface finds their own.
+                Choice(
+                    t("Язык интерфейса"),
+                    listOf(t("Как у колоды"), "Русский", "Српски", "English"),
+                    uiLangs.indexOf(Prefs.uiLang).coerceAtLeast(0),
+                ) { Prefs.uiLang = uiLangs[it] }
             }
 
             GroupTitle(t("Учёба"))
@@ -314,7 +326,7 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
             Panel {
                 Toggle(t("Произносить слово сразу"), null, Prefs.autoSpeak) { Prefs.autoSpeak = it }
                 Line()
-                val voice = Speaker.voice.value
+                val voice = Speaker.voice.value?.getDisplayName(Locale.forLanguageTag(I18n.lang))
                 NavRow(
                     t("Голос"),
                     when {
@@ -668,9 +680,11 @@ private fun Choice(title: String, options: List<String>, selected: Int, onSelect
     Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
         Text(title, fontSize = 16.sp, color = p.text)
         Spacer(Modifier.height(8.dp))
+        // A long option takes two lines; the others grow to its height.
         Row(
             Modifier
                 .fillMaxWidth()
+                .height(IntrinsicSize.Min)
                 .clip(RoundedCornerShape(14.dp))
                 .background(p.panel)
                 .padding(3.dp)
@@ -680,6 +694,7 @@ private fun Choice(title: String, options: List<String>, selected: Int, onSelect
                 Box(
                     Modifier
                         .weight(1f)
+                        .fillMaxHeight()
                         .clip(RoundedCornerShape(11.dp))
                         .background(if (on) p.card else Color.Transparent)
                         .clickable { onSelect(i) }
@@ -692,7 +707,7 @@ private fun Choice(title: String, options: List<String>, selected: Int, onSelect
                         fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (on) p.accent else p.secondary,
                         textAlign = TextAlign.Center,
-                        maxLines = 1,
+                        maxLines = 2,
                     )
                 }
             }

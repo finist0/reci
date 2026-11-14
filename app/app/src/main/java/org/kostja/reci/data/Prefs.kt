@@ -64,6 +64,17 @@ object Prefs {
             changed()
         }
 
+    // The interface language: "ru", "sr" or "en"; "" speaks the native language of the deck.
+    var uiLang: String
+        get() {
+            version.intValue
+            return sp.getString("ui_lang", "") ?: ""
+        }
+        set(v) {
+            sp.edit { putString("ui_lang", v) }
+            changed()
+        }
+
     var latinFirst: Boolean
         get() = bool("latin_first", false)
         set(v) = setBool("latin_first", v)
@@ -233,14 +244,14 @@ object Prefs {
         "useMarks" to "use_marks", "reviewKnown" to "review_known", "hintDone" to "hint_done",
         "cardMode" to "card_mode", "activeSize" to "active_size", "cardCount" to Decks.scoped("card_count"),
         "accentMode" to "accent_mode", "theme" to "theme", "wordSize" to "word_size", "order" to "order",
-        "newKnownCount" to "new_known_count", "shuffleSeed" to Decks.scoped("shuffle_seed"),
+        "newKnownCount" to "new_known_count", "shuffleSeed" to Decks.scoped("shuffle_seed"), "uiLang" to "ui_lang",
     )
 
     fun exportJson(): JSONObject {
         val o = JSONObject()
         for ((name, key) in portable) {
             when (val v = sp.all[key]) {
-                is Boolean, is Int, is Long -> o.put(name, v)
+                is Boolean, is Int, is Long, is String -> o.put(name, v)
             }
         }
         o.put("categories", JSONArray(categories.sorted()))
@@ -252,6 +263,7 @@ object Prefs {
             for ((name, key) in portable) {
                 when (val v = o.opt(name)) {
                     is Boolean -> putBoolean(key, v)
+                    is String -> putString(key, v)
                     is Number -> if (key == Decks.scoped("shuffle_seed")) putLong(key, v.toLong()) else putInt(key, v.toInt())
                 }
             }

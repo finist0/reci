@@ -27,6 +27,7 @@ object Env {
             .put("locale", Locale.getDefault().toLanguageTag().take(120))
             .put("dict", DictUpdate.describe())
             .put("deck", Decks.current.id)
+            .put("ui", Prefs.uiLang)
             .put("mode", Prefs.cardMode)
             .put("theme", Prefs.theme)
             .put("latin", Prefs.latinFirst)

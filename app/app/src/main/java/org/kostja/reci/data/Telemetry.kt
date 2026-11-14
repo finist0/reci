@@ -170,7 +170,7 @@ object Telemetry {
             .put("cats", JSONArray(Prefs.categories.filter { CAT.matches(it) }.sorted().take(100)))
             .put("mode", Prefs.cardMode).put("theme", Prefs.theme).put("latin", Prefs.latinFirst)
             .put("lock", if (Prefs.lockEnabled) "overlay" else "off").put("learned", learned)
-            .put("deck", Decks.current.id)
+            .put("deck", Decks.current.id).put("ui", Prefs.uiLang)
         for (k in listOf("cards", "answers", "opened")) if (c.has(k)) p.put(k, c.get(k))
         return p
     }

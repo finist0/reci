@@ -12,8 +12,8 @@ object Speaker : TextToSpeech.OnInitListener {
     private var latinOnly = false
     private var pending: String? = null
 
-    // Null until the engine has answered, then the name of the voice language in use.
-    val voice = mutableStateOf<String?>(null)
+    // Null until the engine has answered, then the language of the voice in use.
+    val voice = mutableStateOf<Locale?>(null)
     val failed = mutableStateOf(false)
 
     fun init(c: Context) {
@@ -43,7 +43,7 @@ object Speaker : TextToSpeech.OnInitListener {
                 t.language = loc
                 latinOnly = latin
                 ready = true
-                voice.value = loc.getDisplayName(Locale.forLanguageTag(Decks.current.native))
+                voice.value = loc
                 pending?.let { speak(it) }
                 pending = null
                 return

@@ -6,7 +6,7 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 // A pair of languages: the one learned (target) and the user's own (native), which the
-// interface speaks. Decks are listed in assets/decks.json, so a new pair needs data only.
+// interface speaks unless the user picked another one (Prefs.uiLang). Decks are listed in assets/decks.json, so a new pair needs data only.
 data class Deck(val id: String, val target: String, val native: String, val words: String, val grammar: String) {
     // The first deck keeps the storage names it had before there were others.
     val isFirst: Boolean get() = id == Decks.FIRST
@@ -116,7 +116,7 @@ object Decks {
 
     // The script setting matters wherever Serbian is shown.
     val hasSerbian: Boolean
-        get() = current.target == "sr" || current.native == "sr"
+        get() = current.target == "sr" || current.native == "sr" || I18n.lang == "sr"
 }
 
 object I18n {
@@ -139,7 +139,7 @@ object I18n {
     internal var langOverride: String? = null
 
     val lang: String
-        get() = langOverride ?: Decks.current.native
+        get() = langOverride ?: Prefs.uiLang.ifEmpty { Decks.current.native }
 
     fun t(ru: String): String = tIn(lang, ru)
 

@@ -2,7 +2,7 @@
     "comment": "What the apps may send to the server (reci.server, src/index.js). The server rejects any other field, so every platform checks its packets against this list.",
     "ping": {
         "required": ["id", "day", "platform", "app", "os", "locale"],
-        "optional": ["cards", "answers", "learned", "lock", "cats", "mode", "theme", "latin", "opened", "deck"]
+        "optional": ["cards", "answers", "learned", "lock", "cats", "mode", "theme", "latin", "opened", "deck", "ui"]
     },
     "answers": ["know", "dontknow", "long", "later", "hide"],
     "platforms": ["android", "ios", "web-ios", "web-android", "web-desktop"],

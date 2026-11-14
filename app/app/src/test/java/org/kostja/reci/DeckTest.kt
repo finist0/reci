@@ -105,6 +105,36 @@ class DeckTest {
     }
 
     @Test
+    fun theInterfaceLanguageIsChosenApartFromTheDeck() {
+        assertEquals("", Prefs.uiLang)
+        Prefs.uiLang = "en"
+        assertEquals("Settings", t("Настройки"))
+        assertEquals("cards", plural(5, "карточку", "карточки", "карточек"))
+        // The cards stay in the language of the deck: the search of translations asks for Russian.
+        assertEquals("word in Russian", Decks.meaningHint)
+
+        switchTo("ru-sr")
+        assertEquals("the choice is not the deck's", "Settings", t("Настройки"))
+        assertEquals("word in Serbian", Decks.meaningHint)
+
+        Prefs.uiLang = ""
+        assertEquals("Подешавања", t("Настройки"))
+        switchTo("sr-ru")
+        assertEquals("Настройки", t("Настройки"))
+
+        Prefs.uiLang = "sr"
+        I18n.langOverride = "en"
+        try {
+            assertEquals("Settings", t("Настройки"))
+        } finally {
+            I18n.langOverride = null
+        }
+        assertEquals("Подешавања", t("Настройки"))
+        assertTrue("Serbian on screen needs the script setting", Decks.hasSerbian)
+        Prefs.uiLang = ""
+    }
+
+    @Test
     fun englishHasTwoPluralForms() {
         I18n.langOverride = "en"
         try {
