@@ -29,7 +29,7 @@ LEVEL_BOUNDS = (500, 1100, 2000, 3000)
 LATIN = re.compile(r"[A-Za-zčćžšđČĆŽŠĐ]")
 CYR_RU_ONLY = re.compile(r"[ыэъёщЫЭЪЁЩ]")
 FIELDS = ("tips", "cyr", "acc", "pos", "gram", "ruGram", "ruNoun", "forms", "meanings", "level", "topic", "rank",
-          "examples", "syn", "ant", "related", "note")
+          "examples", "syn", "synAcc", "ant", "antAcc", "related", "note")
 SR_GENDER = {"м. р.": "masc", "ж. р.": "femn", "ср. р.": "neut"}
 RU_GENDER = {"masc": "м. р.", "femn": "ж. р.", "neut": "ср. р."}
 WORD = re.compile(r"[а-яё-]+", re.I)
@@ -101,12 +101,12 @@ def check(e):
         # Articles: a Russian title or a list of words, an explanation and the words discussed.
         errs = [f"missing {f}" for f in ("key", "cyr", "note", "rank") if not e.get(f)]
         for r in e.get("related", []):
-            if bad := stray(r.get("sr", ""), SR_LETTERS | RU_LETTERS):
+            if bad := stray(unstressed(r.get("sr", "")), SR_LETTERS | RU_LETTERS):
                 errs.append(f"foreign letters {bad} in {r.get('sr')!r}")
         return errs
     errs = []
-    sr_fields = [e.get("cyr", "")] + ([] if e.get("pos") == "phrase" else [e.get("forms", "")]) + e.get("syn", []) + e.get("ant", [])
-    sr_fields += [r.get("sr", "") for r in e.get("related", [])]
+    words = [unstressed(w) for w in e.get("syn", []) + e.get("ant", []) + [r.get("sr", "") for r in e.get("related", [])]]
+    sr_fields = [e.get("cyr", "")] + ([] if e.get("pos") == "phrase" else [e.get("forms", "")]) + words
     # Stress marks are fine on the bracketed words of an example and nowhere else in it.
     for x in e.get("examples", []):
         outside = re.sub(r"\[[^\]]*\]", "", x.get("sr", ""))
@@ -139,8 +139,7 @@ def check(e):
     if e.get("pos") == "noun" and not (sr_gender(e.get("gram", "")) or e.get("gram", "").startswith("мн.")):
         errs.append(f"noun without gender in gram {e.get('gram')!r}")
     # A phrase card keeps its literal Russian translation in forms.
-    sr = [e.get("cyr", "")] + ([] if e.get("pos") == "phrase" else [e.get("forms", "")]) + e.get("syn", []) + e.get("ant", [])
-    sr += [r.get("sr", "") for r in e.get("related", [])]
+    sr = [e.get("cyr", "")] + ([] if e.get("pos") == "phrase" else [e.get("forms", "")]) + words
     sr += [unstressed(x.get("sr", "")) for x in e.get("examples", [])]
     for t in sr:
         if LATIN.search(t):
@@ -160,10 +159,25 @@ def check(e):
     return errs
 
 
+def split_stress(e):
+    """Related words, synonyms and antonyms carry stress marks in the sources. The app gets them
+    bare, which it looks cards up by, and the stressed form beside: acc, synAcc, antAcc."""
+    for f in ("syn", "ant"):
+        bare = [unstressed(w) for w in e.get(f, [])]
+        if bare != e.get(f, []):
+            e[f + "Acc"] = [unicodedata.normalize("NFC", w) for w in e[f]]
+            e[f] = bare
+    for r in e.get("related", []):
+        bare = unstressed(r["sr"])
+        if bare != r["sr"]:
+            r["sr"], r["acc"] = bare, unicodedata.normalize("NFC", r["sr"])
+
+
 def main():
     words = {}
     bad = 0
-    for path in sorted(SRC.glob("*.jsonl")):
+    files = [Path(f) for f in sys.argv[sys.argv.index("--files") + 1:]] if "--files" in sys.argv else sorted(SRC.glob("*.jsonl"))
+    for path in files:
         for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
             if not line.strip():
                 continue
@@ -182,6 +196,7 @@ def main():
             if e["key"] in words:
                 print(f"{path.name}:{n}: duplicate key {e['key']}", file=sys.stderr)
                 continue
+            split_stress(e)
             words[e["key"]] = e
     accents = ROOT / "data" / "accents.tsv"
     if accents.exists():
