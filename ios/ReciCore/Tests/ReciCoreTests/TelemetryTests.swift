@@ -142,6 +142,7 @@ final class TelemetryTests: XCTestCase {
         XCTAssertEqual(p["day"] as? String, "2026-11-02")
         XCTAssertEqual(p["platform"] as? String, "ios")
         XCTAssertEqual(p["lock"] as? String, "wallpaper")
+        XCTAssertEqual(p["deck"] as? String, "sr-ru")
         XCTAssertEqual(p["cards"] as? Int, 1)
         XCTAssertEqual(p["learned"] as? Int, 7)
         XCTAssertEqual(p["answers"] as? [String: Int], ["know": 1])
@@ -261,7 +262,7 @@ final class TelemetryTests: XCTestCase {
     }
 
     func testAMessageGoesOutWithItsOwnIdAndOnlyTheAcceptedFields() async {
-        let card = CardInfo(key: "бити", word: "бити", problem: "stress", latin: false, stress: 1)
+        let card = CardInfo(key: "бити", word: "бити", problem: "stress", latin: false, stress: 1, deck: "ru-sr")
         let sent = await t.sendFeedback(kind: "card", text: "", card: card, email: "me@example.org", app: "0.12", os: "iOS 18.6")
         XCTAssertTrue(sent)
         let m = posts[0].body
@@ -269,6 +270,7 @@ final class TelemetryTests: XCTestCase {
         XCTAssertEqual(Set(m.keys).subtracting(names("feedback", "required") + names("feedback", "optional")), [])
         XCTAssertEqual(Set((m["card"] as! [String: Any]).keys).subtracting(names("feedback", "card")), [])
         XCTAssertTrue(names("feedback", "problems", "word").contains(card.problem))
+        XCTAssertEqual((m["card"] as! [String: Any])["deck"] as? String, "ru-sr")
         XCTAssertEqual(m["id"] as? String, t.state.feedbackId)
         XCTAssertNotEqual(m["id"] as? String, t.state.id)
         XCTAssertNil(m["text"])

@@ -188,7 +188,8 @@ struct ReportSheet: View {
             return false
         }
         let card = CardInfo(key: String(w.key.prefix(120)), word: String(w.cyr.prefix(120)), problem: problem,
-                            latin: model.prefs.latinFirst, stress: model.prefs.accentMode)
+                            latin: model.prefs.latinFirst, stress: model.prefs.accentMode,
+                            deck: model.prefs.deckId)
         model.sendFeedback(kind: "card", text: body, card: card, email: mail)
         return true
     }

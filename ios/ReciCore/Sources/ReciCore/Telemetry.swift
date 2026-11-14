@@ -35,6 +35,7 @@ public struct Ping: Codable, Equatable {
     public var cards: Int?
     public var answers: [String: Int]?
     public var opened: [String: Int]?
+    public var deck: String?
 }
 
 public struct CardInfo: Codable, Equatable {
@@ -43,9 +44,11 @@ public struct CardInfo: Codable, Equatable {
     public var problem: String
     public var latin: Bool
     public var stress: Int
+    // Optional: messages queued on disk by an older version have none.
+    public var deck: String?
 
-    public init(key: String, word: String, problem: String, latin: Bool, stress: Int) {
-        (self.key, self.word, self.problem, self.latin, self.stress) = (key, word, problem, latin, stress)
+    public init(key: String, word: String, problem: String, latin: Bool, stress: Int, deck: String) {
+        (self.key, self.word, self.problem, self.latin, self.stress, self.deck) = (key, word, problem, latin, stress, deck)
     }
 }
 
@@ -71,7 +74,7 @@ public enum Env {
             "mode": "\(p.cardMode)", "theme": "\(p.theme)", "latin": "\(p.latinFirst)", "both": "\(p.showBothScripts)",
             "stress": "\(p.accentMode)", "size": "\(p.wordSize)", "marks": "\(p.useMarks)", "review": "\(p.reviewKnown)",
             "speak": "\(p.autoSpeak)", "active": "\(p.activeSize)", "order": "\(p.order)",
-            "lock": p.lockMode == 1 ? "wallpaper" : "widget",
+            "lock": p.lockMode == 1 ? "wallpaper" : "widget", "deck": p.deckId,
         ]
     }
 }
@@ -214,7 +217,7 @@ public final class Telemetry {
             mode: prefs.cardMode, theme: prefs.theme, latin: prefs.latinFirst,
             lock: prefs.lockMode == 1 ? "wallpaper" : "widget", learned: learned,
             cards: c.cards > 0 ? c.cards : nil, answers: c.answers.isEmpty ? nil : c.answers,
-            opened: c.opened.isEmpty ? nil : c.opened
+            opened: c.opened.isEmpty ? nil : c.opened, deck: prefs.deckId
         )
     }
 
