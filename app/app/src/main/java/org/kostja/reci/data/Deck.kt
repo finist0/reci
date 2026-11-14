@@ -8,12 +8,22 @@ import org.json.JSONObject
 // A pair of languages: the one learned (target) and the user's own (native), the language of
 // the translations. Decks are listed in assets/decks.json, so a new pair needs data only.
 data class Deck(val id: String, val target: String, val native: String, val words: String, val grammar: String) {
-    // The first deck keeps the storage names it had before there were others.
+    // The deck of words.json: the dictionary patches (DictUpdate) are made for it only.
     val isFirst: Boolean get() = id == Decks.FIRST
+
+    // Progress belongs to the language learned, not to the deck: a Serbian word learned with
+    // Russian translations stays learned with English ones. The decks of one language learned
+    // keep it under the id of the first of them listed.
+    val store: String get() = Decks.all.firstOrNull { it.target == target }?.id ?: id
+
+    // Cyrillic in the translations that the script setting turns into Latin: Serbian ones, or
+    // Serbian words quoted in translations into a language not written in Cyrillic.
+    val serbianInNative: Boolean get() = native == "sr" || target == "sr" && native !in Decks.cyrillic
 }
 
 object Decks {
     const val FIRST = "sr-ru"
+    internal val cyrillic = setOf("ru", "sr")
     private lateinit var ctx: Context
 
     fun init(c: Context) {
@@ -50,10 +60,15 @@ object Decks {
     // Serbian and the languages close to it.
     private val serbian = setOf("sr", "hr", "bs", "sh", "cnr", "mk", "sl")
 
-    // A first start on a phone set to Serbian or a close language opens Russian for Serbs.
-    fun guess(): String {
-        val lang = Locale.getDefault().language
-        return if (lang in serbian && all.any { it.id == "ru-sr" }) "ru-sr" else FIRST
+    // A first start opens Serbian for Russians on a phone set to Russian, Russian for Serbs on
+    // one set to Serbian or a close language, and Serbian with English translations elsewhere.
+    fun guess(lang: String = Locale.getDefault().language): String {
+        val id = when {
+            lang == "ru" -> FIRST
+            lang in serbian -> "ru-sr"
+            else -> "sr-en"
+        }
+        return if (all.any { it.id == id }) id else FIRST
     }
 
     // The interface language of a first start: the phone's, if the interface speaks it.
@@ -63,8 +78,9 @@ object Decks {
         else -> "en"
     }
 
-    // Storage names of what belongs to one deck: the first deck keeps the old names.
-    fun scoped(name: String, deck: Deck = current) = if (deck.isFirst) name else "${deck.id}.$name"
+    // Storage names of what belongs to the language learned (Deck.store): the first deck keeps
+    // the names it had before there were others.
+    fun scoped(name: String, deck: Deck = current) = if (deck.store == FIRST) name else "${deck.store}.$name"
 
     fun howToSay() = t(
         when (current.target) {
@@ -134,8 +150,10 @@ object Decks {
 
     val shareText: String
         get() = t(
-            when (current.target) {
-                "ru" -> "НЕРодная речь — русские слова для тех, кто говорит по-сербски: карточки с ударениями и примерами. Бесплатно."
+            when (current.id) {
+                "ru-sr" -> "НЕРодная речь — русские слова для тех, кто говорит по-сербски: карточки с ударениями и примерами. Бесплатно."
+                "sr-en" -> "НЕРодная речь — сербские слова для тех, кто говорит по-английски: карточки с ударениями и примерами. Бесплатно."
+                "ru-en" -> "НЕРодная речь — русские слова для тех, кто говорит по-английски: карточки с ударениями и примерами. Бесплатно."
                 else -> "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно."
             }
         )

@@ -178,7 +178,8 @@ private fun Grammar(w: Word) {
         Text(Labels.pos(w.pos), fontSize = 14.sp, color = p.secondary)
         if (w.gram.isBlank()) return@Row
         Spacer(Modifier.width(8.dp))
-        if (w.ruGram.isBlank()) {
+        // The gender in Russian is a hint for those who read Russian translations only.
+        if (w.ruGram.isBlank() || Decks.current.native != "ru") {
             Text(
                 Prefs.native(w.gram),
                 fontSize = 14.sp,
@@ -217,7 +218,7 @@ private fun GrammarLinks(w: Word, onGrammar: (String) -> Unit) {
     ) {
         for (c in compares) {
             Text(
-                "≈ " + c.meanings.firstOrNull().orEmpty().ifBlank { c.cyr },
+                "≈ " + Prefs.native(c.meanings.firstOrNull().orEmpty()).ifBlank { Prefs.primary(c.cyr) },
                 fontSize = 12.sp,
                 color = p.accent,
                 modifier = Modifier

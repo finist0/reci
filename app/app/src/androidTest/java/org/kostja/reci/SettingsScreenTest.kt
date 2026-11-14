@@ -66,7 +66,7 @@ class SettingsScreenTest {
     fun freshStart() {
         FakeServer.install(closeNotice = true)
         val ctx = InstrumentationRegistry.getInstrumentation().targetContext
-        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").commit()
+        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").putString("deck", "sr-ru").commit()
         waitIo()
         Repo.resetAll()
         waitIo()
@@ -147,7 +147,7 @@ class SettingsScreenTest {
             tap("uilang:sr")
             compose.onNodeWithText("Подешавања").assertExists()
             compose.onNodeWithTag("target").assert(hasText("Учим")).assert(hasText("Руски"))
-            // Only one deck learns Russian: its menu has one option.
+            // No deck translates Russian into Russian.
             compose.onNodeWithTag("native").assert(hasText("Српски"))
             tap("native")
             compose.onNodeWithTag("native:sr").assertExists()

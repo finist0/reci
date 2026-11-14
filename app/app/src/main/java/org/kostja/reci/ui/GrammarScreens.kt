@@ -56,6 +56,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Grammar
 import org.kostja.reci.data.GrammarBlock
 import org.kostja.reci.data.Prefs
@@ -103,7 +104,9 @@ fun GrammarIndexScreen(open: (String) -> Unit, openCard: (String) -> Unit, back:
     Repo.version.intValue
     val p = LocalPalette.current
     val all = Grammar.topics
-    var tab by rememberSaveable { mutableIntStateOf(0) }
+    // A deck without a reference has the comparisons and the notes only.
+    val withGrammar = Decks.current.grammar.isNotEmpty()
+    var tab by rememberSaveable { mutableIntStateOf(if (withGrammar) 0 else 1) }
     var query by rememberSaveable { mutableStateOf("") }
     val q = query.trim().lowercase()
     // Comparisons and notes are cards in the dictionary; the reference lists them for browsing.
@@ -123,7 +126,7 @@ fun GrammarIndexScreen(open: (String) -> Unit, openCard: (String) -> Unit, back:
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             listOf(t("Грамматика"), t("Похожие"), t("Заметки")).forEachIndexed { i, name ->
-                SelectChip(if (i == 0) name else "$name · ${counts[i]}", tab == i) { tab = i; query = "" }
+                if (i > 0 || withGrammar) SelectChip(if (i == 0) name else "$name · ${counts[i]}", tab == i) { tab = i; query = "" }
             }
         }
         if (tab != 0) {
@@ -168,7 +171,7 @@ fun GrammarIndexScreen(open: (String) -> Unit, openCard: (String) -> Unit, back:
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            if (w.pos == "compare") w.meanings.firstOrNull().orEmpty().ifBlank { w.cyr } else w.cyr,
+                            if (w.pos == "compare") Prefs.native(w.meanings.firstOrNull().orEmpty()).ifBlank { Prefs.primary(w.cyr) } else Prefs.native(w.cyr),
                             fontSize = 16.sp,
                             color = p.text,
                             modifier = Modifier.weight(1f),

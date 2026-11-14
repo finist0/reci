@@ -283,7 +283,7 @@ object Prefs {
     fun primary(cyr: String) = if (latinFirst && Decks.current.target == "sr") Translit.toLatin(cyr) else cyr
 
     // Text in the user's own language: a translation, a note, a grammar label.
-    fun native(text: String) = if (latinFirst && Decks.current.native == "sr") Translit.toLatin(text) else text
+    fun native(text: String) = if (latinFirst && Decks.current.serbianInNative) Translit.toLatin(text) else text
 
     // Serbian text that may carry stress marks: an example, a note.
     fun marked(text: String) = Accents.show(text, accentMode)

@@ -30,8 +30,9 @@ object Repo {
         db = dbFor(Decks.current)
     }
 
-    // Each deck keeps its own progress: Russian вода and Serbian вода are different cards.
-    private fun dbFor(d: Deck) = ProgressDb(ctx, if (d.isFirst) "progress.db" else "progress-${d.id}.db")
+    // Each language learned keeps its own progress: Russian вода and Serbian вода are different
+    // cards, Serbian вода with Russian or English translations is one.
+    private fun dbFor(d: Deck) = ProgressDb(ctx, if (d.store == Decks.FIRST) "progress.db" else "progress-${d.store}.db")
 
     // Switches to another deck: its cards, its progress and its place in the cards.
     fun switchDeck(id: String) {
@@ -55,6 +56,9 @@ object Repo {
             }
             Grammar.reset()
             load()
+            // The card on screen may stay, as the decks of one language share the place in the
+            // cards; its snapshot is redone in the languages of the new deck.
+            Prefs.setCurrent(Prefs.position, Prefs.currentKey, Prefs.currentKey?.let { word(it) }?.let { WordJson.write(it) })
             Grammar.preload()
             main.post {
                 Speaker.reset()

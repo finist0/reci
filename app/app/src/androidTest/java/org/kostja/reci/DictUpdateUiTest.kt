@@ -42,7 +42,7 @@ class DictUpdateUiTest {
     @Before
     fun freshStart() {
         FakeServer.install(closeNotice = true)
-        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").commit()
+        ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").putString("deck", "sr-ru").commit()
         ctx.getSharedPreferences("dict", Context.MODE_PRIVATE).edit().clear().commit()
         File(ctx.filesDir, "dict/patch.json").delete()
         waitIo()

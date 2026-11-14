@@ -3,12 +3,14 @@ package org.kostja.reci
 import android.content.Context
 import android.os.Looper
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.kostja.reci.data.Deck
 import org.kostja.reci.data.Decks
+import org.kostja.reci.data.Grammar
 import org.kostja.reci.data.I18n
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
@@ -16,6 +18,7 @@ import org.kostja.reci.data.State
 import org.kostja.reci.data.WordJson
 import org.kostja.reci.data.plural
 import org.kostja.reci.data.t
+import org.kostja.reci.ui.searchMatch
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
@@ -96,8 +99,8 @@ class DeckTest {
     fun theLanguageLearnedSwitchesTheDeckAndEachKeepsItsProgress() {
         waitIo()
         assertEquals(listOf("sr", "ru"), Decks.targets)
-        assertEquals(listOf("ru"), Decks.natives("sr"))
-        assertEquals(listOf("sr"), Decks.natives("ru"))
+        assertEquals("ru", Decks.natives("sr").first())
+        assertEquals("sr", Decks.natives("ru").first())
         val sr = Repo.words.first { it.key == "кућа" }
         Repo.answer(sr, State.KNOWN, learned = true)
         waitIo()
@@ -235,6 +238,152 @@ class DeckTest {
         assertEquals("Подешавања", t("Настройки"))
         assertTrue("Serbian on screen needs the script setting", Decks.hasSerbian)
         Prefs.uiLang = "ru"
+    }
+
+    private val srRu get() = Decks.all.first { it.id == "sr-ru" }
+    private val ruSr get() = Decks.all.first { it.id == "ru-sr" }
+
+    // Decks with English translations over the cards the app carries in any case: their own
+    // assets may not be built yet.
+    private val srEn = Deck("sr-en", "sr", "en", "words.json", "")
+    private val ruEn = Deck("ru-en", "ru", "en", "words-ru-sr.json", "")
+
+    private fun withEnglish(f: () -> Unit) {
+        Decks.allOverride = listOf(srRu, ruSr, srEn, ruEn)
+        try {
+            f()
+        } finally {
+            Repo.switchDeck("sr-ru")
+            waitIo()
+            Decks.allOverride = null
+            Prefs.latinFirst = false
+            I18n.langOverride = null
+        }
+    }
+
+    @Test
+    fun theDecksOfOneLanguageLearnedShareTheProgressAndThePlaceInTheCards() = withEnglish {
+        waitIo()
+        assertEquals("sr-ru", srEn.store)
+        assertEquals("ru-sr", ruEn.store)
+        assertEquals("current_key", Decks.scoped("current_key", srEn))
+        assertEquals("ru-sr.current_key", Decks.scoped("current_key", ruEn))
+        Repo.answer(Repo.word("кућа")!!, State.KNOWN, learned = true)
+        Repo.step(1)
+        val card = Prefs.currentKey
+        val count = Prefs.cardCount
+        Prefs.categories = setOf("L1", "L2")
+        waitIo()
+
+        switchTo("sr-en")
+        assertEquals(State.KNOWN, Repo.progress(Repo.word("кућа")!!).state)
+        assertEquals(card, Prefs.currentKey)
+        assertEquals(count, Prefs.cardCount)
+        assertEquals(setOf("L1", "L2"), Prefs.categories)
+        Repo.answer(Repo.word("вода")!!, State.DONT_KNOW)
+        waitIo()
+
+        learn("ru")
+        assertEquals("ru-en", Decks.current.id)
+        assertEquals(State.NEW, Repo.progress(Repo.word("дом")!!).state)
+        Repo.answer(Repo.word("дом")!!, State.KNOWN, learned = true)
+        waitIo()
+        switchTo("ru-sr")
+        assertEquals("Russian with Serbian shares it too", State.KNOWN, Repo.progress(Repo.word("дом")!!).state)
+
+        switchTo("sr-ru")
+        assertEquals(State.DONT_KNOW, Repo.progress(Repo.word("вода")!!).state)
+    }
+
+    @Test
+    fun aFirstStartOnAPhoneInAnotherLanguageLearnsSerbianWithEnglish() {
+        withEnglish {
+            assertEquals("sr-ru", Decks.guess("ru"))
+            assertEquals("ru-sr", Decks.guess("sr"))
+            assertEquals("ru-sr", Decks.guess("hr"))
+            assertEquals("sr-en", Decks.guess("en"))
+            assertEquals("sr-en", Decks.guess("de"))
+            assertEquals("sr-en", Decks.guess(""))
+
+            val was = Locale.getDefault()
+            try {
+                Locale.setDefault(Locale.forLanguageTag("en-US"))
+                prefs.edit().remove("deck").remove("current_key").commit()
+                assertEquals("sr-en", Prefs.deck)
+                Locale.setDefault(Locale.forLanguageTag("ru-RU"))
+                assertEquals("the choice stays", "sr-en", Prefs.deck)
+
+                Locale.setDefault(Locale.forLanguageTag("en-US"))
+                prefs.edit().remove("deck").putString("current_key", "кућа").commit()
+                assertEquals("an earlier user stays", "sr-ru", Prefs.deck)
+            } finally {
+                Locale.setDefault(was)
+                prefs.edit().putString("deck", "sr-ru").commit()
+            }
+        }
+        Decks.allOverride = listOf(srRu, ruSr)
+        try {
+            assertEquals("without English translations the first deck", "sr-ru", Decks.guess("en"))
+        } finally {
+            Decks.allOverride = null
+        }
+    }
+
+    @Test
+    fun serbianInEnglishTextFollowsTheScriptSetting() = withEnglish {
+        val note = "«да» + present tense: хоћу да идем"
+        Prefs.latinFirst = true
+        assertEquals("Russian translations stay in Cyrillic", note, Prefs.native(note))
+        switchTo("sr-en")
+        assertTrue("the script setting is shown", Decks.hasSerbian)
+        assertEquals("«da» + present tense: hoću da idem", Prefs.native(note))
+        assertEquals("kuća", Prefs.primary("кућа"))
+        Prefs.latinFirst = false
+        assertEquals(note, Prefs.native(note))
+
+        Prefs.latinFirst = true
+        switchTo("ru-en")
+        assertEquals("Russian learned: nothing is Serbian", "«дом» is a house", Prefs.native("«дом» is a house"))
+        assertEquals("дом", Prefs.primary("дом"))
+    }
+
+    @Test
+    fun aDeckWithoutGrammarLinksToNoTopicAndHidesTheRussianGender() = withEnglish {
+        val kuca = Repo.word("кућа")!!
+        assertTrue(Grammar.linksFor(kuca).isNotEmpty())
+        switchTo("sr-en")
+        Grammar.preload()
+        assertTrue(Grammar.topics.isEmpty())
+        assertTrue(Grammar.linksFor(Repo.word("кућа")!!).isEmpty())
+    }
+
+    @Test
+    fun theTextsOfTheEnglishDecks() = withEnglish {
+        I18n.langOverride = "en"
+        assertEquals("NERodnaya rech: Serbian words for Russian speakers, cards with stress marks, examples and grammar. Free.", Decks.shareText)
+        switchTo("sr-en")
+        assertEquals("NERodnaya rech: Serbian words for English speakers, cards with stress marks and examples. Free.", Decks.shareText)
+        assertEquals("word in English", Decks.meaningHint)
+        assertEquals("Serbian word", Decks.wordChip)
+        assertEquals("How to say it in Serbian", Decks.howToSay())
+        assertEquals(3, Decks.accentSamples.size)
+        switchTo("ru-en")
+        assertEquals("NERodnaya rech: Russian words for English speakers, cards with stress marks and examples. Free.", Decks.shareText)
+        assertEquals("Russian word", Decks.wordChip)
+        assertEquals(2, Decks.accentSamples.size)
+        I18n.langOverride = "sr"
+        assertEquals("реч на енглеском", Decks.meaningHint)
+    }
+
+    @Test
+    fun englishTranslationsAreFoundInLatinLettersAsSerbianLatinIs() {
+        val w = WordJson.parse("""{"key": "реч", "cyr": "реч", "meanings": ["word", "speech"]}""")!!
+        assertTrue(searchMatch(w, "speech", byMeaning = true))
+        assertTrue(searchMatch(w, "wor", byMeaning = true))
+        assertTrue("Serbian Latin", searchMatch(w, "reč", byMeaning = false))
+        assertTrue(searchMatch(w, "ре", byMeaning = false))
+        assertFalse("an English word is not a Serbian one", searchMatch(w, "word", byMeaning = false))
+        assertFalse(searchMatch(w, "reč", byMeaning = true))
     }
 
     @Test

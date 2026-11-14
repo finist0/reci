@@ -78,7 +78,7 @@ class LockService : Service() {
             b.setContentTitle(t("Слова на экране блокировки"))
         } else {
             b.setContentTitle(Prefs.primary(w.cyr))
-            b.setContentText(w.meanings.mapIndexed { i, m -> "${Labels.circled(i)} $m" }.joinToString("  "))
+            b.setContentText(w.meanings.mapIndexed { i, m -> "${Labels.circled(i)} ${Prefs.native(m)}" }.joinToString("  "))
         }
         return b.build()
     }

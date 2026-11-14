@@ -294,8 +294,9 @@ private fun LevelRow(name: String, known: Int, total: Int, selected: Boolean, on
     }
 }
 
-// Serbian may be typed in either script, Russian without ё.
-private fun searchMatch(w: Word, q0: String, byMeaning: Boolean): Boolean {
+// Serbian may be typed in either script, Russian without ё. Translations into English are
+// typed in Latin letters, as Serbian Latin is: the chips tell which one is looked for.
+internal fun searchMatch(w: Word, q0: String, byMeaning: Boolean): Boolean {
     val q = q0.replace('ё', 'е')
     fun norm(s: String) = s.lowercase().replace('ё', 'е')
     if (byMeaning) return w.meanings.any { norm(it).contains(q) || Translit.toLatin(norm(it)).contains(q) }
@@ -392,7 +393,7 @@ fun SearchScreen(open: (String) -> Unit, back: () -> Unit) {
                         Text(Labels.levels[w.level]?.substringBefore(' ') ?: "", fontSize = 11.sp, color = p.faint)
                     }
                     Text(
-                        w.meanings.joinToString(" · "),
+                        Prefs.native(w.meanings.joinToString(" · ")),
                         fontSize = 14.sp,
                         color = p.secondary,
                         maxLines = 1,
@@ -495,7 +496,7 @@ fun WordListScreen(category: String, open: (String) -> Unit, back: () -> Unit) {
                 ) {
                     Column(Modifier.weight(1f)) {
                         Text(
-                            if (w.pos == "compare") w.meanings.firstOrNull().orEmpty().ifBlank { w.cyr } else Prefs.headword(w),
+                            if (w.pos == "compare") Prefs.native(w.meanings.firstOrNull().orEmpty()).ifBlank { Prefs.primary(w.cyr) } else Prefs.headword(w),
                             fontFamily = Serif,
                             fontSize = 18.sp,
                             fontWeight = FontWeight.SemiBold,
@@ -505,7 +506,7 @@ fun WordListScreen(category: String, open: (String) -> Unit, back: () -> Unit) {
                         )
                         if (w.pos != "note" && w.pos != "compare") {
                             Text(
-                                w.meanings.joinToString(" · "),
+                                Prefs.native(w.meanings.joinToString(" · ")),
                                 fontSize = 14.sp,
                                 color = p.secondary,
                                 maxLines = 1,

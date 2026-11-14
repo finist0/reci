@@ -138,7 +138,7 @@ class StoreScreenshots {
         val theme = Prefs.theme
         try {
             FakeServer.install(closeNotice = true)
-            ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").commit()
+            ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").putString("deck", "sr-ru").commit()
             waitIo()
             Repo.resetAll()
             waitIo()
