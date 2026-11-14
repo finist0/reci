@@ -61,12 +61,15 @@ enum LockDeck {
     }
 
     // Answers the card on the lock screen and moves on, as the buttons of the card screen do.
-    static func answer(know: Bool) {
-        guard let repo = repo(), let w = repo.current() else { return }
-        repo.answer(w, know ? Mark.known : Mark.dontKnow)
+    // Gives the answer under its name in the statistics, or nil when it repeated the last one.
+    static func answer(_ repo: Repo?, know: Bool) -> String? {
+        guard let repo, let w = repo.current() else { return nil }
+        let counted = repo.answer(w, know ? Mark.known : Mark.dontKnow)
         repo.step(1)
         if let w = repo.current() { repo.markShown(w) }
         WidgetCenter.shared.reloadTimelines(ofKind: "card")
+        guard counted else { return nil }
+        return w.isArticle ? (know ? "hide" : "later") : know ? "know" : "dontknow"
     }
 }
 
@@ -86,8 +89,12 @@ struct AnswerIntent: AppIntent {
         self.know = know
     }
 
+    // Once a day this waits for the ping, at most the five seconds of its timeout.
+    @MainActor
     func perform() async throws -> some IntentResult {
-        LockDeck.answer(know: know)
+        let repo = LockDeck.repo()
+        let answer = LockDeck.answer(repo, know: know)
+        await Stats.fromLockScreen(repo, answer: answer)
         return .result()
     }
 }

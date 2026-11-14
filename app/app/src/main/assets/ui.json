@@ -1339,9 +1339,9 @@
   "en": "and settings, which screens were opened.",
   "sr": "и подешавања, који су екрани отварани."
  },
- "и настройки, какой способ показа карточки на экране блокировки выбран, какие экраны открывали.\n\n": {
-  "en": "and settings, which way of showing the card on the lock screen is chosen, which screens were opened.\n\n",
-  "sr": "и подешавања, који је начин приказа картице на закључаном екрану изабран, који су екрани отварани.\n\n"
+ "и настройки, какой способ показа карточки на экране блокировки выбран, какие виджеты приложения стоят, давно ли рисовались обои, сколько ответов дано на экране блокировки, какие экраны открывали.\n\n": {
+  "en": "and settings, which way of showing the card on the lock screen is chosen, which of the app's widgets are placed, how long ago the wallpaper was drawn, how many answers were given on the lock screen, which screens were opened.\n\n",
+  "sr": "и подешавања, који је начин приказа картице на закључаном екрану изабран, који виџети апликације су постављени, колико је давно нацртана позадина, колико је одговора дато на закључаном екрану, који су екрани отварани.\n\n"
  },
  "из %d слов знаю": {
   "en": "of %d words I know",

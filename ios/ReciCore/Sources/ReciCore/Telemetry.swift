@@ -1,10 +1,32 @@
 import Foundation
+#if canImport(Darwin)
+import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
-// What the app does, summed since the last ping.
+// What the app does, summed since the last ping. `lock` holds the answers given on the lock
+// screen, `answers` those given in the app.
 public struct Counts: Codable, Equatable {
     public var cards = 0
     public var answers: [String: Int] = [:]
     public var opened: [String: Int] = [:]
+    public var lock: [String: Int] = [:]
+
+    public init() {}
+
+    init(cards: Int, answers: [String: Int], opened: [String: Int], lock: [String: Int] = [:]) {
+        (self.cards, self.answers, self.opened, self.lock) = (cards, answers, opened, lock)
+    }
+
+    // A file written by an older version has no lock answers.
+    public init(from decoder: Decoder) throws {
+        let c = try decoder.container(keyedBy: CodingKeys.self)
+        cards = try c.decodeIfPresent(Int.self, forKey: .cards) ?? 0
+        answers = try c.decodeIfPresent([String: Int].self, forKey: .answers) ?? [:]
+        opened = try c.decodeIfPresent([String: Int].self, forKey: .opened) ?? [:]
+        lock = try c.decodeIfPresent([String: Int].self, forKey: .lock) ?? [:]
+    }
 
     // What was counted while a ping was on its way stays for the next one.
     func minus(_ sent: Counts) -> Counts {
@@ -14,7 +36,20 @@ public struct Counts: Codable, Equatable {
                 if n > 0 { out[kv.key] = n }
             }
         }
-        return Counts(cards: max(0, cards - sent.cards), answers: less(answers, sent.answers), opened: less(opened, sent.opened))
+        return Counts(cards: max(0, cards - sent.cards), answers: less(answers, sent.answers), opened: less(opened, sent.opened),
+                      lock: less(lock, sent.lock))
+    }
+}
+
+// The kinds of the app's widgets iOS reports on lock screens and on home screens.
+public struct Widgets: Codable, Equatable {
+    public static let kinds = ["card", "know", "dontknow"]
+    public var lock: [String]
+    public var home: [String]
+
+    public init(lock: Set<String>, home: Set<String>) {
+        self.lock = Self.kinds.filter(lock.contains)
+        self.home = Self.kinds.filter(home.contains)
     }
 }
 
@@ -37,6 +72,9 @@ public struct Ping: Codable, Equatable {
     public var opened: [String: Int]?
     public var deck: String?
     public var ui: String?
+    public var lockans: [String: Int]?
+    public var widgets: Widgets?
+    public var wallpaper: String?
 }
 
 public struct CardInfo: Codable, Equatable {
@@ -143,10 +181,11 @@ public struct TelemetryState: Codable {
 }
 
 // Anonymous daily statistics and messages to the developer, sent to the project's server. Kept in
-// a file of its own, out of the progress file and the shared App Group, so that a progress file
-// or a restored install never carries the same id.
+// a file of its own, out of the progress file and out of the backup, so that a progress file or a
+// restored install never carries the same id.
 // On the main actor, so that the checks before a request and the changes after its answer
-// cannot interleave with another call.
+// cannot interleave with another call. The app and its widgets share the file, each with its own
+// Telemetry: every change rereads the file under a lock, so neither undoes what the other wrote.
 @MainActor
 public final class Telemetry {
     public static let server = "https://reci.finist.workers.dev"
@@ -164,42 +203,66 @@ public final class Telemetry {
     public init(file: URL, post: @escaping @MainActor (String, Data) async -> Int) {
         self.file = file
         self.post = post
-        state = (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode(TelemetryState.self, from: $0) } ?? TelemetryState()
-        save()
+        state = TelemetryState()
+        update { _ in }
     }
 
-    private func save() {
+    private static func load(_ file: URL) -> TelemetryState? {
+        (try? Data(contentsOf: file)).flatMap { try? JSONDecoder().decode(TelemetryState.self, from: $0) }
+    }
+
+    // Applies a change to the state as the file has it now and writes it back. The lock is held
+    // only for this, never across a request: iOS ends an app that sleeps holding a file lock in
+    // the App Group.
+    @discardableResult
+    private func update<T>(_ change: (inout TelemetryState) -> T) -> T {
         try? FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let fd = open(file.path + ".lock", O_CREAT | O_RDWR, 0o644)
+        if fd >= 0 { flock(fd, LOCK_EX) }
+        defer {
+            if fd >= 0 {
+                flock(fd, LOCK_UN)
+                close(fd)
+            }
+        }
+        if let now = Self.load(file) { state = now }
+        let result = change(&state)
         if let data = try? JSONEncoder().encode(state) { try? data.write(to: file, options: .atomic) }
+        return result
+    }
+
+    // Takes up what the widgets wrote meanwhile, such as a ping they sent.
+    public func reload() {
+        if let now = Self.load(file) { state = now }
     }
 
     public func count(_ name: String, _ sub: String? = nil) {
-        guard state.enabled else { return }
-        switch (name, sub) {
-        case ("cards", _): state.counts.cards += 1
-        case ("answers", let s?): state.counts.answers[s, default: 0] += 1
-        case ("opened", let s?): state.counts.opened[s, default: 0] += 1
-        default: return
+        update { s in
+            guard s.enabled else { return }
+            switch (name, sub) {
+            case ("cards", _): s.counts.cards += 1
+            case ("answers", let k?): s.counts.answers[k, default: 0] += 1
+            case ("opened", let k?): s.counts.opened[k, default: 0] += 1
+            case ("lock", let k?): s.counts.lock[k, default: 0] += 1
+            default: return
+            }
         }
-        save()
     }
 
     public func setEnabled(_ on: Bool) {
-        state.enabled = on
-        // Sums collected while statistics were off are never sent.
-        if !on { state.counts = Counts() }
-        save()
+        update { s in
+            s.enabled = on
+            // Sums collected while statistics were off are never sent.
+            if !on { s.counts = Counts() }
+        }
     }
 
     public func markNoticeShown() {
-        guard !state.noticeShown else { return }
-        state.noticeShown = true
-        save()
+        update { $0.noticeShown = true }
     }
 
     public func closeNotice() {
-        state.noticeClosed = true
-        save()
+        update { $0.noticeClosed = true }
     }
 
     public func localDay(_ d: Date) -> String {
@@ -211,7 +274,15 @@ public final class Telemetry {
         s.range(of: pattern, options: .regularExpression) != nil
     }
 
-    public func ping(day: String, app: String, os: String, locale: String, prefs: Prefs, learned: Int, counts: Counts? = nil) -> Ping {
+    // How long ago the Card Wallpaper action last drew a card, coarse enough to tell nothing else.
+    public static func wallpaper(drawn: Date?, now: Date) -> String {
+        guard let drawn else { return "never" }
+        let ago = now.timeIntervalSince(drawn)
+        return ago < 48 * 3600 ? "48h" : ago < 7 * 86400 ? "week" : "older"
+    }
+
+    public func ping(day: String, app: String, os: String, locale: String, prefs: Prefs, learned: Int, counts: Counts? = nil,
+                     widgets: Widgets? = nil, wallpaper: String? = nil) -> Ping {
         let c = counts ?? state.counts
         return Ping(
             id: state.id, day: day, platform: "ios", app: app, os: os,
@@ -220,35 +291,46 @@ public final class Telemetry {
             mode: prefs.cardMode, theme: prefs.theme, latin: prefs.latinFirst,
             lock: prefs.lockMode == 1 ? "wallpaper" : "widget", learned: learned,
             cards: c.cards > 0 ? c.cards : nil, answers: c.answers.isEmpty ? nil : c.answers,
-            opened: c.opened.isEmpty ? nil : c.opened, deck: prefs.deckId, ui: prefs.uiLang
+            opened: c.opened.isEmpty ? nil : c.opened, deck: prefs.deckId, ui: prefs.uiLang,
+            lockans: c.lock.isEmpty ? nil : c.lock, widgets: widgets, wallpaper: wallpaper
         )
     }
 
     private var sending = false
 
     // Sends today's ping once: when statistics are on, the notice about them has been shown and
-    // nothing went out today. A failed attempt is retried an hour later at the earliest.
+    // nothing went out today. A failed attempt is retried an hour later at the earliest. The time
+    // of the attempt is written before the request, so that the app and a widget, each with its
+    // own Telemetry, do not both send. `widgets` is asked only when the ping goes.
     @discardableResult
-    public func sendPing(app: String, os: String, locale: String, prefs: Prefs, learned: Int) async -> Bool {
+    public func sendPing(app: String, os: String, locale: String, prefs: Prefs, learned: Int,
+                         widgets: () async -> Widgets? = { nil }, wallpaper: String? = nil) async -> Bool {
         let t = now()
         let day = localDay(t)
-        if sending || !state.enabled || !state.noticeShown || state.sentDay == day { return false }
-        if t.timeIntervalSince1970 - state.triedAt < Self.retry { return false }
+        if sending { return false }
+        let due = update { s -> Bool in
+            if !s.enabled || !s.noticeShown || s.sentDay == day { return false }
+            if t.timeIntervalSince1970 - s.triedAt < Self.retry { return false }
+            s.triedAt = t.timeIntervalSince1970
+            return true
+        }
+        guard due else { return false }
         sending = true
         defer { sending = false }
-        state.triedAt = t.timeIntervalSince1970
-        save()
+        let placed = await widgets()
         let sent = state.counts
-        let p = ping(day: day, app: app, os: os, locale: locale, prefs: prefs, learned: learned, counts: sent)
+        let p = ping(day: day, app: app, os: os, locale: locale, prefs: prefs, learned: learned, counts: sent,
+                     widgets: placed, wallpaper: wallpaper)
         guard let body = try? JSONEncoder().encode(p) else { return false }
         let status = await post(Self.server + "/ping", body)
         // A rejected ping would be rejected again: drop it with the sums, as if it was sent.
         guard (200..<300).contains(status) || status == 400 || status == 413 else { return false }
-        state.sentDay = day
-        state.counts = state.counts.minus(sent)
-        // A forget that finished meanwhile gave the install a new id.
-        if (200..<300).contains(status) && p.id == state.id { state.last = p }
-        save()
+        update { s in
+            s.sentDay = day
+            s.counts = s.counts.minus(sent)
+            // A forget that finished meanwhile gave the install a new id.
+            if (200..<300).contains(status) && p.id == s.id { s.last = p }
+        }
         return (200..<300).contains(status)
     }
 
@@ -288,8 +370,9 @@ public final class Telemetry {
         while let m = state.queue.first, let body = try? JSONEncoder().encode(m) {
             let status = await post(Self.server + "/feedback", body)
             if status == -1 || status == 429 || status >= 500 { return }
-            state.queue.removeFirst()
-            save()
+            update { s in
+                if s.queue.first == m { s.queue.removeFirst() }
+            }
         }
     }
 
@@ -314,13 +397,14 @@ public final class Telemetry {
         while let running = flushing { await running.value }
         guard let body = try? JSONEncoder().encode(["id": state.id, "feedbackId": state.feedbackId]) else { return false }
         guard (200..<300).contains(await post(Self.server + "/forget", body)) else { return false }
-        state.id = UUID().uuidString.lowercased()
-        state.feedbackId = UUID().uuidString.lowercased()
-        state.queue = []
-        state.last = nil
-        state.email = ""
-        state.counts = Counts()
-        save()
+        update { s in
+            s.id = UUID().uuidString.lowercased()
+            s.feedbackId = UUID().uuidString.lowercased()
+            s.queue = []
+            s.last = nil
+            s.email = ""
+            s.counts = Counts()
+        }
         return true
     }
 
@@ -331,17 +415,19 @@ public final class Telemetry {
     public func sendFeedback(kind: String, text: String, card: CardInfo?, email: String, app: String, os: String,
                              env: [String: String]? = nil) async -> Bool {
         let email = kind == "crash" ? "" : email
-        if kind != "crash" { state.email = email }
         // The server refuses control characters; pasted text may carry some.
         let clean = String(String.UnicodeScalarView(text.unicodeScalars.filter {
             !(0...8 ~= $0.value || $0.value == 0x0B || $0.value == 0x0C || 0x0E...0x1F ~= $0.value || $0.value == 0x7F)
         }))
-        let m = Message(
-            id: state.feedbackId, kind: kind, platform: "ios", app: app, os: os,
-            text: clean.isEmpty ? nil : clean, email: email.isEmpty ? nil : email, card: card, env: env
-        )
-        state.queue.append(m)
-        save()
+        let m = update { s -> Message in
+            if kind != "crash" { s.email = email }
+            let m = Message(
+                id: s.feedbackId, kind: kind, platform: "ios", app: app, os: os,
+                text: clean.isEmpty ? nil : clean, email: email.isEmpty ? nil : email, card: card, env: env
+            )
+            s.queue.append(m)
+            return m
+        }
         await flush()
         return !state.queue.contains(m)
     }

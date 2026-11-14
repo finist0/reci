@@ -82,18 +82,7 @@ struct LockSetup: View {
 
     private func refresh() {
         drawn = LockDeck.wallpaperDrawn
-        Task { placed = await Self.lockWidgets() }
-    }
-
-    // The accessory families are the lock screen ones on a phone. iOS may report a widget for a
-    // while after it is removed, so a missing one is the sure finding.
-    private static func lockWidgets() async -> Set<String>? {
-        await withCheckedContinuation { done in
-            WidgetCenter.shared.getCurrentConfigurations { result in
-                let lock: [WidgetFamily] = [.accessoryCircular, .accessoryRectangular, .accessoryInline]
-                done.resume(returning: (try? result.get()).map { infos in Set(infos.filter { lock.contains($0.family) }.map(\.kind)) })
-            }
-        }
+        Task { placed = await Stats.widgets().map { Set($0.lock) } }
     }
 
     @ViewBuilder
@@ -258,6 +247,8 @@ struct CardWallpaperIntent: AppIntent {
         renderer.scale = screen.bounds.width * screen.scale / WallpaperCard.width
         guard let data = renderer.uiImage?.pngData() else { throw CocoaError(.fileWriteUnknown) }
         LockDeck.wallpaperDrawn = Date()
+        // The automation draws the card without opening the app, so the daily ping goes from here too.
+        await Stats.fromLockScreen(repo)
         return .result(value: IntentFile(data: data, filename: "reci-card.png", type: .png))
     }
 }

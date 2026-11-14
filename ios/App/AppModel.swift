@@ -144,19 +144,21 @@ final class AppModel: ObservableObject {
         }
     }
 
-    // Outside the App Group the widgets share and outside the backup, so that the statistics id
-    // never moves to another phone with a restored backup.
+    // The file moves from the app's own directory, where versions up to 1.7 kept it, to the App
+    // Group, where the widgets find it.
     private static func telemetryFile() -> URL {
-        var dir = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+        let old = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appendingPathComponent("telemetry/telemetry.json")
+        let file = Stats.file
         if ProcessInfo.processInfo.arguments.contains("-uitest-reset") {
-            try? FileManager.default.removeItem(at: dir.appendingPathComponent("telemetry"))
+            try? FileManager.default.removeItem(at: old)
+            try? FileManager.default.removeItem(at: file)
         }
-        try? FileManager.default.createDirectory(at: dir.appendingPathComponent("telemetry"), withIntermediateDirectories: true)
-        var values = URLResourceValues()
-        values.isExcludedFromBackup = true
-        dir.appendPathComponent("telemetry")
-        try? dir.setResourceValues(values)
-        return dir.appendingPathComponent("telemetry.json")
+        if old.path != file.path && FileManager.default.fileExists(atPath: old.path) {
+            try? FileManager.default.removeItem(at: file)
+            try? FileManager.default.moveItem(at: old, to: file)
+        }
+        return file
     }
 
     // UI tests never reach the real server: "-uitest" or "-uitest-reset" answer every request at
@@ -165,14 +167,7 @@ final class AppModel: ObservableObject {
         let args = ProcessInfo.processInfo.arguments
         if args.contains("-uitest-offline") { return { _, _ in -1 } }
         if args.contains("-uitest") || args.contains("-uitest-reset") { return { _, _ in 204 } }
-        return { url, body in
-            var req = URLRequest(url: URL(string: url)!, timeoutInterval: 5)
-            req.httpMethod = "POST"
-            req.setValue("application/json", forHTTPHeaderField: "Content-Type")
-            req.httpBody = body
-            guard let answer = try? await URLSession.shared.data(for: req) else { return -1 }
-            return (answer.1 as? HTTPURLResponse)?.statusCode ?? -1
-        }
+        return Stats.post
     }
 
     // UI tests on a slow simulator wait out the closing sheet and keyboard before they look,
@@ -180,14 +175,16 @@ final class AppModel: ObservableObject {
     private static let toastTime: UInt64 =
         ProcessInfo.processInfo.arguments.contains { $0.hasPrefix("-uitest") } ? 15_000_000_000 : 3_000_000_000
 
-    private var appVersion: String { Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "unknown" }
-    private var osName: String { "iOS " + UIDevice.current.systemVersion }
+    private var appVersion: String { Stats.appVersion }
+    private var osName: String { Stats.osName }
 
     // Sends the ping and the waiting messages when it is time; cheap to call on every start.
     func sendStats() {
-        let learned = repo.words.reduce(0) { $0 + (repo.progress($1).state == Mark.known ? 1 : 0) }
+        let learned = Stats.learned(repo)
+        // The widgets may have sent today's ping meanwhile; the settings show it.
+        telemetry.reload()
         Task { @MainActor in
-            await telemetry.sendPing(app: appVersion, os: osName, locale: Locale.current.identifier(.bcp47), prefs: prefs, learned: learned)
+            await Stats.send(telemetry, prefs: prefs, learned: learned)
             await telemetry.flush()
             version += 1
         }

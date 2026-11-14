@@ -158,6 +158,128 @@ final class TelemetryTests: XCTestCase {
         XCTAssertNil(posts[0].body["answers"])
     }
 
+    func testLockScreenAnswersGoApartFromTheAnswersInTheApp() async {
+        t.count("answers", "know")
+        t.count("lock", "know")
+        t.count("lock", "know")
+        t.count("lock", "dontknow")
+        let widgets = Widgets(lock: ["dontknow", "card", "clock"], home: ["card"])
+        let sent = await t.sendPing(app: "1.8", os: "iOS 18.6", locale: "ru-RS", prefs: Prefs(), learned: 0,
+                                    widgets: { widgets }, wallpaper: "week")
+        XCTAssertTrue(sent)
+        let p = posts[0].body
+        XCTAssertEqual(Set(p.keys).subtracting(names("ping", "required") + names("ping", "optional")), [])
+        XCTAssertEqual(p["answers"] as? [String: Int], ["know": 1])
+        XCTAssertEqual(p["lockans"] as? [String: Int], ["know": 2, "dontknow": 1])
+        XCTAssertEqual(Set((p["lockans"] as! [String: Int]).keys).subtracting(names("answers")), [])
+        let w = p["widgets"] as! [String: [String]]
+        XCTAssertEqual(Set(w.keys), Set((fields["widgets"] as! [String: [String]])["places"]!))
+        XCTAssertEqual(w["lock"], ["card", "dontknow"])
+        XCTAssertEqual(w["home"], ["card"])
+        XCTAssertEqual(Set(w.values.joined()).subtracting((fields["widgets"] as! [String: [String]])["kinds"]!), [])
+        XCTAssertTrue(names("wallpaper").contains(p["wallpaper"] as! String))
+        XCTAssertEqual(t.state.counts, Counts())
+    }
+
+    func testTheWallpaperIsToldOnlyRoughly() {
+        let now = clock
+        let ago = { (hours: Double) in Telemetry.wallpaper(drawn: now.addingTimeInterval(-hours * 3600), now: now) }
+        XCTAssertEqual(Telemetry.wallpaper(drawn: nil, now: now), "never")
+        XCTAssertEqual([ago(0), ago(47), ago(49), ago(24 * 7 - 1), ago(24 * 7 + 1), ago(24 * 400)],
+                       ["48h", "48h", "week", "week", "older", "older"])
+        XCTAssertEqual(Set(["never", ago(0), ago(49), ago(24 * 8)]), Set(names("wallpaper")))
+    }
+
+    func testWidgetsAreAskedOnlyWhenThePingGoes() async {
+        var asked = 0
+        let count = { () async -> Widgets? in
+            asked += 1
+            return nil
+        }
+        var sent = await t.sendPing(app: "1.8", os: "iOS 18.6", locale: "ru-RS", prefs: Prefs(), learned: 0, widgets: count)
+        XCTAssertTrue(sent)
+        sent = await t.sendPing(app: "1.8", os: "iOS 18.6", locale: "ru-RS", prefs: Prefs(), learned: 0, widgets: count)
+        XCTAssertFalse(sent)
+        XCTAssertEqual(asked, 1)
+        XCTAssertNil(posts[0].body["widgets"])
+    }
+
+    func testLockScreenAnswersAreNotCountedWhileStatisticsAreOff() {
+        t.setEnabled(false)
+        t.count("lock", "know")
+        XCTAssertEqual(t.state.counts, Counts())
+    }
+
+    // The widgets keep a Telemetry of their own on the app's file.
+    private func widget() -> Telemetry {
+        let w = Telemetry(file: t.file) { [unowned self] url, body in
+            posts.append((url, try! JSONSerialization.jsonObject(with: body) as! [String: Any]))
+            return reply(url)
+        }
+        w.now = { [unowned self] in clock }
+        return w
+    }
+
+    func testTheAppAndTheWidgetsSendOnePingADayBetweenThem() async {
+        let w = widget()
+        XCTAssertEqual(w.state.id, t.state.id)
+        w.count("lock", "know")
+        t.count("answers", "dontknow")
+        var sent = await w.sendPing(app: "1.8", os: "iOS 18.6", locale: "ru-RS", prefs: Prefs(), learned: 0)
+        XCTAssertTrue(sent)
+        XCTAssertEqual(posts[0].body["lockans"] as? [String: Int], ["know": 1])
+        XCTAssertEqual(posts[0].body["answers"] as? [String: Int], ["dontknow": 1])
+        sent = await ping()
+        XCTAssertFalse(sent)
+        XCTAssertEqual(posts.count, 1)
+        // The app shows the packet the widget sent.
+        t.reload()
+        XCTAssertEqual(t.state.last?.lockans, ["know": 1])
+
+        clock += 24 * 3600
+        sent = await ping()
+        XCTAssertTrue(sent)
+        sent = await w.sendPing(app: "1.8", os: "iOS 18.6", locale: "ru-RS", prefs: Prefs(), learned: 0)
+        XCTAssertFalse(sent)
+        XCTAssertEqual(posts.count, 2)
+        XCTAssertNil(posts[1].body["lockans"])
+    }
+
+    func testAWidgetDoesNotSendWhileTheAppsPingIsOnItsWay() async {
+        let w = widget()
+        let release = hold("/ping")
+        let pinging = Task { await ping() }
+        await settle()
+        w.count("lock", "dontknow")
+        let sent = await w.sendPing(app: "1.8", os: "iOS 18.6", locale: "ru-RS", prefs: Prefs(), learned: 0)
+        XCTAssertFalse(sent)
+        release()
+        _ = await pinging.value
+        XCTAssertEqual(posts.filter { $0.url.hasSuffix("/ping") }.count, 1)
+        // What the widget counted meanwhile waits for the next ping.
+        XCTAssertEqual(t.state.counts.lock, ["dontknow": 1])
+        XCTAssertEqual(t.state.sentDay, "2026-11-02")
+    }
+
+    func testAWidgetTurningStatisticsOffIsSeenByTheApp() {
+        let w = widget()
+        t.count("cards")
+        w.setEnabled(false)
+        t.count("cards")
+        XCTAssertFalse(t.state.enabled)
+        XCTAssertEqual(t.state.counts, Counts())
+    }
+
+    func testAFileOfAnOlderVersionKeepsItsId() throws {
+        let file = FileManager.default.temporaryDirectory.appendingPathComponent("reci-telemetry-\(UUID().uuidString)/telemetry.json")
+        try FileManager.default.createDirectory(at: file.deletingLastPathComponent(), withIntermediateDirectories: true)
+        let old = #"{"id":"0f8fad5b-d9cb-469f-a165-70867728950e","noticeShown":true,"counts":{"cards":3,"answers":{"know":1},"opened":{}}}"#
+        try Data(old.utf8).write(to: file)
+        let o = Telemetry(file: file) { _, _ in 204 }
+        XCTAssertEqual(o.state.id, "0f8fad5b-d9cb-469f-a165-70867728950e")
+        XCTAssertEqual(o.state.counts, Counts(cards: 3, answers: ["know": 1], opened: [:]))
+    }
+
     func testOnePingADayAndTheSumsStartAgainAfterIt() async {
         t.count("cards")
         var sent = await ping()

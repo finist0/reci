@@ -12,13 +12,19 @@ struct CardProvider: TimelineProvider {
         completion(entry())
     }
 
-    // Answers reload the timeline, so the entry only has to follow day changes.
+    // Answers reload the timeline, so the entry only has to follow day changes. A reload also
+    // sends the daily ping when it is due, for someone who only looks at the card.
     func getTimeline(in context: Context, completion: @escaping (Timeline<CardEntry>) -> Void) {
-        completion(Timeline(entries: [entry()], policy: .after(Date().addingTimeInterval(3600))))
+        let repo = LockDeck.repo()
+        let timeline = Timeline(entries: [entry(repo)], policy: .after(Date().addingTimeInterval(3600)))
+        Task { @MainActor in
+            await Stats.fromLockScreen(repo)
+            completion(timeline)
+        }
     }
 
-    private func entry() -> CardEntry {
-        let card = LockCard.of(LockDeck.repo())
+    private func entry(_ repo: Repo? = LockDeck.repo()) -> CardEntry {
+        let card = LockCard.of(repo)
         return CardEntry(date: Date(), title: card.title, subtitle: card.subtitle, recall: card.recall, example: card.example)
     }
 }
