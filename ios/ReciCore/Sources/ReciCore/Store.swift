@@ -8,7 +8,7 @@ import Foundation
 // deck prefixes them with its id: "ru-sr.progress.json", "ru-sr.currentKey" in prefs.json.
 public final class Store {
     public let dir: URL
-    // The interface follows the deck and the script setting.
+    // The interface follows the language chosen and the script setting.
     public var prefs = Prefs() {
         didSet { I18n.follow(prefs) }
     }
@@ -45,9 +45,17 @@ public final class Store {
         for k in Store.perDeck { view[k] = stored[d.scoped(k)] }
         var p = (try? JSONSerialization.data(withJSONObject: view)).flatMap { try? dec.decode(Prefs.self, from: $0) } ?? Prefs()
         p.deckId = d.id
+        // A first start takes the interface language from the phone. An earlier user keeps the
+        // native language of the deck, which the interface spoke before there was a choice.
+        let settle = p.uiLang.isEmpty
+        if settle {
+            let earlier = stored.keys.contains { $0 == "currentKey" || $0.hasSuffix(".currentKey") }
+                || FileManager.default.fileExists(atPath: progressURL(d).path)
+            p.uiLang = earlier ? d.native : Decks.guessUi(Decks.systemLanguage)
+        }
         prefs = p
         progress = (try? Data(contentsOf: progressURL(d))).flatMap { try? dec.decode([String: Progress].self, from: $0) } ?? [:]
-        if stored["deck"] as? String != d.id { savePrefs() }
+        if settle || stored["deck"] as? String != d.id { savePrefs() }
     }
 
     public func savePrefs() {

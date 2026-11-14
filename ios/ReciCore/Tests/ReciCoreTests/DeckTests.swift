@@ -35,7 +35,36 @@ final class DeckTests: XCTestCase {
         XCTAssertEqual(Store(dir: dir).prefs.deckId, "sr-ru", "the choice is kept")
     }
 
-    func testTheRussianDeckSpeaksSerbianAndKeepsItsOwnProgress() throws {
+    // A first start of a store in dir, on a phone in the given language, with prefs.json as given.
+    private func start(_ language: String, _ prefs: String = "{}") throws -> Store {
+        Decks.systemLanguage = language
+        let dir = FileManager.default.temporaryDirectory.appendingPathComponent("reci-test-\(UUID().uuidString)")
+        try FileManager.default.createDirectory(at: dir, withIntermediateDirectories: true)
+        try Data(prefs.utf8).write(to: dir.appendingPathComponent("prefs.json"))
+        return Store(dir: dir)
+    }
+
+    func testAFirstStartTakesTheInterfaceLanguageFromThePhoneAndKeepsIt() throws {
+        XCTAssertEqual(try start("ru").prefs.uiLang, "ru")
+        XCTAssertEqual(try start("sr").prefs.uiLang, "sr")
+        XCTAssertEqual(try start("hr").prefs.uiLang, "sr")
+        let de = try start("de")
+        XCTAssertEqual(de.prefs.uiLang, "en")
+        XCTAssertEqual(t("Настройки"), "Settings")
+
+        Decks.systemLanguage = "ru"
+        XCTAssertEqual(Store(dir: de.dir).prefs.uiLang, "en", "the stored language stays")
+        de.switchDeck("ru-sr")
+        XCTAssertEqual(de.prefs.uiLang, "en")
+        XCTAssertEqual(Store(dir: de.dir).prefs.uiLang, "en")
+
+        XCTAssertEqual(try start("sr", #"{"uiLang": ""}"#).prefs.uiLang, "sr", "an empty value of an early build counts as none")
+        XCTAssertEqual(try start("en", #"{"currentKey": "кућа"}"#).prefs.uiLang, "ru", "an earlier user keeps the interface of the deck")
+        XCTAssertEqual(try start("en", #"{"deck": "ru-sr", "ru-sr.currentKey": "дом"}"#).prefs.uiLang, "sr")
+        Decks.systemLanguage = "ru"
+    }
+
+    func testTheRussianDeckKeepsItsOwnProgress() throws {
         let store = Fixtures.tempStore()
         let sr = Repo(store: store, words: Fixtures.words)
         sr.step(1)
@@ -49,7 +78,7 @@ final class DeckTests: XCTestCase {
 
         store.switchDeck("ru-sr")
         XCTAssertEqual(store.prefs.deckId, "ru-sr")
-        XCTAssertEqual(t("Настройки"), "Podešavanja")
+        XCTAssertEqual(t("Настройки"), "Настройки", "the interface is not the deck's")
         XCTAssertTrue(store.prefs.latinFirst, "settings are shared")
         XCTAssertNil(store.prefs.currentKey)
         XCTAssertEqual(store.prefs.categories, Prefs().categories)
@@ -144,7 +173,7 @@ final class DeckTests: XCTestCase {
 
     func testTheInterfaceLanguageIsChosenApartFromTheDeck() throws {
         let store = Fixtures.tempStore()
-        XCTAssertEqual(store.prefs.uiLang, "")
+        XCTAssertEqual(store.prefs.uiLang, "ru")
         store.prefs.uiLang = "en"
         store.savePrefs()
         XCTAssertEqual(t("Настройки"), "Settings")
@@ -161,11 +190,8 @@ final class DeckTests: XCTestCase {
         XCTAssertEqual(prefs["uiLang"] as? String, "en")
         XCTAssertNil(prefs["ru-sr.uiLang"], "one choice for all decks")
 
-        store.prefs.uiLang = ""
-        XCTAssertEqual(t("Настройки"), "Подешавања")
         store.switchDeck("sr-ru")
-        XCTAssertEqual(t("Настройки"), "Настройки")
-
+        XCTAssertEqual(t("Настройки"), "Settings")
         store.prefs.uiLang = "sr"
         XCTAssertEqual(t("Настройки"), "Подешавања")
         XCTAssertTrue(store.prefs.deck.hasSerbian)
@@ -246,7 +272,7 @@ final class DeckTests: XCTestCase {
 
     func testSerbianInterfaceFollowsTheScriptSetting() {
         let s = Fixtures.tempStore()
-        s.switchDeck("ru-sr")
+        s.prefs.uiLang = "sr"
         s.prefs.latinFirst = true
         XCTAssertEqual(t("Настройки"), "Podešavanja")
         XCTAssertEqual(plural(5, "карточку", "карточки", "карточек"), "kartica")

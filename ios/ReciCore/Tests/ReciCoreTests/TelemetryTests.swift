@@ -284,6 +284,7 @@ final class TelemetryTests: XCTestCase {
     func testAMessageTellsWhereTheAppRunsWithinTheServerLimits() async throws {
         var prefs = Prefs()
         prefs.latinFirst = true
+        prefs.uiLang = "sr"
         let env = Env.of(prefs).merging(["device": "iPhone15,2", "screen": "393x852 pt"]) { a, _ in a }
         await t.sendFeedback(kind: "app", text: "Карточка не помещается", card: nil, email: "", app: "1.2", os: "iOS 18.6", env: env)
         let sent = try XCTUnwrap(posts[0].body["env"] as? [String: String])
@@ -298,7 +299,7 @@ final class TelemetryTests: XCTestCase {
         XCTAssertEqual(sent["latin"], "true")
         XCTAssertEqual(sent["lock"], "widget")
         XCTAssertEqual(sent["device"], "iPhone15,2")
-        XCTAssertEqual(sent["ui"], "")
+        XCTAssertEqual(sent["ui"], "sr")
     }
 
     func testACrashReportGoesOutWithoutTheRememberedEmail() async {

@@ -11,6 +11,9 @@ extension XCUIElement {
     }
 }
 
+// A fresh install on a phone in Russian: a first start takes the interface language from it.
+let fresh = ["-uitest-reset", "-AppleLanguages", "(ru)"]
+
 // UI tests of the iPhone app in the simulator, the counterpart of CardScreenTest.kt and
 // web/tests/ui/*.test.mjs. Each test starts from a fresh install.
 final class ReciUITests: XCTestCase {
@@ -19,7 +22,7 @@ final class ReciUITests: XCTestCase {
     override func setUp() {
         continueAfterFailure = false
         app = XCUIApplication()
-        app.launchArguments = ["-uitest-reset"]
+        app.launchArguments = fresh
         app.launch()
         XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 20) || app.staticTexts["articleTitle"].exists)
     }
@@ -145,19 +148,28 @@ final class ReciUITests: XCTestCase {
         return app.buttons.matching(NSPredicate(format: "label == %@ AND NOT (identifier IN %@)", label, rows)).firstMatch
     }
 
-    // Russian for Serbs: the language learned is chosen in the settings, and the interface follows the deck.
-    func testTheRussianDeckSpeaksSerbian() {
+    // Russian for Serbs: the language learned and the interface language are chosen apart.
+    func testTheRussianDeckWithTheSerbianInterface() {
         openSettings()
         reach(app.buttons["Учу"].firstMatch).tap()
         XCTAssertTrue(option("Сербский").waitForExistence(timeout: 5))
         option("Русский").tap()
-        XCTAssertTrue(app.staticTexts["Подешавања"].waitForExistence(timeout: 10))
+        // The schools row is for those who learn Serbian only.
+        let schools = app.buttons["Куда пойти учиться?"].firstMatch
+        wait(for: [expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: schools)], timeout: 10)
         // One deck learns Russian: the menu of its translations has one option.
-        app.buttons["Превод на"].firstMatch.tap()
+        app.buttons["Перевод на"].firstMatch.tap()
+        XCTAssertTrue(option("Сербский").waitForExistence(timeout: 5))
+        XCTAssertFalse(option("Русский").exists)
+        option("Сербский").tap()
+        XCTAssertTrue(app.staticTexts["Настройки"].exists, "the interface is not the deck's")
+
+        app.buttons["Язык интерфейса"].firstMatch.tap()
         XCTAssertTrue(option("Српски").waitForExistence(timeout: 5))
-        XCTAssertFalse(option("Руски").exists)
+        XCTAssertTrue(option("English").exists)
+        XCTAssertFalse(option("Как у колоды").exists)
         option("Српски").tap()
-        XCTAssertTrue(app.staticTexts["Подешавања"].exists)
+        XCTAssertTrue(app.staticTexts["Подешавања"].waitForExistence(timeout: 10))
         back()
         XCTAssertTrue(app.staticTexts["stage"].waitForExistence(timeout: 10))
         XCTAssertEqual(app.staticTexts["stage"].label, "Нова реч")
@@ -170,7 +182,7 @@ final class ReciUITests: XCTestCase {
 final class FeedbackUITests: XCTestCase {
     private var app: XCUIApplication!
 
-    private func launch(_ args: [String] = ["-uitest-reset"]) {
+    private func launch(_ args: [String] = fresh) {
         continueAfterFailure = false
         app = XCUIApplication()
         app.launchArguments = args
@@ -218,7 +230,7 @@ final class FeedbackUITests: XCTestCase {
     }
 
     func testTheLastCrashIsOfferedOnceAndSentOnYes() {
-        launch(["-uitest-reset", "-uitest-crash"])
+        launch(fresh + ["-uitest-crash"])
         XCTAssertTrue(app.alerts["Приложение закрылось с ошибкой"].waitForExistence(timeout: 10))
         app.alerts.buttons["Отправить"].tap()
         XCTAssertTrue(app.descendants(matching: .any)["sentToast"].firstMatch.waitForExistence(timeout: 5))
@@ -229,7 +241,7 @@ final class FeedbackUITests: XCTestCase {
     }
 
     func testADeclinedCrashReportIsNotOfferedAgain() {
-        launch(["-uitest-reset", "-uitest-crash"])
+        launch(fresh + ["-uitest-crash"])
         XCTAssertTrue(app.alerts["Приложение закрылось с ошибкой"].waitForExistence(timeout: 10))
         app.alerts.buttons["Не отправлять"].tap()
         XCTAssertFalse(app.descendants(matching: .any)["sentToast"].firstMatch.waitForExistence(timeout: 2))
@@ -240,7 +252,7 @@ final class FeedbackUITests: XCTestCase {
 
     func testTheNewsOfAnUpdateAreShownOnce() {
         let news = { self.app.alerts.matching(NSPredicate(format: "label BEGINSWITH 'Что нового'")).firstMatch }
-        launch(["-uitest-reset", "-uitest-whatsnew"])
+        launch(fresh + ["-uitest-whatsnew"])
         XCTAssertTrue(news().waitForExistence(timeout: 10))
         XCTAssertTrue(news().staticTexts.matching(NSPredicate(format: "label CONTAINS '• '")).firstMatch.exists)
         news().buttons["Понятно"].tap()
@@ -281,7 +293,7 @@ final class FeedbackUITests: XCTestCase {
     }
 
     func testWithoutNetworkAMessageWaits() {
-        launch(["-uitest-reset", "-uitest-offline"])
+        launch(fresh + ["-uitest-offline"])
         report(problem: "other")
         type("message", "карточка повторяется")
         app.buttons["send"].tap()
@@ -356,7 +368,7 @@ final class ScreenshotUITests: XCTestCase {
     func testScreens() {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = ["-uitest-reset"]
+        app.launchArguments = fresh
         app.launch()
         XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 20))
         let shot = { (name: String) in
@@ -412,7 +424,7 @@ final class ScreenshotUITests: XCTestCase {
         continueAfterFailure = false
         for mode in ["widgets", "wallpaper"] {
             let app = XCUIApplication()
-            app.launchArguments = ["-uitest-reset", "-uitest-lockpreview", mode]
+            app.launchArguments = fresh + ["-uitest-lockpreview", mode]
             app.launch()
             XCTAssertTrue(app.descendants(matching: .any)["lockPreview"].firstMatch.waitForExistence(timeout: 20))
             let a = XCTAttachment(screenshot: app.screenshot())

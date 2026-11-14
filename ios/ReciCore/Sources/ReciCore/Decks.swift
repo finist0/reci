@@ -1,7 +1,7 @@
 import Foundation
 
-// A pair of languages: the one learned (target) and the user's own (native), which the
-// interface speaks unless the user picked another one (Prefs.uiLang). Decks are listed in decks.json, so a new pair needs data only. The
+// A pair of languages: the one learned (target) and the user's own (native), the language of
+// the translations. Decks are listed in decks.json, so a new pair needs data only. The
 // counterpart of data/Deck.kt.
 public struct Deck: Codable, Hashable, Sendable {
     public var id: String
@@ -60,9 +60,17 @@ public enum Decks {
         return String(tag.prefix { $0 != "-" && $0 != "_" }).lowercased()
     }()
 
+    // Serbian and the languages close to it.
+    static let serbian: Set<String> = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"]
+
     // A first start on a phone set to Serbian or a close language opens Russian for Serbs.
     public static func guess(_ language: String) -> String {
-        ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"].contains(language) && all.contains { $0.id == "ru-sr" } ? "ru-sr" : first
+        serbian.contains(language) && all.contains { $0.id == "ru-sr" } ? "ru-sr" : first
+    }
+
+    // The interface language of a first start: the phone's, if the interface speaks it.
+    public static func guessUi(_ language: String) -> String {
+        language == "ru" ? "ru" : serbian.contains(language) ? "sr" : "en"
     }
 
     private static func langName(_ code: String, _ l: String) -> String {
@@ -185,8 +193,7 @@ public extension Deck {
 public enum I18n {
     // Russian text -> language -> translation.
     public static var table: [String: [String: String]] = [:]
-    // The language chosen for the interface or else the native language of the current deck,
-    // and the script setting; the store keeps them.
+    // The language chosen for the interface and the script setting; the store keeps them.
     public static var lang = "ru"
     public static var latin = false
 
@@ -195,7 +202,7 @@ public enum I18n {
     }
 
     public static func follow(_ p: Prefs) {
-        lang = p.uiLang.isEmpty ? p.deck.native : p.uiLang
+        lang = p.uiLang
         latin = p.latinFirst
     }
 

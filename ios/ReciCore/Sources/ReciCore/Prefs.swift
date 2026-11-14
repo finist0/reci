@@ -13,7 +13,8 @@ public struct PendingAnswer: Codable, Equatable {
 public struct Prefs: Codable, Equatable {
     // The deck in use (Decks); the store picks one on a first start and switches it.
     public var deckId = Decks.first
-    // The interface language: "ru", "sr" or "en"; "" speaks the native language of the deck.
+    // The interface language: "ru", "sr" or "en"; the store sets it on a first start, and "" is
+    // only what an empty prefs.json reads as.
     public var uiLang = ""
     public var latinFirst = false
     public var showBothScripts = true
