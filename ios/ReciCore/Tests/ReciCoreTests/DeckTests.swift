@@ -189,11 +189,11 @@ final class DeckTests: XCTestCase {
     }
 
     func testEachDeckIsTitledInItsOwnLanguage() {
-        XCTAssertEqual(Decks.title(Decks.deck("sr-ru")), "Учу сербский · родной русский")
-        XCTAssertEqual(Decks.title(Decks.deck("ru-sr")), "Учим руски · матерњи српски")
+        XCTAssertEqual(Decks.title(Decks.deck("sr-ru")), "Учу сербский · перевод на русский")
+        XCTAssertEqual(Decks.title(Decks.deck("ru-sr")), "Учим руски · превод на српски")
         I18n.latin = true
         XCTAssertEqual(Decks.title(Decks.deck("ru-sr")), "Učim ruski · maternji srpski")
-        XCTAssertEqual(Decks.title(Decks.deck("sr-ru")), "Учу сербский · родной русский")
+        XCTAssertEqual(Decks.title(Decks.deck("sr-ru")), "Учу сербский · перевод на русский")
     }
 
     func testSerbianInterfaceFollowsTheScriptSetting() {

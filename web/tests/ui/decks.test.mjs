@@ -40,7 +40,7 @@ test("a deck chosen in the settings brings its cards and its language; the progr
 
     await page.tap('[data-act="settings"]');
     const rows = await page.eval(`[...document.querySelectorAll('[data-act="deck"]')].map(e => e.textContent.trim())`);
-    assert.deepEqual(rows, ["Учу сербский · родной русский", "Учим руски · матерњи српски"]);
+    assert.deepEqual(rows, ["Учу сербский · перевод на русский", "Учим руски · превод на српски"]);
     await page.tap('[data-act="deck"][data-arg="ru-sr"]');
     await page.waitFor("document.querySelector('h1')?.textContent === 'Подешавања'");
     assert.equal(await has(page, '[data-act="bothscripts"]'), false);

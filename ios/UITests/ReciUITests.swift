@@ -143,7 +143,7 @@ final class ReciUITests: XCTestCase {
     func testTheRussianDeckSpeaksSerbian() {
         openSettings()
         let ru = reach(app.buttons["deck:ru-sr"].firstMatch)
-        XCTAssertEqual(ru.label, "Учим руски · матерњи српски")
+        XCTAssertEqual(ru.label, "Учим руски · превод на српски")
         ru.tap()
         XCTAssertTrue(app.staticTexts["Подешавања"].waitForExistence(timeout: 10))
         XCTAssertTrue(app.buttons["deck:ru-sr"].isSelected)

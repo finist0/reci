@@ -69,9 +69,9 @@ export const hasSerbian = () => current().target === "sr" || current().native ==
 
 const langName = (code, l) => tIn(l, code === "sr" ? "сербский" : code === "ru" ? "русский" : code === "en" ? "английский" : code);
 
-// "Учу сербский · родной русский", in the deck's own native language, so that a user finds the
+// "Учу сербский · перевод на русский", in the deck's own native language, so that a user finds the
 // line in their language among the others.
-export const title = d => format(tIn(d.native, "Учу %s · родной %s"), [langName(d.target, d.native), langName(d.native, d.native)]);
+export const title = d => format(tIn(d.native, "Учу %s · перевод на %s"), [langName(d.target, d.native), langName(d.native, d.native)]);
 
 const target = () => current().target;
 

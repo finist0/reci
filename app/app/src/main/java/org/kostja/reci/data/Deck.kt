@@ -57,9 +57,9 @@ object Decks {
         },
     )
 
-    // "Учу сербский · родной русский", in the deck's own native language, so that a user
+    // "Учу сербский · перевод на русский", in the deck's own native language, so that a user
     // finds the line in their language among the others.
-    fun title(d: Deck) = I18n.tIn(d.native, "Учу %s · родной %s").format(langName(d.target, d.native), langName(d.native, d.native))
+    fun title(d: Deck) = I18n.tIn(d.native, "Учу %s · перевод на %s").format(langName(d.target, d.native), langName(d.native, d.native))
 
     // A word to show the font size and the stress marks on.
     val sample: String

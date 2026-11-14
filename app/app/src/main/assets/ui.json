@@ -1107,9 +1107,9 @@
   "en": "Learn %d %s",
   "sr": "Учи %d %s"
  },
- "Учу %s · родной %s": {
-  "en": "Learning %s · native %s",
-  "sr": "Учим %s · матерњи %s"
+ "Учу %s · перевод на %s": {
+  "en": "Learning %s · translated into %s",
+  "sr": "Учим %s · превод на %s"
  },
  "Учёба": {
   "en": "Study",

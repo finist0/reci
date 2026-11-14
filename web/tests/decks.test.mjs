@@ -114,8 +114,8 @@ test("the Serbian interface, in either script", () => {
         assert.equal(t("Настройки"), "Podešavanja");
         S.setPref("latinFirst", false);
     });
-    assert.equal(Decks.title(ruSr), "Учим руски · матерњи српски");
-    assert.equal(Decks.title(srRu), "Учу сербский · родной русский");
+    assert.equal(Decks.title(ruSr), "Учим руски · превод на српски");
+    assert.equal(Decks.title(srRu), "Учу сербский · перевод на русский");
 });
 
 test("the English interface", () => {

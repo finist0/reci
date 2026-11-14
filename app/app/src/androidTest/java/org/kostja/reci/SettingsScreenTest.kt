@@ -125,7 +125,7 @@ class SettingsScreenTest {
     fun aSerbLearningRussianGetsASerbianInterfaceAndRussianCards() {
         compose.onNodeWithContentDescription("Настройки").performClick()
         compose.waitForIdle()
-        click("Учим руски · матерњи српски")
+        click("Учим руски · превод на српски")
         try {
             compose.waitUntil(10_000) { Decks.current.id == "ru-sr" && Repo.isLoaded }
             compose.onNodeWithText("Подешавања").assertExists()

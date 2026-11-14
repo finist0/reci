@@ -74,10 +74,10 @@ public enum Decks {
         }
     }
 
-    // "Учу сербский · родной русский", in the deck's own native language, so that a user
+    // "Учу сербский · перевод на русский", in the deck's own native language, so that a user
     // finds the line in their language among the others.
     public static func title(_ d: Deck) -> String {
-        I18n.format(I18n.tIn(d.native, "Учу %s · родной %s"), [langName(d.target, d.native), langName(d.native, d.native)])
+        I18n.format(I18n.tIn(d.native, "Учу %s · перевод на %s"), [langName(d.target, d.native), langName(d.native, d.native)])
     }
 }
 
