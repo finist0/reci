@@ -9,12 +9,12 @@ Android.
 
 ## Языки страницы
 
-Каждый язык обращается к своему читателю:
+Везде приложение учит сербскому и русскому, но каждый язык обращается к своему читателю:
 
-- **русский** (Russian): сербский для тех, кто говорит по-русски, остальные пары в конце;
-- **сербский**: русский для тех, кто говорит по-сербски;
-- **английский** (English U.S. и English U.K., текст один): сербский и русский с переводом
-  на английский.
+- **русский** (Russian): ловушки сербского для тех, кто говорит по-русски;
+- **сербский**: ловушки русского для тех, кто говорит по-сербски;
+- **английский** (English U.S. и English U.K., текст один): разборы и заметки, написанные
+  для говорящих по-английски.
 
 Сербского среди языков App Store Connect нет. В витринах Сербии, Черногории и Боснии и
 Герцеговины основной язык English (U.K.), дополнительный Croatian. Поэтому:
@@ -40,7 +40,7 @@ Android.
 ### Подзаголовок (до 30 символов)
 
 ```
-Сербский для русскоговорящих
+Учить сербский и русский
 ```
 
 ### Рекламный текст (до 170 символов)
@@ -48,7 +48,7 @@ Android.
 Его можно менять без новой версии и без проверки.
 
 ```
-Сербское слово на экране блокировки: с ударением, примерами и переводом. Десять секунд, и оно остаётся с вами. А ещё русский для сербов и переводы на английский.
+Сербское или русское слово на экране блокировки: с ударением, примерами и переводом на русский, сербский или английский. Десять секунд, и оно остаётся с вами.
 ```
 
 ### Ключевые слова (до 100 байт, через запятую)
@@ -60,7 +60,9 @@ Android.
 ### Описание (до 4000 символов)
 
 ```
-Вы берёте телефон в руки десятки раз в день. НЕРодная речь превращает каждый такой момент в маленький урок сербского: виджет на экране блокировки показывает слово с переводом на русский, а круглые виджеты «Знаю» и «Не знаю» отвечают прямо оттуда. Десять секунд, и слово остаётся с вами.
+Вы берёте телефон в руки десятки раз в день. НЕРодная речь превращает каждый такой момент в маленький урок сербского или русского: виджет на экране блокировки показывает слово с переводом, а круглые виджеты «Знаю» и «Не знаю» отвечают прямо оттуда. Десять секунд, и слово остаётся с вами.
+
+Сербский можно учить с переводом на русский или английский, русский с переводом на сербский или английский.
 
 ПОЧЕМУ ЭТО РАБОТАЕТ
 
@@ -69,25 +71,35 @@ Android.
 • Вспоминать, а не перечитывать. После знакомства слово нужно вспомнить по переводу. Выученное возвращается на проверку через неделю, три недели, два месяца, полгода и год.
 • Забыли — повторим сразу. Слово с ответом «Не знаю» вернётся через пять карточек, пока оно ещё свежее.
 
-СДЕЛАНО ДЛЯ ТЕХ, КТО ГОВОРИТ ПО-РУССКИ
+ЛОВУШКИ ДЛЯ ТЕХ, КТО ГОВОРИТ ПО-РУССКИ
 
-• Переводы и объяснения на русском.
-• Предупреждения там, где сербский подводит: «проблем» мужского рода, хотя «проблема» женского.
+Сербский похож на русский, и сходство подводит. Сербские карточки с переводом на русский отмечают такие места.
+
 • Ложные друзья: «празан» значит «пустой», а не «праздный».
-• Разборы похожих слов: «уговор или договор?», «привремено или тренутно?».
+• Похожие слова: русскому «договору» соответствует «уговор», а «договор» значит устную договорённость.
+• Род не совпадает: «проблем» мужского рода, хотя «проблема» женского.
 
-ЧТО ВНУТРИ
+СЕРБСКИЙ
 
 • 16 000 карточек: 12 500 слов, 2 500 выражений и идиом, 380 разборов похожих слов, 670 заметок о языке.
 • Почти 30 000 примеров с переводом, синонимы, антонимы, связанные слова.
-• Ударения у слов и формы: множественное число, спряжение, вид глагола.
 • Справочник по грамматике: 26 тем с таблицами склонений и спряжений.
+
+РУССКИЙ
+
+• 4 200 слов с ударениями, формами и примерами.
+• 400 разборов похожих слов и заметок о языке и обычаях.
+• Больше 9 000 примеров с переводом.
+
+В ОБОИХ ЯЗЫКАХ
+
+• Ударения у слов и формы: множественное число, спряжение, вид глагола.
 • Уровни от A1 до C1 и 30 тем: еда, транспорт, работа, семья и другие.
 
-ЕЩЁ ТРИ ПАРЫ ЯЗЫКОВ
+ЧЕТЫРЕ ПАРЫ ЯЗЫКОВ
 
-• Русский для тех, кто говорит по-сербски: 4 200 слов с ударениями и переводом на сербский.
-• Сербский и русский с переводом на английский.
+• Сербский с переводом на русский или английский.
+• Русский с переводом на сербский или английский.
 • Выученное слово остаётся выученным и с другим переводом.
 • Интерфейс на русском, сербском или английском.
 
@@ -99,12 +111,12 @@ Android.
 
 УДОБНО
 
-• Кириллица или латиница, подпись другим алфавитом.
+• Сербский кириллицей или латиницей, подпись другим алфавитом.
 • Произношение голосом телефона.
 • Долгое нажатие на «Знаю» сразу отмечает знакомое слово выученным.
 • Ошиблись — кнопка «назад» вернёт карточку, и ответ можно поменять.
 • Режимы «только перевод» и «только слово».
-• Поиск по сербскому слову и по переводу, избранное.
+• Поиск по слову и по переводу, избранное.
 • Восемь цветовых тем, светлые и тёмные.
 • Исправления карточек приходят сами, без обновления приложения.
 • Работает и на iPad.
@@ -128,13 +140,13 @@ Android.
 ### Podnaslov (do 30 znakova)
 
 ```
-Ruski jezik, reč po reč
+Ruski i srpski, reč po reč
 ```
 
 ### Promotivni tekst (do 170 znakova)
 
 ```
-Ruska reč na zaključanom ekranu: sa akcentom, primerima i prevodom na srpski. Deset sekundi, i reč ostaje s vama. Tu su i srpski i ruski sa prevodom na engleski.
+Ruska ili srpska reč na zaključanom ekranu: sa akcentom, primerima i prevodom na srpski, ruski ili engleski. Deset sekundi, i reč ostaje s vama.
 ```
 
 ### Ključne reči (do 100 bajtova, odvojene zarezom)
@@ -146,9 +158,9 @@ ruski,rečnik,kartice,akcenat,reči,učenje,russian,rusija,widget,gramatika
 ### Opis (do 4000 znakova)
 
 ```
-Telefon uzmete u ruke desetine puta dnevno. НЕРодная речь svaki taj trenutak pretvara u kratak čas ruskog: vidžet na zaključanom ekranu pokazuje reč sa prevodom na srpski, a okrugli vidžeti „Znam“ i „Ne znam“ odgovaraju pravo odatle. Deset sekundi, i reč ostaje s vama.
+Telefon uzmete u ruke desetine puta dnevno. НЕРодная речь svaki taj trenutak pretvara u kratak čas ruskog ili srpskog: vidžet na zaključanom ekranu pokazuje reč sa prevodom, a okrugli vidžeti „Znam“ i „Ne znam“ odgovaraju pravo odatle. Deset sekundi, i reč ostaje s vama.
 
-Ime na ruskom znači „nematernji govor“.
+Ruski može da se uči sa prevodom na srpski ili engleski, a srpski sa prevodom na ruski ili engleski. Ime na ruskom znači „nematernji govor“.
 
 ZAŠTO TO FUNKCIONIŠE
 
@@ -157,26 +169,35 @@ ZAŠTO TO FUNKCIONIŠE
 • Prisećanje, a ne ponovno čitanje. Novu reč treba da se setite po prevodu. Naučene reči se vraćaju na proveru posle nedelju dana, tri nedelje, dva meseca, pola godine i godinu dana.
 • Zaboravili ste? Reč na koju odgovorite „Ne znam“ vraća se posle pet kartica, dok je još sveža.
 
-NAPRAVLJENO ZA ONE KOJI GOVORE SRPSKI
+ZAMKE ZA ONE KOJI GOVORE SRPSKI
 
-• Prevodi i objašnjenja na srpskom.
+Ruski liči na srpski, i ta sličnost često vara. Ruske kartice sa prevodom na srpski označavaju takva mesta.
+
 • Lažni prijatelji: ruski „живот“ je stomak, a srpskom životu odgovara „жизнь“.
 • Ruski „вредный“ znači „štetan“, a ne „vredan“.
+• Slične reči: srpski „sto“ je ruski „стол“, srpska „stolica“ je „стул“, a ruska „столица“ je prestonica.
 • U ruskom nema „je“ u sadašnjem vremenu: „Он врач.“ znači „On je lekar.“
-• Poređenja sličnih reči i beleške: „идти ili ехать?“
 
-ŠTA JE UNUTRA
+RUSKI
 
-• 4.200 ruskih reči sa akcentima, oblicima i primerima.
-• 400 poređenja sličnih reči i beleški o jeziku i običajima.
+• 4.200 reči sa akcentima, oblicima i primerima.
+• 400 poređenja sličnih reči i beleški o jeziku i običajima: „идти ili ехать?“
 • Više od 9.000 primera sa prevodom.
+
+SRPSKI
+
+• 16.000 kartica: 12.500 reči, 2.500 izraza i idioma.
+• Priručnik gramatike na ruskom.
+
+U OBA JEZIKA
+
 • Sinonimi, antonimi i srodne reči, sve sa akcentima.
 • Nivoi od A1 do C1 i 30 tema: hrana, prevoz, posao, porodica i druge.
 
-JOŠ TRI JEZIČKA PARA
+ČETIRI JEZIČKA PARA
 
-• Srpski za one koji govore ruski: 16.000 kartica i priručnik gramatike.
-• Srpski i ruski sa prevodom na engleski.
+• Ruski sa prevodom na srpski ili engleski.
+• Srpski sa prevodom na ruski ili engleski.
 • Naučena reč ostaje naučena i sa drugim prevodom.
 • Interfejs na srpskom, ruskom ili engleskom.
 
@@ -192,7 +213,7 @@ PRAKTIČNO
 • Izgovor glasom telefona.
 • Dug pritisak na „Znam“ odmah označava poznatu reč kao naučenu.
 • Pogrešili ste? Dugme „nazad“ vraća karticu, i odgovor može da se promeni.
-• Pretraga po ruskoj reči i po prevodu, omiljeno.
+• Pretraga po reči i po prevodu, omiljeno.
 • Osam tema boja, svetle i tamne.
 • Ispravke kartica stižu same, bez ažuriranja aplikacije.
 • Radi i na iPad-u.
@@ -261,7 +282,7 @@ RUSSIAN WITH ENGLISH TRANSLATIONS
 
 ALSO INSIDE
 
-• Serbian for Russian speakers and Russian for Serbian speakers.
+• Serbian with Russian translations and Russian with Serbian translations.
 • A learned word stays learned with any translation.
 • Interface in English, Serbian or Russian.
 • Levels from A1 to C1 and 30 topics: food, transport, work, family and more.
@@ -298,10 +319,10 @@ HONEST
 | Текст | Предел | Russian | Croatian (сербский) | English |
 |---|---|---|---|---|
 | Название | 30 символов | 13 | 13 | 13 |
-| Подзаголовок | 30 символов | 28 | 23 | 30 |
-| Рекламный текст | 170 символов | 161 | 161 | 148 |
+| Подзаголовок | 30 символов | 24 | 26 | 30 |
+| Рекламный текст | 170 символов | 158 | 144 | 148 |
 | Ключевые слова | 100 байт | 97 | 75 | 91 |
-| Описание | 4000 символов | 2772 | 2587 | 2567 |
+| Описание | 4000 символов | 3089 | 2888 | 2577 |
 
 ## Что ещё понадобится в App Store Connect
 
