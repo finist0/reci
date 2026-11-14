@@ -10,7 +10,7 @@ struct Showing {
     let id: String
     let key: String
     var recall: Bool
-    let stage: String?
+    var stage: String?
     var answered: Int?
     var revealed: Bool
     var covered: Bool
@@ -321,6 +321,11 @@ final class AppModel: ObservableObject {
             s.recall = repo.asksRecall(w)
             s.revealed = s.answered != nil
             s.covered = prefs.cardMode == 2 && !w.isArticle
+            showing = s
+        }
+        // A new interface language or card mode relabels the card on screen too.
+        if var s = showing, s.key == w.key, s.stage != stageLabel(w) {
+            s.stage = stageLabel(w)
             showing = s
         }
     }
