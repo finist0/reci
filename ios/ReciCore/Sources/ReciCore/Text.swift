@@ -71,7 +71,7 @@ public extension Prefs {
     func primary(_ cyr: String) -> String { latinFirst && deck.target == "sr" ? Translit.toLatin(cyr) : cyr }
 
     // Text in the user's own language: a translation, a note, a grammar label.
-    func native(_ text: String) -> String { latinFirst && deck.native == "sr" ? Translit.toLatin(text) : text }
+    func native(_ text: String) -> String { latinFirst && deck.serbianInNative ? Translit.toLatin(text) : text }
 
     func headword(_ w: Word) -> String {
         // A note's title is in the user's language.
@@ -96,7 +96,8 @@ public extension Prefs {
 }
 
 // Search by a word or by its translation: Serbian may be typed in either script, Russian
-// without ё.
+// without ё. Translations into English are typed in Latin letters, as Serbian Latin is: the
+// search picker tells which one is looked for.
 public enum Search {
     static func norm(_ s: String) -> String { s.lowercased().replacingOccurrences(of: "ё", with: "е") }
 

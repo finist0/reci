@@ -152,7 +152,8 @@ struct GramLine: View {
         guard !w.gram.isEmpty else { return out }
         var g = AttributedString("  " + prefs.native(w.gram))
         g.font = .ui(14, .semibold)
-        if w.ruGram.isEmpty {
+        // The gender in Russian is a hint for those who read Russian translations only.
+        if w.ruGram.isEmpty || model.deck.native != "ru" {
             g.foregroundColor = w.pos == "noun" ? model.palette.accent : model.palette.text
             return out + g
         }

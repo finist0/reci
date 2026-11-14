@@ -9,7 +9,7 @@ public struct PendingAnswer: Codable, Equatable {
 }
 
 // Settings under the names of the web version, so progress files move between the versions.
-// The fields in Store.perDeck belong to the current deck: each deck keeps its own.
+// The fields in Store.perLanguage belong to the language learned: each one keeps its own.
 public struct Prefs: Codable, Equatable {
     // The deck in use (Decks); the store picks one on a first start and switches it.
     public var deckId = Decks.first

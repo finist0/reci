@@ -3,9 +3,11 @@ import Foundation
 // Settings and progress as two JSON files in one directory. The app and the lock screen widgets
 // share the directory through an App Group, so each change is written at once.
 //
-// Each deck keeps its own progress and its own place in the cards: Russian вода and Serbian вода
-// are different cards. The first deck keeps the names it had before there were others; another
-// deck prefixes them with its id: "ru-sr.progress.json", "ru-sr.currentKey" in prefs.json.
+// Each language learned keeps its own progress and its own place in the cards: Russian вода and
+// Serbian вода are different cards, Serbian вода with Russian or English translations is one
+// (Deck.store). The first deck keeps the names it had before there were others; another language
+// prefixes them with the id of its first deck: "ru-sr.progress.json", "ru-sr.currentKey" in
+// prefs.json.
 public final class Store {
     public let dir: URL
     // The interface follows the language chosen and the script setting.
@@ -14,13 +16,14 @@ public final class Store {
     }
     // key -> progress; only words that were touched.
     public private(set) var progress: [String: Progress] = [:]
-    // The deck whose own fields prefs holds; switchDeck changes it.
+    // The deck whose fields of the language learned prefs holds; switchDeck changes it.
     public private(set) var deck = Decks.deck(nil)
-    // prefs.json as read: the settings and the own fields of every deck.
+    // prefs.json as read: the settings and the fields of every language learned.
     private var stored: [String: Any] = [:]
 
-    // What belongs to one deck.
-    static let perDeck: Set<String> = ["cardCount", "shuffleSeed", "currentKey", "categories", "lastShown", "pendingAnswer"]
+    // What belongs to the language learned: the place in the cards goes with the progress, as
+    // the card numbers in it do.
+    static let perLanguage: Set<String> = ["cardCount", "shuffleSeed", "currentKey", "categories", "lastShown", "pendingAnswer"]
 
     public init(dir: URL) {
         self.dir = dir
@@ -42,7 +45,7 @@ public final class Store {
         let d = Decks.deck(id)
         deck = d
         var view = stored
-        for k in Store.perDeck { view[k] = stored[d.scoped(k)] }
+        for k in Store.perLanguage { view[k] = stored[d.scoped(k)] }
         var p = (try? JSONSerialization.data(withJSONObject: view)).flatMap { try? dec.decode(Prefs.self, from: $0) } ?? Prefs()
         p.deckId = d.id
         // A first start takes the interface language from the phone. An earlier user keeps the
@@ -61,7 +64,7 @@ public final class Store {
     public func savePrefs() {
         guard let data = try? JSONEncoder().encode(prefs),
               let now = try? JSONSerialization.jsonObject(with: data) as? [String: Any] else { return }
-        for k in Prefs.keys { stored[Store.perDeck.contains(k) ? deck.scoped(k) : k] = now[k] }
+        for k in Prefs.keys { stored[Store.perLanguage.contains(k) ? deck.scoped(k) : k] = now[k] }
         stored["deck"] = deck.id
         writeStored()
     }

@@ -233,8 +233,8 @@ final class DeckTests: XCTestCase {
 
     func testTheLanguageLearnedSwitchesTheDeckAndEachKeepsItsProgress() throws {
         XCTAssertEqual(Decks.targets, ["sr", "ru"])
-        XCTAssertEqual(Decks.natives("sr"), ["ru"])
-        XCTAssertEqual(Decks.natives("ru"), ["sr"])
+        XCTAssertEqual(Decks.natives("sr").first, "ru")
+        XCTAssertEqual(Decks.natives("ru").first, "sr")
         let store = Fixtures.tempStore()
         let sr = Repo(store: store, words: Fixtures.words)
         let kuca = try XCTUnwrap(sr.word("кућа"))
@@ -324,5 +324,120 @@ final class DeckTests: XCTestCase {
         XCTAssertTrue(ru.isFirst == false && sr.isFirst)
         XCTAssertEqual(ru.scoped("progress.json"), "ru-sr.progress.json")
         XCTAssertEqual(sr.scoped("progress.json"), "progress.json")
+    }
+
+    // Decks with English translations over the cards the app carries in any case: their own
+    // assets may not be built yet.
+    private let srEn = Deck(id: "sr-en", target: "sr", native: "en", words: "words.json", grammar: "")
+    private let ruEn = Deck(id: "ru-en", target: "ru", native: "en", words: "words-ru-sr.json", grammar: "")
+
+    private func withEnglish(_ f: () throws -> Void) rethrows {
+        let decks = Decks.all
+        Decks.all = [Decks.deck("sr-ru"), Decks.deck("ru-sr"), srEn, ruEn]
+        defer { Decks.all = decks }
+        try f()
+    }
+
+    func testTheDecksOfOneLanguageLearnedShareTheProgressAndThePlaceInTheCards() throws {
+        try withEnglish {
+            XCTAssertEqual(srEn.store, "sr-ru")
+            XCTAssertEqual(ruEn.store, "ru-sr")
+            XCTAssertEqual(srEn.scoped("currentKey"), "currentKey")
+            XCTAssertEqual(ruEn.scoped("currentKey"), "ru-sr.currentKey")
+            XCTAssertEqual(srEn.ownScoped("deck.json"), "sr-en.deck.json", "the widgets' cards hold the translations")
+            let store = Fixtures.tempStore()
+            let sr = Repo(store: store, words: Fixtures.words)
+            sr.step(1)
+            let card = try XCTUnwrap(sr.current())
+            sr.answer(try XCTUnwrap(sr.word("кућа")), Mark.known, learned: true)
+            var p = sr.prefs
+            p.categories = ["L1", "L2"]
+            sr.prefs = p
+
+            store.switchDeck("sr-en")
+            XCTAssertEqual(store.prefs.deckId, "sr-en")
+            let en = Repo(store: store, words: Fixtures.words)
+            XCTAssertEqual(en.current()?.key, card.key)
+            XCTAssertEqual(en.prefs.categories, ["L1", "L2"])
+            XCTAssertEqual(en.progress(try XCTUnwrap(en.word("кућа"))).state, Mark.known)
+            en.answer(try XCTUnwrap(en.word("вода")), Mark.dontKnow)
+
+            learn(store, "ru")
+            XCTAssertEqual(store.prefs.deckId, "ru-en")
+            let ru = Repo(store: store, words: Fixtures.ruWords)
+            ru.answer(try XCTUnwrap(ru.word("дом")), Mark.known, learned: true)
+            store.switchDeck("ru-sr")
+            XCTAssertEqual(store.progress["дом"]?.state, Mark.known, "Russian with Serbian shares it too")
+
+            store.switchDeck("sr-ru")
+            XCTAssertEqual(store.progress["вода"]?.state, Mark.dontKnow)
+            let prefs = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: store.dir.appendingPathComponent("prefs.json"))) as? [String: Any])
+            XCTAssertFalse(prefs.keys.contains { $0.hasPrefix("sr-en.") || $0.hasPrefix("ru-en.") })
+            let files = try FileManager.default.contentsOfDirectory(atPath: store.dir.path)
+            XCTAssertFalse(files.contains { $0.hasPrefix("sr-en.") || $0.hasPrefix("ru-en.") }, "\(files)")
+        }
+    }
+
+    func testAFirstStartOnAPhoneInAnotherLanguageLearnsSerbianWithEnglish() throws {
+        try withEnglish {
+            XCTAssertEqual(Decks.guess("ru"), "sr-ru")
+            XCTAssertEqual(Decks.guess("sr"), "ru-sr")
+            XCTAssertEqual(Decks.guess("hr"), "ru-sr")
+            XCTAssertEqual(Decks.guess("en"), "sr-en")
+            XCTAssertEqual(Decks.guess("de"), "sr-en")
+            XCTAssertEqual(Decks.guess(""), "sr-en")
+            let de = try start("de")
+            XCTAssertEqual(de.prefs.deckId, "sr-en")
+            Decks.systemLanguage = "ru"
+            XCTAssertEqual(Store(dir: de.dir).prefs.deckId, "sr-en", "the choice stays")
+            XCTAssertEqual(try start("en", #"{"currentKey": "кућа"}"#).prefs.deckId, "sr-ru", "an earlier user stays")
+            Decks.systemLanguage = "ru"
+        }
+        let decks = Decks.all
+        Decks.all = [Decks.deck("sr-ru"), Decks.deck("ru-sr")]
+        defer { Decks.all = decks }
+        XCTAssertEqual(Decks.guess("en"), "sr-ru", "without English translations the first deck")
+    }
+
+    func testSerbianInEnglishTextFollowsTheScriptSetting() {
+        withEnglish {
+            let note = "«да» + present tense: хоћу да идем"
+            var p = Prefs()
+            p.latinFirst = true
+            XCTAssertEqual(p.native(note), note, "Russian translations stay in Cyrillic")
+            p.deckId = "sr-en"
+            XCTAssertTrue(p.deck.hasSerbian)
+            XCTAssertEqual(p.native(note), "«da» + present tense: hoću da idem")
+            XCTAssertEqual(p.primary("кућа"), "kuća")
+            p.latinFirst = false
+            XCTAssertEqual(p.native(note), note)
+            p.latinFirst = true
+            p.deckId = "ru-en"
+            XCTAssertEqual(p.native("«дом» is a house"), "«дом» is a house", "Russian learned: nothing is Serbian")
+            XCTAssertEqual(p.primary("дом"), "дом")
+        }
+    }
+
+    func testTheTextsOfTheEnglishDecks() {
+        I18n.lang = "en"
+        XCTAssertEqual(srEn.shareText, "NERodnaya rech: Serbian words for English speakers, cards with stress marks and examples. Free.")
+        XCTAssertEqual(ruEn.shareText, "NERodnaya rech: Russian words for English speakers, cards with stress marks and examples. Free.")
+        XCTAssertEqual(Decks.deck("sr-ru").shareText, "NERodnaya rech: Serbian words for Russian speakers, cards with stress marks, examples and grammar. Free.")
+        XCTAssertEqual(srEn.meaningHint, "word in English")
+        XCTAssertEqual(srEn.wordChip, "Serbian word")
+        XCTAssertEqual(ruEn.wordChip, "Russian word")
+        XCTAssertEqual(srEn.accentSamples.count, 3)
+        XCTAssertEqual(ruEn.accentSamples.count, 2)
+        XCTAssertTrue(Repo(store: Fixtures.tempStore(), words: Fixtures.words).linksFor(Fixtures.words[0]).isEmpty, "no reference, no links")
+    }
+
+    func testEnglishTranslationsAreFoundInLatinLettersAsSerbianLatinIs() throws {
+        let w = try XCTUnwrap(Word.decode(Data(#"[{"key": "реч", "cyr": "реч", "meanings": ["word", "speech"]}]"#.utf8), deck: srEn).first)
+        XCTAssertTrue(Search.matches(w, "speech", byMeaning: true))
+        XCTAssertTrue(Search.matches(w, "Wor", byMeaning: true))
+        XCTAssertTrue(Search.matches(w, "reč", byMeaning: false), "Serbian Latin")
+        XCTAssertTrue(Search.matches(w, "ре", byMeaning: false))
+        XCTAssertFalse(Search.matches(w, "word", byMeaning: false), "an English word is not a Serbian one")
+        XCTAssertFalse(Search.matches(w, "reč", byMeaning: true))
     }
 }

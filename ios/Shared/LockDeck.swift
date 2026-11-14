@@ -33,8 +33,9 @@ enum LockDeck {
 
     // The widgets have little memory, so they read a short copy of the dictionary: only the
     // fields the learning rules and a lock screen card need, with the first example only. The
-    // app writes it at start and when the deck changes, one copy per deck.
-    private static func deckURL(_ deck: Deck) -> URL { dir.appendingPathComponent(deck.scoped("deck.json")) }
+    // app writes it at start and when the deck changes, one copy per deck: it holds the
+    // translations, which the decks of one language learned do not share.
+    private static func deckURL(_ deck: Deck) -> URL { dir.appendingPathComponent(deck.ownScoped("deck.json")) }
 
     private struct Short: Encodable {
         let key, cyr, acc, pos, gram, topic: String

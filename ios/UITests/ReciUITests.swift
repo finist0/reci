@@ -167,7 +167,7 @@ final class ReciUITests: XCTestCase {
         // The schools row is for those who learn Serbian only.
         let schools = app.buttons["Куда пойти учиться?"].firstMatch
         wait(for: [expectation(for: NSPredicate(format: "exists == false"), evaluatedWith: schools)], timeout: 10)
-        // One deck learns Russian: the menu of its translations has one option.
+        // No deck translates Russian into Russian.
         app.buttons["Перевод на"].firstMatch.tap()
         XCTAssertTrue(option("Сербский").waitForExistence(timeout: 5))
         XCTAssertFalse(option("Русский").exists)

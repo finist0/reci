@@ -26,11 +26,24 @@ public struct Deck: Codable, Hashable, Sendable {
         grammar = try c.decodeIfPresent(String.self, forKey: .grammar) ?? ""
     }
 
-    // The first deck keeps the storage names it had before there were others.
+    // The deck of words.json: the dictionary patches (DictUpdate) are made for it only.
     public var isFirst: Bool { id == Decks.first }
 
-    // Storage names of what belongs to one deck.
-    public func scoped(_ name: String) -> String { isFirst ? name : "\(id).\(name)" }
+    // Progress belongs to the language learned, not to the deck: a Serbian word learned with
+    // Russian translations stays learned with English ones. The decks of one language learned
+    // keep it under the id of the first of them listed.
+    public var store: String { Decks.all.first { $0.target == target }?.id ?? id }
+
+    // Storage names of what belongs to the language learned: the first deck keeps the names it
+    // had before there were others.
+    public func scoped(_ name: String) -> String { store == Decks.first ? name : "\(store).\(name)" }
+
+    // Storage names of what belongs to this deck alone.
+    public func ownScoped(_ name: String) -> String { isFirst ? name : "\(id).\(name)" }
+
+    // Cyrillic in the translations that the script setting turns into Latin: Serbian ones, or
+    // Serbian words quoted in translations into a language not written in Cyrillic.
+    public var serbianInNative: Bool { native == "sr" || target == "sr" && !Decks.cyrillic.contains(native) }
 
     // Cards are read for a deck: its examples and related words are keyed by language.
     public static let userInfoKey = CodingUserInfoKey(rawValue: "reci.deck")!
@@ -40,6 +53,7 @@ public struct Deck: Codable, Hashable, Sendable {
 
 public enum Decks {
     public static let first = "sr-ru"
+    static let cyrillic: Set<String> = ["ru", "sr"]
 
     // decks.json as built in; the app replaces it with the file it carries.
     public static var all: [Deck] = [
@@ -63,9 +77,11 @@ public enum Decks {
     // Serbian and the languages close to it.
     static let serbian: Set<String> = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"]
 
-    // A first start on a phone set to Serbian or a close language opens Russian for Serbs.
+    // A first start opens Serbian for Russians on a phone set to Russian, Russian for Serbs on
+    // one set to Serbian or a close language, and Serbian with English translations elsewhere.
     public static func guess(_ language: String) -> String {
-        serbian.contains(language) && all.contains { $0.id == "ru-sr" } ? "ru-sr" : first
+        let id = language == "ru" ? first : serbian.contains(language) ? "ru-sr" : "sr-en"
+        return all.contains { $0.id == id } ? id : first
     }
 
     // The interface language of a first start: the phone's, if the interface speaks it.
@@ -178,8 +194,10 @@ public extension Deck {
     }
 
     var shareText: String {
-        switch target {
-        case "ru": return t("НЕРодная речь — русские слова для тех, кто говорит по-сербски: карточки с ударениями и примерами. Бесплатно.")
+        switch id {
+        case "ru-sr": return t("НЕРодная речь — русские слова для тех, кто говорит по-сербски: карточки с ударениями и примерами. Бесплатно.")
+        case "sr-en": return t("НЕРодная речь — сербские слова для тех, кто говорит по-английски: карточки с ударениями и примерами. Бесплатно.")
+        case "ru-en": return t("НЕРодная речь — русские слова для тех, кто говорит по-английски: карточки с ударениями и примерами. Бесплатно.")
         default: return t("НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно.")
         }
     }

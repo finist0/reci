@@ -37,16 +37,20 @@ func grammarText(_ s: String, prefs: Prefs, palette p: Palette) -> AttributedStr
 struct GrammarScreen: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var router: Router
-    @State private var tab = 0
+    @State private var chosen: Int?
     @State private var q = ""
+
+    // A deck without a reference has the comparisons and the notes only.
+    private var withGrammar: Bool { !model.deck.grammar.isEmpty }
+    private var tab: Int { chosen ?? (withGrammar ? 0 : 1) }
 
     var body: some View {
         let p = model.palette
         let n = { (pos: String) in model.repo.words.filter { $0.pos == pos }.count }
         VStack(spacing: 0) {
             Header(title: t("Справочник"))
-            Picker("", selection: $tab) {
-                Text(t("Грамматика")).tag(0)
+            Picker("", selection: Binding(get: { tab }, set: { chosen = $0 })) {
+                if withGrammar { Text(t("Грамматика")).tag(0) }
                 Text(t("Похожие") + " · \(n("compare"))").tag(1)
                 Text(t("Заметки") + " · \(n("note"))").tag(2)
             }
