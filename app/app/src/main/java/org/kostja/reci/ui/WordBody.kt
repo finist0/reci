@@ -301,7 +301,7 @@ private fun Details(w: Word, onGrammar: ((String) -> Unit)?) {
 
     if (w.related.isNotEmpty()) {
         HorizontalDivider(Modifier.padding(vertical = 20.dp), color = p.divider)
-        SectionLabel(t("Связанные слова"))
+        SectionLabel(t("Ещё по теме"))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             for (r in w.related) {
                 Text(

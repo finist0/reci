@@ -241,7 +241,7 @@ function details(w) {
         if (w.ant.length) out += sectionLabel(t("Антонимы")) + chips(w.ant, w.antAcc, "ant");
     }
     if (w.related.length) {
-        out += divider + sectionLabel(t("Связанные слова")) + '<div class="related">' + w.related.map(r => `
+        out += divider + sectionLabel(t("Ещё по теме")) + '<div class="related">' + w.related.map(r => `
             <button class="rel" ${act("word", r.word)}><b>${esc(linked(r.word, r.acc))}</b>${more(r.word)}<span class="dash">—</span>${esc(native(r.tr))}</button>`).join("") + "</div>";
     }
     const notes = [w.note, ...w.tips].filter(Boolean);
