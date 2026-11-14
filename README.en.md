@@ -103,17 +103,29 @@ Then [set it up on Android](#android-setup).
 2. Open https://testflight.apple.com/join/3x3Hs9DV on the iPhone and install the app.
    Updates then come through TestFlight.
 3. Open the app → Settings → "Карточка на экране блокировки" (lock screen card) → "Обои"
-   (wallpaper). The card becomes the lock screen wallpaper: the "Обои с карточкой" (card
-   wallpaper) action for the Shortcuts app draws it.
-4. Set up an automation in Shortcuts:
-   1. Shortcuts → Automation → New Automation → Time of Day, for example every hour →
-      Run Immediately.
-   2. Add the "Обои с карточкой" action (НЕРодная речь).
-   3. Add Set Wallpaper Photo → Lock Screen and turn off Show Preview.
-5. Add the round "Знаю" (I know) and "Не знаю" (I don't know) widgets to the lock screen:
-   touch and hold the lock screen → Customize → Lock Screen → the frame under the clock.
+   (wallpaper). The card becomes the lock screen wallpaper: the Card Wallpaper action
+   (НЕРодная речь) for the Shortcuts app draws it.
+4. Build the shortcut: the "Создать команду" (create the shortcut) button there opens
+   Shortcuts.
+   1. New Shortcut → Rename → Card Wallpaper.
+   2. Add Action → Card Wallpaper (НЕРодная речь).
+   3. Add Action → Set Wallpaper Photo: Lock Screen, turn off Show Preview and
+      Crop to Subject.
+5. Let the shortcut run by itself.
+   - iOS 17, 18 and 26: Automation → New Automation → Time of Day (Daily) →
+     Run Immediately → Next → Card Wallpaper. A second automation the same way:
+     App → НЕРодная речь → Is Closed.
+   - iOS 27: in the shortcut itself add the Time of Day and
+     App → НЕРодная речь → Is Closed triggers from Automation, then Info (ⓘ) → Privacy →
+     Allow Running When Locked.
+6. Add the round "Знаю" (I know) and "Не знаю" (I don't know) widgets under the clock:
+   touch and hold the lock screen → Customize (on iOS 17 and 18 also → Lock Screen) →
+   Add Widgets.
 
 A new wallpaper appears when the automation runs, not right after an answer.
+
+The app shows these steps for your iOS version, when the shortcut last drew the card and
+which widgets iOS does not see on the lock screen yet.
 
 Widgets alone work too: choose "Виджеты" (widgets) in the same switch and also add the wide
 "Карточка" widget under the clock. Then an answer from a round widget shows the next word at
