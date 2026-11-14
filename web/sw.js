@@ -4,7 +4,7 @@
 const CACHE = "reci";
 const ASSETS = "../app/app/src/main/";
 const CORE = [
-    "./", "index.html", "privacy.html", "style.css", "manifest.webmanifest", "icon-180.png", "icon-192.png",
+    "./", "index.html", "privacy.html", "licenses.html", "style.css", "manifest.webmanifest", "icon-180.png", "icon-192.png",
     "js/app.js", "js/data.js", "js/decks.js", "js/repo.js", "js/speech.js", "js/store.js", "js/telemetry.js", "js/ui.js", "js/whatsnew.js",
     ASSETS + "assets/decks.json", ASSETS + "assets/ui.json", ASSETS + "assets/words.json", ASSETS + "assets/grammar.json",
     ASSETS + "assets/whatsnew.json",

@@ -661,7 +661,6 @@ input[type="range"] { width: 100%; accent-color: var(--accent); margin-top: 8px;
 .about { padding: 18px; font-size: 14px; color: var(--secondary); display: flex; flex-direction: column; gap: 2px; }
 .app-title { font: 26px "Ruslan Display", var(--serif); color: var(--word); margin-bottom: 6px; }
 .app-title span { color: var(--title); }
-.credits { margin-top: 12px; font-size: 13px; line-height: 19px; }
 
 .modal {
     position: absolute;

@@ -829,9 +829,6 @@ function settingsScreen(e) {
     const accents = serbian ? choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode, "accents")
         // One kind of mark only: "with" is mode 1, "without" is mode 2.
         : choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode === 2 ? 1 : 0, "stressplace");
-    const credits = [t("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n"), t("Ударения: Викисловарь (kaikki.org), CC BY-SA.\n"),
-        t("Часть карточек и подсказок составлена по материалам из открытых источников.\n"),
-        t("Шрифты Literata и Ruslan Display: SIL Open Font License.\n"), t("Иконки: Material Icons, Apache 2.0.")];
 
     return `<div class="screen-col">${header(t("Настройки"))}
         <div class="scroll" data-scroll="settings">
@@ -883,8 +880,7 @@ function settingsScreen(e) {
                 <div class="app-title"><span>НЕ</span>РОДНАЯ РЕЧЬ</div>
                 <div>${esc(t("Версия %s", appVersion))} · ${t("веб-версия")}</div>
                 <div>${t("Автор: Константин Хоренко")}</div>
-                <div>${t("Лицензия: GNU GPL v3 или новее")}</div>
-                <div class="credits">${credits.map(s => esc(s.trim())).join("<br>")}</div></div>`)}
+                <a class="policy" href="licenses.html" target="_blank" rel="noopener">${t("Лицензии и источники")}</a></div>`)}
             <div class="spacer"></div>
         </div>
         ${sentToast ? toast(sentToast) : ""}
