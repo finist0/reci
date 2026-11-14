@@ -6,6 +6,7 @@ import android.app.Notification
 import android.app.NotificationManager
 import android.content.Intent
 import android.media.AudioManager
+import android.os.Looper
 import android.provider.Settings
 import android.telecom.TelecomManager
 import org.junit.After
@@ -27,12 +28,15 @@ import org.kostja.reci.lock.LockActivity
 import org.kostja.reci.lock.LockService
 import org.kostja.reci.ui.MainActivity
 import org.kostja.reci.ui.afterCallsRequest
+import org.kostja.reci.ui.countAnswer
 import org.robolectric.Robolectric
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowSettings
+import org.json.JSONObject
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 
@@ -222,6 +226,65 @@ class LockSettingsTest {
         assertEquals(w.key, Repo.current()!!.key)
         assertEquals(1, Repo.progress(w).seen)
         assertEquals(1, Prefs.todayCount)
+    }
+
+    // Runs the ping on the network thread and its result on the main one.
+    private fun waitPing(sent: () -> Boolean) {
+        for (i in 0 until 500) {
+            shadowOf(Looper.getMainLooper()).idle()
+            if (sent()) return
+            Thread.sleep(10)
+        }
+        error("no ping")
+    }
+
+    @Test
+    fun theLockCardSendsTheDailyPingOnceADayWithoutTheAppOpened() {
+        val pings = CopyOnWriteArrayList<JSONObject>()
+        Telemetry.post = { url, body ->
+            if (url.endsWith("/ping")) pings += JSONObject(body)
+            204
+        }
+        Telemetry.markNoticeShown()
+        Robolectric.buildActivity(LockActivity::class.java).setup()
+        waitPing { Telemetry.sentDay.isNotEmpty() }
+        assertEquals(1, pings.size)
+        assertTrue(pings[0].getBoolean("overlay"))
+        Robolectric.buildActivity(LockActivity::class.java).setup()
+        repeat(20) {
+            shadowOf(Looper.getMainLooper()).idle()
+            Thread.sleep(5)
+        }
+        assertEquals(1, pings.size)
+    }
+
+    @Test
+    fun noPingFromTheLockCardWithStatisticsOff() {
+        var sent = 0
+        Telemetry.post = { _, _ ->
+            sent++
+            204
+        }
+        Telemetry.markNoticeShown()
+        Telemetry.enabled = false
+        Robolectric.buildActivity(LockActivity::class.java).setup()
+        repeat(20) {
+            shadowOf(Looper.getMainLooper()).idle()
+            Thread.sleep(5)
+        }
+        assertEquals(0, sent)
+    }
+
+    @Test
+    fun answersOnTheLockCardAreCountedApartFromThoseInTheApp() {
+        val w = Repo.current()!!
+        countAnswer(w, State.KNOWN, false, onLockScreen = true)
+        countAnswer(w, State.DONT_KNOW, false, onLockScreen = true)
+        countAnswer(w, State.KNOWN, true, onLockScreen = true)
+        countAnswer(w, State.DONT_KNOW, false)
+        val c = Telemetry.counts()
+        assertEquals("""{"know":1,"dontknow":1,"long":1}""", c.getJSONObject("lockans").toString())
+        assertEquals("""{"dontknow":1}""", c.getJSONObject("answers").toString())
     }
 
     @Test

@@ -19,6 +19,7 @@ import org.robolectric.RuntimeEnvironment
 import org.robolectric.Shadows.shadowOf
 import org.robolectric.annotation.Config
 import org.robolectric.shadows.ShadowBuild
+import org.robolectric.shadows.ShadowSettings
 import java.io.File
 import java.util.Calendar
 
@@ -147,6 +148,24 @@ class TelemetryTest {
         assertTrue(p.getString("lock") in names("lock"))
         assertEquals(listOf(1, 1, 1, 7), listOf(p.getInt("cards"), p.getJSONObject("answers").getInt("know"),
             p.getJSONObject("opened").getInt("search"), p.getInt("learned")))
+        assertFalse(p.has("lockans"))
+        assertFalse(p.getBoolean("overlay"))
+    }
+
+    @Test
+    fun lockScreenAnswersGoApartFromTheAnswersInTheApp() {
+        ShadowSettings.setCanDrawOverlays(true)
+        Telemetry.count("answers", "know")
+        Telemetry.count("lockans", "know")
+        Telemetry.count("lockans", "know")
+        Telemetry.count("lockans", "long")
+        assertTrue(ping())
+        val p = posts.single().second
+        assertEquals("""{"know":1}""", p.getJSONObject("answers").toString())
+        assertEquals("""{"know":2,"long":1}""", p.getJSONObject("lockans").toString())
+        assertTrue(p.getJSONObject("lockans").keys().asSequence().all { it in names("answers") })
+        assertTrue(p.getBoolean("overlay"))
+        assertEquals(0, Telemetry.counts().length())
     }
 
     @Test

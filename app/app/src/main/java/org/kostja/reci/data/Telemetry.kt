@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import android.provider.Settings
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.core.content.edit
 import org.json.JSONArray
@@ -40,6 +41,8 @@ object Telemetry {
     // Answers an HTTP POST with its status, or -1 when there was no answer. Tests replace it.
     var post: (url: String, body: String) -> Int = ::httpPost
     var now: () -> Long = System::currentTimeMillis
+    // Whether the lock card may start over the lock screen; without it the card never shows.
+    private var canShowLockCard: () -> Boolean = { false }
 
     // Network calls run one at a time off the main thread; results come back on it.
     private val io = Executors.newSingleThreadExecutor()
@@ -51,6 +54,8 @@ object Telemetry {
     fun init(ctx: Context) {
         sp = ctx.getSharedPreferences("telemetry", Context.MODE_PRIVATE)
         appVersion = clean(ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName)
+        val app = ctx.applicationContext
+        canShowLockCard = { Settings.canDrawOverlays(app) }
         sp.edit {
             if (!sp.contains("id")) putString("id", UUID.randomUUID().toString())
             if (!sp.contains("feedback_id")) putString("feedback_id", UUID.randomUUID().toString())
@@ -170,8 +175,8 @@ object Telemetry {
             .put("cats", JSONArray(Prefs.categories.filter { CAT.matches(it) }.sorted().take(100)))
             .put("mode", Prefs.cardMode).put("theme", Prefs.theme).put("latin", Prefs.latinFirst)
             .put("lock", if (Prefs.lockEnabled) "overlay" else "off").put("learned", learned)
-            .put("deck", Decks.current.id).put("ui", Prefs.uiLang)
-        for (k in listOf("cards", "answers", "opened")) if (c.has(k)) p.put(k, c.get(k))
+            .put("deck", Decks.current.id).put("ui", Prefs.uiLang).put("overlay", canShowLockCard())
+        for (k in listOf("cards", "answers", "opened", "lockans")) if (c.has(k)) p.put(k, c.get(k))
         return p
     }
 

@@ -45,6 +45,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Repo
+import org.kostja.reci.data.Telemetry
 import org.kostja.reci.ui.CardScreen
 import org.kostja.reci.ui.CardText
 import org.kostja.reci.ui.ReciTheme
@@ -205,6 +206,21 @@ class CardLayoutTest {
         compose.onNodeWithText("Готово").assertIsDisplayed()
         compose.onNodeWithContentDescription("Следующее слово").assertIsDisplayed()
         compose.onNodeWithContentDescription("Предыдущее слово").assertIsDisplayed()
+    }
+
+    @Test
+    fun answersOnTheLockCardAreCountedApartAndSendTheDailyPingOnce() {
+        show(411, 823, lock = true)
+        compose.onNodeWithText("Знаю").performClick()
+        compose.waitUntil(10_000) { FakeServer.of("ping").isNotEmpty() }
+        val p = FakeServer.of("ping").single()
+        assertEquals("""{"know":1}""", p.getJSONObject("lockans").toString())
+        assertFalse(p.has("answers"))
+        compose.onNodeWithText("Не знаю").performClick()
+        compose.waitUntil(10_000) { Telemetry.counts().has("lockans") }
+        Thread.sleep(500)
+        assertEquals(1, FakeServer.of("ping").size)
+        assertFalse(Telemetry.counts().has("answers"))
     }
 
     private fun showText(lines: Int) {

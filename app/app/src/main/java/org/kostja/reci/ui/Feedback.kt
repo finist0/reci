@@ -69,14 +69,15 @@ fun openLink(ctx: Context, url: String) {
     }
 }
 
-fun countAnswer(w: Word, a: State, learnedNow: Boolean) {
+// Answers on the lock screen are counted apart from those in the app, never in both.
+fun countAnswer(w: Word, a: State, learnedNow: Boolean, onLockScreen: Boolean = false) {
     val what = when {
         Repo.isArticle(w) -> if (a == State.KNOWN) "hide" else "later"
         learnedNow -> "long"
         a == State.KNOWN -> "know"
         else -> "dontknow"
     }
-    Telemetry.count("answers", what)
+    Telemetry.count(if (onLockScreen) "lockans" else "answers", what)
 }
 
 @Composable
@@ -293,7 +294,7 @@ fun WhatSentDialog(onDismiss: () -> Unit) {
                 Text(
                     t("Раз в день уходит: случайный номер этой установки, платформа, версии приложения и системы, ") +
                         t("язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы ") +
-                        t("и настройки, включена ли карточка на экране блокировки, какие экраны открывали.\n\n") +
+                        t("и настройки, включена ли карточка на экране блокировки и есть ли у неё разрешение, сколько ответов дано на ней, какие экраны открывали.\n\n") +
                         t("Не уходит: слова и ответы по отдельным словам, имя, почта, точное местоположение. Адрес IP сервер не сохраняет."),
                     color = p.secondary,
                 )

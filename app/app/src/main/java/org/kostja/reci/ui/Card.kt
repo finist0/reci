@@ -119,9 +119,11 @@ fun CardScreen(
     var reporting by remember { mutableStateOf<Word?>(null) }
     val onAnswer = { a: State, learnedNow: Boolean ->
         if (w != null) {
-            if (Repo.answer(w, a, learnedNow)) countAnswer(w, a, learnedNow)
+            if (Repo.answer(w, a, learnedNow)) countAnswer(w, a, learnedNow, onLockScreen = onDone != null)
             answered = a
         }
+        // The lock card sends the ping when it starts; an attempt that failed then is retried here.
+        if (onDone != null) sendStats()
         revealed = true
         if (learnedNow) {
             Prefs.hintDone = true

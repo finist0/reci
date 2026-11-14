@@ -1331,9 +1331,9 @@
   "en": "and the app settings. Words and progress are not sent.",
   "sr": "и подешавања апликације. Речи и напредак се не шаљу."
  },
- "и настройки, включена ли карточка на экране блокировки, какие экраны открывали.\n\n": {
-  "en": "and settings, whether the lock screen card is on, which screens were opened.\n\n",
-  "sr": "и подешавања, да ли је укључена картица на закључаном екрану, који су екрани отварани.\n\n"
+ "и настройки, включена ли карточка на экране блокировки и есть ли у неё разрешение, сколько ответов дано на ней, какие экраны открывали.\n\n": {
+  "en": "and settings, whether the lock screen card is on and has its permission, how many answers were given on it, which screens were opened.\n\n",
+  "sr": "и подешавања, да ли је укључена картица на закључаном екрану и да ли има дозволу, колико је одговора дато на њој, који су екрани отварани.\n\n"
  },
  "и настройки, какие экраны открывали.": {
   "en": "and settings, which screens were opened.",
