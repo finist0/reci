@@ -801,7 +801,7 @@ const menu = (title, values, value, label, name) => `
     </label>`;
 
 // The values of prefs.uiLang in the order of the interface language choice.
-const UI_LANGS = ["", "ru", "sr", "en"];
+const UI_LANGS = ["ru", "sr", "en"];
 
 const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 
@@ -832,7 +832,7 @@ function settingsScreen(e) {
         ${t("Прогресс хранится в этом браузере на этом устройстве.")}</div>`);
     const deck = Decks.current();
     // Each language is named in itself, so that a user who cannot read the interface finds their own.
-    const uiNames = [t("Как у колоды"), "Русский", "Српски", "English"];
+    const uiNames = ["Русский", "Српски", "English"];
     const languages = groupTitle(t("Язык")) + panel(menu(t("Учу"), Decks.targets(), deck.target, Decks.name, "target") + line +
         menu(t("Перевод на"), Decks.natives(deck.target), deck.native, Decks.name, "native") + line +
         menu(t("Язык интерфейса"), UI_LANGS, prefs.uiLang, v => uiNames[Math.max(0, UI_LANGS.indexOf(v))], "uilang"));

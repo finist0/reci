@@ -1,9 +1,8 @@
 // Language pairs and the interface language, the counterpart of data/Deck.kt. A deck has the
-// language learned (target) and the user's own (native), which the interface speaks unless the
-// user picked another one (prefs.uiLang). Decks are listed in assets/decks.json, so a new pair
-// needs data only.
+// language learned (target) and the user's own (native), the language of the translations.
+// Decks are listed in assets/decks.json, so a new pair needs data only.
 
-import { prefs, deck, useDeck, hasProgress, FIRST } from "./store.js";
+import { prefs, setPref, deck, useDeck, hasProgress, FIRST } from "./store.js";
 import { toLatin } from "./data.js";
 
 export let all = [{ id: FIRST, target: "sr", native: "ru", words: "words.json", grammar: "grammar.json" }];
@@ -11,17 +10,30 @@ export let all = [{ id: FIRST, target: "sr", native: "ru", words: "words.json", 
 // Russian text -> language -> translation. Russian is the key, so code reads as before.
 let table = {};
 
+// Serbian and the languages close to it.
+const SERBIAN = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"];
+const browserLang = langs => String(langs[0] ?? "").toLowerCase().split(/[-_]/)[0];
+
 // A first start in a browser set to Serbian or a close language opens Russian for Serbs.
 export function guess(langs = navigator.languages ?? [navigator.language]) {
-    const lang = String(langs[0] ?? "").toLowerCase().split(/[-_]/)[0];
-    return ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"].includes(lang) && all.some(d => d.id === "ru-sr") ? "ru-sr" : FIRST;
+    return SERBIAN.includes(browserLang(langs)) && all.some(d => d.id === "ru-sr") ? "ru-sr" : FIRST;
 }
 
-// Earlier users learned the first deck before there was a choice.
+// The interface language of a first start: the browser's, if the interface speaks it.
+export function guessUi(langs = navigator.languages ?? [navigator.language]) {
+    const lang = browserLang(langs);
+    return lang === "ru" ? "ru" : SERBIAN.includes(lang) ? "sr" : "en";
+}
+
+// Earlier users learned the first deck before there was a choice, and kept the interface in the
+// deck's native language before that was a choice. Once stored, the interface language changes
+// only in the settings.
 export function init(decks, ui) {
     if (decks?.length) all = decks;
     table = ui ?? {};
-    if (!deck()) useDeck(prefs.currentKey || hasProgress() ? FIRST : guess());
+    const earlier = prefs.currentKey || hasProgress();
+    if (!deck()) useDeck(earlier ? FIRST : guess());
+    if (!prefs.uiLang) setPref("uiLang", earlier ? current().native : guessUi());
 }
 
 export const current = () => all.find(d => d.id === deck()) ?? all[0];
@@ -29,7 +41,7 @@ export const current = () => all.find(d => d.id === deck()) ?? all[0];
 // Tests set it to see a language without switching decks.
 export const i18n = { override: null };
 
-export const lang = () => i18n.override ?? (prefs.uiLang || current().native);
+export const lang = () => i18n.override ?? prefs.uiLang;
 
 // For dates and language names: Serbian in the script the user reads.
 export const locale = () => (lang() === "sr" && prefs.latinFirst ? "sr-Latn" : lang());

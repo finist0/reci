@@ -1,6 +1,5 @@
-// Language pairs in the web app: choosing the languages of the deck in the settings, the
-// interface in the deck's native language or the one chosen, the first start by the browser's
-// language.
+// Language pairs in the web app: choosing the languages of the deck and of the interface in the
+// settings, the first start by the browser's language.
 // Usage: node --test "web/tests/ui/*.test.mjs"   (CHROME=/path/to/chrome if it is not google-chrome)
 
 import { test, before, after } from "node:test";
@@ -41,7 +40,7 @@ async function switchTo(page, id) {
     await page.tap('[data-act="back"]');
 }
 
-test("the language learned chosen in the settings brings its cards and its language; the progress of each deck stays", async t => {
+test("the language learned chosen in the settings brings its cards; the progress of each deck stays", async t => {
     const page = await app(t);
     assert.equal(await deck(page), "sr-ru");
     const sr = await current(page);
@@ -59,9 +58,10 @@ test("the language learned chosen in the settings brings its cards and its langu
     assert.deepEqual(await options(page, "native"), ["Русский"]);
     assert.equal(await chosen(page, "native"), "Русский");
     await choose(page, "target", "ru");
-    await page.waitFor("document.querySelector('h1')?.textContent === 'Подешавања'");
-    assert.equal(await chosen(page, "target"), "Руски");
-    assert.deepEqual(await options(page, "native"), ["Српски"]);
+    await page.waitFor(`import('./js/decks.js').then(D => D.current().id === "ru-sr")`);
+    assert.equal(await textOf(page, "h1"), "Настройки", "the interface is not the deck's");
+    assert.equal(await chosen(page, "target"), "Русский");
+    assert.deepEqual(await options(page, "native"), ["Сербский"]);
     assert.equal(await has(page, '[data-act="bothscripts"]'), false);
     assert.equal(await has(page, '.setting[data-act="schools"]'), false);
     assert.equal(await page.eval(`document.querySelectorAll('[data-act="stressplace"]').length`), 2);
@@ -71,9 +71,8 @@ test("the language learned chosen in the settings brings its cards and its langu
     assert.notEqual(ru.key, sr.key);
     assert.equal(await page.eval("import('./js/repo.js').then(R => !!R.word('хотеть'))"), true);
     assert.equal(await known(page), 0);
-    assert.deepEqual(await page.eval("[...document.querySelectorAll('.mark')].map(e => e.textContent.trim())"), ["Не знам", "Знам"]);
-    assert.equal(await page.eval("document.documentElement.lang"), "sr");
-    await page.tap(".mark", "Не знам");
+    assert.equal(await page.eval("document.documentElement.lang"), "ru");
+    await page.tap(".mark", "Не знаю");
 
     await switchTo(page, "sr-ru");
     assert.equal(await known(page), 1);
@@ -83,7 +82,7 @@ test("the language learned chosen in the settings brings its cards and its langu
     // Each deck comes back where it was left, also after a reload.
     await switchTo(page, "ru-sr");
     assert.equal((await current(page)).key, ru.key);
-    assert.equal(await page.eval("document.querySelector('.mark.on')?.textContent.trim()"), "Не знам");
+    assert.equal(await page.eval("document.querySelector('.mark.on')?.textContent.trim()"), "Не знаю");
     await page.reload();
     assert.equal(await deck(page), "ru-sr");
     assert.equal((await current(page)).key, ru.key);
@@ -109,8 +108,8 @@ test("a browser in Serbian starts on Russian for Serbs, in the Serbian interface
 test("the interface language chosen in the settings changes the interface at once and stays", async t => {
     const page = await app(t);
     await page.tap('[data-act="settings"]');
-    assert.deepEqual(await options(page, "uilang"), ["Как у колоды", "Русский", "Српски", "English"]);
-    assert.equal(await chosen(page, "uilang"), "Как у колоды");
+    assert.deepEqual(await options(page, "uilang"), ["Русский", "Српски", "English"]);
+    assert.equal(await chosen(page, "uilang"), "Русский");
     await choose(page, "uilang", "en");
     await page.waitFor("document.querySelector('h1')?.textContent === 'Settings'");
     assert.equal(await page.eval("document.documentElement.lang"), "en");
@@ -124,7 +123,7 @@ test("the interface language chosen in the settings changes the interface at onc
 
     await page.tap('[data-act="settings"]');
     assert.equal(await chosen(page, "uilang"), "English");
-    await choose(page, "uilang", "");
+    await choose(page, "uilang", "sr");
     await page.waitFor("document.querySelector('h1')?.textContent === 'Подешавања'");
     assert.deepEqual(page.errors, []);
 });
@@ -142,23 +141,39 @@ test("with a second deck for a language learned, the translations follow the lan
     assert.deepEqual(await options(page, "target"), ["Сербский", "Русский"]);
     assert.deepEqual(await options(page, "native"), ["Русский", "Английский"]);
     assert.equal(await chosen(page, "native"), "Русский");
+    const waitDeck = id => page.waitFor(`import('./js/decks.js').then(D => D.current().id === "${id}")`);
     await choose(page, "native", "en");
-    await page.waitFor("document.querySelector('h1')?.textContent === 'Settings'");
-    assert.equal(await deck(page), "sr-en");
-    assert.equal(await chosen(page, "native"), "English");
+    await waitDeck("sr-en");
+    assert.equal(await chosen(page, "native"), "Английский");
 
     // No deck teaches Russian with English translations: the Serbian one is taken.
     await choose(page, "target", "ru");
-    await page.waitFor("document.querySelector('h1')?.textContent === 'Подешавања'");
-    assert.equal(await deck(page), "ru-sr");
-    assert.deepEqual(await options(page, "native"), ["Српски"]);
+    await waitDeck("ru-sr");
+    assert.deepEqual(await options(page, "native"), ["Сербский"]);
 
     // Nor Serbian with Serbian translations: the first deck for Serbian is taken.
     await choose(page, "target", "sr");
-    await page.waitFor("document.querySelector('h1')?.textContent === 'Настройки'");
-    assert.equal(await deck(page), "sr-ru");
+    await waitDeck("sr-ru");
     assert.deepEqual(await options(page, "native"), ["Русский", "Английский"]);
     assert.deepEqual(page.errors, []);
+});
+
+test("a first start takes the interface language from the browser and keeps it", async t => {
+    const ui = page => page.eval("import('./js/store.js').then(S => S.prefs.uiLang)");
+    for (const [lang, want, title] of [["ru-RU", "ru", "Настройки"], ["sr-RS", "sr", "Подешавања"],
+        ["hr-HR", "sr", "Подешавања"], ["de-DE", "en", "Settings"]]) {
+        const page = await app(t, { lang });
+        assert.equal(await ui(page), want, lang);
+        assert.equal(await page.eval(`document.querySelector('[data-act="settings"]').getAttribute("aria-label")`), title);
+    }
+    // An earlier user keeps the interface the deck gave, whatever the browser says.
+    const earlier = await app(t, { lang: "en-US", storage: { "reci.prefs": JSON.stringify({ currentKey: "бити" }) } });
+    assert.equal(await ui(earlier), "ru");
+    // A stored choice holds in a browser set to another language, and an empty one counts as none.
+    const chosen = await app(t, { lang: "ru-RU", storage: { "reci.prefs": JSON.stringify({ uiLang: "sr" }) } });
+    assert.equal(await ui(chosen), "sr");
+    const empty = await app(t, { lang: "de-DE", storage: { "reci.prefs": JSON.stringify({ uiLang: "" }) } });
+    assert.equal(await ui(empty), "en");
 });
 
 test("a browser in Russian starts on Serbian; an earlier user stays on it", async t => {

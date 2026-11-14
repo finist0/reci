@@ -16,6 +16,8 @@ globalThis.localStorage = {
     removeItem: k => storage.delete(k),
 };
 globalThis.document = { addEventListener() {}, visibilityState: "visible" };
+const browser = { language: "ru-RU", languages: ["ru-RU"] };
+Object.defineProperty(globalThis, "navigator", { configurable: true, value: browser });
 globalThis.fetch = async url => {
     const text = readFileSync(resolve(WEB, url), "utf-8");
     return { ok: true, json: async () => JSON.parse(text), text: async () => text };
@@ -130,8 +132,39 @@ test("the English interface", () => {
     assert.equal(inLanguage("en", () => t("Нет такой строки %d", 5)), "Нет такой строки 5");
 });
 
+test("a first start takes the interface language from the browser; an earlier user keeps the deck's", () => {
+    assert.equal(Decks.guessUi(["ru-RU"]), "ru");
+    assert.equal(Decks.guessUi(["sr-Latn-RS"]), "sr");
+    assert.equal(Decks.guessUi(["hr-HR"]), "sr");
+    assert.equal(Decks.guessUi(["de-DE"]), "en");
+
+    const ui = JSON.parse(readFileSync(resolve(WEB, R.ASSETS, "ui.json"), "utf-8"));
+    const start = (lang, stored = "") => {
+        browser.languages = [lang];
+        S.setPref("uiLang", stored);
+        Decks.init(Decks.all, ui);
+        return S.prefs.uiLang;
+    };
+    try {
+        R.resetAll();
+        S.setPref("currentKey", null);
+        assert.equal(start("ru-RU"), "ru");
+        assert.equal(start("sr-RS"), "sr");
+        assert.equal(start("hr-HR"), "sr");
+        assert.equal(start("de-DE"), "en");
+        assert.equal(t("Настройки"), "Settings");
+        assert.equal(start("ru-RU", "en"), "en", "the stored language stays");
+        S.setPref("currentKey", "бити");
+        assert.equal(start("en-US"), "ru", "an earlier user keeps the interface of the deck");
+    } finally {
+        browser.languages = ["ru-RU"];
+        S.setPref("currentKey", null);
+        S.setPref("uiLang", "ru");
+    }
+});
+
 test("the interface language is chosen apart from the deck and stays over a deck switch", async () => {
-    assert.equal(S.prefs.uiLang, "");
+    assert.equal(S.prefs.uiLang, "ru");
     S.setPref("uiLang", "en");
     assert.equal(t("Настройки"), "Settings");
     assert.equal(plural(5, "карточку", "карточки", "карточек"), "cards");
@@ -140,17 +173,15 @@ test("the interface language is chosen apart from the deck and stays over a deck
 
     await R.switchDeck("ru-sr");
     assert.equal(t("Настройки"), "Settings");
+    assert.equal(S.prefs.uiLang, "en");
     assert.equal(Decks.meaningHint(), "word in Serbian");
-    S.setPref("uiLang", "");
-    assert.equal(t("Настройки"), "Подешавања");
     await R.switchDeck("sr-ru");
-    assert.equal(t("Настройки"), "Настройки");
 
     S.setPref("uiLang", "sr");
     assert.equal(inLanguage("en", () => t("Настройки")), "Settings");
     assert.equal(t("Настройки"), "Подешавања");
     assert.equal(Decks.lang(), "sr");
-    S.setPref("uiLang", "");
+    S.setPref("uiLang", "ru");
 });
 
 // What the settings do on a tap of the language learned.
@@ -213,7 +244,7 @@ test("the learned language and the native one each follow the script setting whe
     await R.switchDeck("ru-sr");
     assert.equal(Decks.primary("слово"), "слово");
     assert.equal(Decks.native("реч"), "reč");
-    assert.equal(Decks.howToSay(), "Kako se kaže na ruskom");
+    assert.equal(inLanguage("sr", Decks.howToSay), "Kako se kaže na ruskom");
     await R.switchDeck("sr-ru");
     S.setPref("latinFirst", false);
 });
