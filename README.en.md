@@ -40,12 +40,14 @@ The app's interface and translations are in Russian.
 <a id="whats-inside"></a>
 ## What is inside
 
-- **Over 10,000 cards:**
-  - 7,300 words with stress, forms and examples;
-  - 2,000 phrases and idioms;
-  - 345 comparisons of similar words, such as *ugovor* or *dogovor*;
-  - 600 short notes on the language.
-- **18,000 examples** with translations, synonyms, antonyms, related words.
+- **16,000 cards:**
+  - 12,500 words with stress, forms and examples;
+  - 2,500 phrases and idioms;
+  - 380 comparisons of similar words, such as *ugovor* or *dogovor*;
+  - 670 short notes on the language.
+- **30,000 examples** with translations, synonyms, antonyms, related words, all stressed.
+- **For Serbs learning Russian:** 4,200 Russian words with Serbian translations and a
+  Serbian interface. The language is chosen in the settings.
 - **Grammar reference:** 26 topics with tables.
 - **Cyrillic or Latin script**, three ways to show stress, pronunciation.
 - **Eight colour themes**, light and dark.
@@ -222,10 +224,10 @@ possible; corrections are welcome, most easily through the flag on the card.
 
 Dictionary sources:
 
-- word frequencies: [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by
+- Serbian and Russian word frequencies: [FrequencyWords](https://github.com/hermitdave/FrequencyWords) by
   Hermit Dave, from OpenSubtitles subtitles, CC BY-SA 4.0;
 - stress: [Wiktionary](https://en.wiktionary.org/) through the
-  [kaikki.org](https://kaikki.org/) dump, CC BY-SA;
+  [kaikki.org](https://kaikki.org/) dumps, CC BY-SA; where they have none, a model set it;
 - some cards and tips draw on openly available materials.
 
 © 2026 Konstantin Khorenko
