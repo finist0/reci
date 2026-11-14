@@ -4,14 +4,14 @@
   "8b1d981ed242235f80677348e7f75738": {
    "release": "v1.5",
    "file": "patch-8b1d981ed242235f80677348e7f75738.json",
-   "sha256": "563cfe8be8ca008f5461a0d0d4459a7f5986a8f11e4848d7cd95cfdbb9a2b5bc",
-   "size": 11338704
+   "sha256": "055bff968e248513d0ebe810d7e7da8335aa0eb9a03d4358cd7ec92d3c99e5c7",
+   "size": 11338641
   },
   "819db8c5e4e189d7751babac6067f100": {
    "release": "v1.1",
    "file": "patch-819db8c5e4e189d7751babac6067f100.json",
-   "sha256": "0a496b969149b62cce55a36ac7a39b67493f84f11e2bb80506d411b6bdbf33cc",
-   "size": 10792657
+   "sha256": "ba7b27de12d68ce1a67feedda89e4f6633db43f382fc421cb46c75666e646566",
+   "size": 10792594
   }
  }
 }
