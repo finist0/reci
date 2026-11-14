@@ -423,5 +423,12 @@ class SettingsScreenTest {
         assertTrue("no card on the lock screen", card != null)
         inst.runOnMainSync { card!!.finish() }
         shell("wm dismiss-keyguard")
+        // A keyguard still fading out dims the screen of the test that runs next.
+        val keyguard = inst.targetContext.getSystemService(android.app.KeyguardManager::class.java)
+        for (i in 0 until 50) {
+            if (!keyguard.isKeyguardLocked) break
+            Thread.sleep(100)
+        }
+        Thread.sleep(500)
     }
 }
