@@ -6,8 +6,12 @@ import android.os.Build
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertHasNoClickAction
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.hasAnyAncestor
+import androidx.compose.ui.test.hasTestTag
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithTag
@@ -125,10 +129,17 @@ class SettingsScreenTest {
     fun aSerbLearningRussianGetsASerbianInterfaceAndRussianCards() {
         compose.onNodeWithContentDescription("Настройки").performClick()
         compose.waitForIdle()
-        click("Учим руски · превод на српски")
+        compose.onNode(hasText("Сербский") and hasAnyAncestor(hasTestTag("target"))).assertExists()
+        compose.onNode(hasText("Русский") and hasAnyAncestor(hasTestTag("native"))).assertExists()
+        compose.onNode(hasText("Русский") and hasAnyAncestor(hasTestTag("target")))
+            .performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
         try {
             compose.waitUntil(10_000) { Decks.current.id == "ru-sr" && Repo.isLoaded }
             compose.onNodeWithText("Подешавања").assertExists()
+            compose.onNodeWithText("Учим").assertExists()
+            // Only one deck learns Russian: its translations are a plain row.
+            compose.onNode(hasText("Српски") and hasAnyAncestor(hasTestTag("native"))).assertHasNoClickAction()
             compose.onNodeWithText("Писмо").assertExists()
             click("Latinica")
             compose.onNodeWithText("Podešavanja").assertExists()

@@ -6,6 +6,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
+import org.kostja.reci.data.Deck
 import org.kostja.reci.data.Decks
 import org.kostja.reci.data.I18n
 import org.kostja.reci.data.Prefs
@@ -79,6 +80,65 @@ class DeckTest {
 
         switchTo("sr-ru")
         assertEquals(State.KNOWN, Repo.progress(Repo.word("кућа")!!).state)
+    }
+
+    // What the settings do on a tap of the language learned.
+    private fun learn(target: String) {
+        Repo.switchDeck(Decks.pick(target, Decks.current.native).id)
+        waitIo()
+        assertEquals(target, Decks.current.target)
+    }
+
+    @Test
+    fun theLanguageLearnedSwitchesTheDeckAndEachKeepsItsProgress() {
+        waitIo()
+        assertEquals(listOf("sr", "ru"), Decks.targets)
+        assertEquals(listOf("ru"), Decks.natives("sr"))
+        assertEquals(listOf("sr"), Decks.natives("ru"))
+        val sr = Repo.words.first { it.key == "кућа" }
+        Repo.answer(sr, State.KNOWN, learned = true)
+        waitIo()
+
+        learn("ru")
+        assertEquals("ru-sr", Decks.current.id)
+        val ru = Repo.words.first { it.key == "дом" }
+        assertEquals(State.NEW, Repo.progress(ru).state)
+        Repo.answer(ru, State.DONT_KNOW)
+        waitIo()
+
+        learn("sr")
+        assertEquals("sr-ru", Decks.current.id)
+        assertEquals(State.KNOWN, Repo.progress(Repo.word("кућа")!!).state)
+        assertTrue("Russian cards are not in the Serbian deck", Repo.word("хотеть") == null)
+        learn("ru")
+        assertEquals(State.DONT_KNOW, Repo.progress(Repo.word("дом")!!).state)
+        learn("sr")
+    }
+
+    @Test
+    fun theTranslationsFollowTheLanguageLearnedAndStayWhereTheyCan() {
+        val srRu = Decks.all.first { it.id == "sr-ru" }
+        val ruSr = Decks.all.first { it.id == "ru-sr" }
+        val srEn = Deck("sr-en", "sr", "en", "words.json", "")
+        Decks.allOverride = listOf(srRu, ruSr, srEn)
+        try {
+            assertEquals(listOf("sr", "ru"), Decks.targets)
+            assertEquals(listOf("ru", "en"), Decks.natives("sr"))
+            assertEquals(listOf("sr"), Decks.natives("ru"))
+            assertEquals("English translations stay", srEn, Decks.pick("sr", "en"))
+            assertEquals(srRu, Decks.pick("sr", "ru"))
+            assertEquals("no Serbian deck translates into Serbian", srRu, Decks.pick("sr", "sr"))
+            assertEquals("no Russian deck translates into English", ruSr, Decks.pick("ru", "en"))
+
+            assertEquals("Сербский", Decks.name("sr"))
+            I18n.langOverride = "en"
+            assertEquals("English", Decks.name("en"))
+            I18n.langOverride = "sr"
+            assertEquals("Руски", Decks.name("ru"))
+        } finally {
+            Decks.allOverride = null
+            I18n.langOverride = null
+        }
     }
 
     @Test

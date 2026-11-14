@@ -671,6 +671,10 @@
   "en": "Translation",
   "sr": "Превод"
  },
+ "Перевод на": {
+  "en": "Translated into",
+  "sr": "Превод на"
+ },
  "Перечитать позже": {
   "en": "Read again later",
   "sr": "Прочитати касније"
@@ -1106,6 +1110,10 @@
  "Учить %d %s": {
   "en": "Learn %d %s",
   "sr": "Учи %d %s"
+ },
+ "Учу": {
+  "en": "Learning",
+  "sr": "Учим"
  },
  "Учу %s · перевод на %s": {
   "en": "Learning %s · translated into %s",

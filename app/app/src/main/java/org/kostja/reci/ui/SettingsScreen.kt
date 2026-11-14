@@ -170,12 +170,13 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
 
             GroupTitle(t("Язык"))
             Panel {
-                if (Decks.all.size > 1) {
-                    Decks.all.forEach { d ->
-                        DeckRow(Decks.title(d), d.id == Decks.current.id) { Repo.switchDeck(d.id) }
-                        Line()
-                    }
+                val deck = Decks.current
+                LangChoice(t("Учу"), "target", Decks.targets, deck.target) { Repo.switchDeck(Decks.pick(it, deck.native).id) }
+                Line()
+                LangChoice(t("Перевод на"), "native", Decks.natives(deck.target), deck.native) {
+                    Repo.switchDeck(Decks.pick(deck.target, it).id)
                 }
+                Line()
                 // Each language is named in itself, so that a user who cannot read the
                 // interface finds their own.
                 Choice(
@@ -659,25 +660,27 @@ private fun NavRow(title: String, summary: String?, onClick: () -> Unit) {
     }
 }
 
+// A language of the deck: a choice among several, a plain row when there is nothing to choose.
 @Composable
-private fun DeckRow(title: String, on: Boolean, onClick: () -> Unit) {
+private fun LangChoice(title: String, tag: String, langs: List<String>, lang: String, onSelect: (String) -> Unit) {
+    if (langs.size > 1) {
+        Choice(title, langs.map(Decks::name), langs.indexOf(lang), tag) { onSelect(langs[it]) }
+        return
+    }
     val p = LocalPalette.current
     Row(
-        Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 18.dp, vertical = 14.dp),
+        Modifier.fillMaxWidth().testTag(tag).padding(horizontal = 18.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Text(title, fontSize = 16.sp, color = if (on) p.accent else p.text, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, modifier = Modifier.weight(1f))
-        if (on) Text("✓", fontSize = 16.sp, color = p.accent)
+        Text(title, fontSize = 16.sp, color = p.text, modifier = Modifier.weight(1f))
+        Text(Decks.name(lang), fontSize = 16.sp, color = p.secondary)
     }
 }
 
 @Composable
-private fun Choice(title: String, options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
+private fun Choice(title: String, options: List<String>, selected: Int, tag: String? = null, onSelect: (Int) -> Unit) {
     val p = LocalPalette.current
-    Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
+    Column((if (tag != null) Modifier.testTag(tag) else Modifier).padding(horizontal = 18.dp, vertical = 12.dp)) {
         Text(title, fontSize = 16.sp, color = p.text)
         Spacer(Modifier.height(8.dp))
         // A long option takes two lines; the others grow to its height.

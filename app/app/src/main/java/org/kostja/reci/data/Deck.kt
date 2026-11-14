@@ -20,12 +20,29 @@ object Decks {
         ctx = c.applicationContext
     }
 
-    val all: List<Deck> by lazy {
+    private val listed: List<Deck> by lazy {
         val a = JSONArray(ctx.assets.open("decks.json").bufferedReader().use { it.readText() })
         (0 until a.length()).map { a.getJSONObject(it) }.map {
             Deck(it.getString("id"), it.getString("target"), it.getString("native"), it.getString("words"), it.optString("grammar"))
         }
     }
+
+    // Tests set it to see a list of decks the app does not carry.
+    internal var allOverride: List<Deck>? = null
+
+    val all: List<Deck>
+        get() = allOverride ?: listed
+
+    // The settings choose the language learned and the language of the translations, not a deck.
+    val targets: List<String>
+        get() = all.map { it.target }.distinct()
+
+    fun natives(target: String) = all.filter { it.target == target }.map { it.native }
+
+    // The deck of the two languages, else the first one of the language learned: a change of
+    // the language learned keeps the translations where a deck has them.
+    fun pick(target: String, native: String) =
+        all.firstOrNull { it.target == target && it.native == native } ?: all.first { it.target == target }
 
     val current: Deck
         get() = all.firstOrNull { it.id == Prefs.deck } ?: all.first()
@@ -57,9 +74,8 @@ object Decks {
         },
     )
 
-    // "Учу сербский · перевод на русский", in the deck's own native language, so that a user
-    // finds the line in their language among the others.
-    fun title(d: Deck) = I18n.tIn(d.native, "Учу %s · перевод на %s").format(langName(d.target, d.native), langName(d.native, d.native))
+    // A language as an option of the settings, named in the interface language.
+    fun name(code: String) = langName(code, I18n.lang).replaceFirstChar { it.titlecase() }
 
     // A word to show the font size and the stress marks on.
     val sample: String
