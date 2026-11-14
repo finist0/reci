@@ -139,16 +139,25 @@ final class ReciUITests: XCTestCase {
         XCTAssertNil(headword.range(of: "[\\u0400-\\u04FF]", options: .regularExpression))
     }
 
+    // An option of the open menu, not a menu row whose value reads the same.
+    private func option(_ label: String) -> XCUIElement {
+        let rows = ["Учу", "Перевод на", "Язык интерфейса", "Учим", "Превод на", "Језик интерфејса"]
+        return app.buttons.matching(NSPredicate(format: "label == %@ AND NOT (identifier IN %@)", label, rows)).firstMatch
+    }
+
     // Russian for Serbs: the language learned is chosen in the settings, and the interface follows the deck.
     func testTheRussianDeckSpeaksSerbian() {
         openSettings()
-        XCTAssertTrue(reach(app.buttons["Сербский"].firstMatch).isSelected)
-        // One deck learns Serbian: the language of its translations is shown, not offered.
-        XCTAssertTrue(app.staticTexts["Перевод на"].exists)
-        app.buttons["Русский"].firstMatch.tap()
+        reach(app.buttons["Учу"].firstMatch).tap()
+        XCTAssertTrue(option("Сербский").waitForExistence(timeout: 5))
+        option("Русский").tap()
         XCTAssertTrue(app.staticTexts["Подешавања"].waitForExistence(timeout: 10))
-        XCTAssertTrue(app.buttons["Руски"].firstMatch.isSelected)
-        XCTAssertTrue(app.staticTexts["Превод на"].exists)
+        // One deck learns Russian: the menu of its translations has one option.
+        app.buttons["Превод на"].firstMatch.tap()
+        XCTAssertTrue(option("Српски").waitForExistence(timeout: 5))
+        XCTAssertFalse(option("Руски").exists)
+        option("Српски").tap()
+        XCTAssertTrue(app.staticTexts["Подешавања"].exists)
         back()
         XCTAssertTrue(app.staticTexts["stage"].waitForExistence(timeout: 10))
         XCTAssertEqual(app.staticTexts["stage"].label, "Нова реч")

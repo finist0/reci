@@ -44,9 +44,15 @@ struct SettingsScreen: View {
                     Group {
                         GroupTitle(text: t("Язык"))
                         Panel {
-                            langChoice(t("Учу"), Decks.targets, deck.target) { model.switchDeck(Decks.pick($0, deck.native).id) }
+                            let targets = Decks.targets
+                            let natives = Decks.natives(deck.target)
+                            menuChoice(t("Учу"), targets.map(Decks.name), targets.firstIndex(of: deck.target) ?? 0) { i in
+                                model.switchDeck(Decks.pick(targets[i], deck.native).id)
+                            }
                             Line()
-                            langChoice(t("Перевод на"), Decks.natives(deck.target), deck.native) { model.switchDeck(Decks.pick(deck.target, $0).id) }
+                            menuChoice(t("Перевод на"), natives.map(Decks.name), natives.firstIndex(of: deck.native) ?? 0) { i in
+                                model.switchDeck(Decks.pick(deck.target, natives[i]).id)
+                            }
                             Line()
                             // Each language is named in itself, so that a user who cannot read
                             // the interface finds their own.
@@ -332,21 +338,6 @@ struct SettingsScreen: View {
         .accessibilityIdentifier(title)
     }
 
-    // A language of the deck: a choice among several, a plain row when there is nothing to choose.
-    @ViewBuilder
-    private func langChoice(_ title: String, _ langs: [String], _ lang: String, _ onSelect: @escaping (String) -> Void) -> some View {
-        if langs.count > 1 {
-            choice(title, langs.map(Decks.name), langs.firstIndex(of: lang) ?? 0) { onSelect(langs[$0]) }
-        } else {
-            HStack {
-                Text(title).font(.ui(16)).foregroundStyle(model.palette.text)
-                Spacer()
-                Text(Decks.name(lang)).font(.ui(16)).foregroundStyle(model.palette.secondary)
-            }
-            .padding(.horizontal, 18).padding(.vertical, 14)
-        }
-    }
-
     private func toggle(_ title: String, _ summary: String?, _ on: Bool, _ set: @escaping (Bool) -> Void) -> some View {
         let p = model.palette
         return Toggle(isOn: Binding(get: { on }, set: set)) {
@@ -360,7 +351,7 @@ struct SettingsScreen: View {
         .accessibilityIdentifier(title)
     }
 
-    // A menu rather than segments: the four options do not fit across a phone.
+    // A menu rather than segments: a list of languages does not fit across a phone.
     private func menuChoice(_ title: String, _ options: [String], _ selected: Int, _ onSelect: @escaping (Int) -> Void) -> some View {
         let p = model.palette
         return HStack {
