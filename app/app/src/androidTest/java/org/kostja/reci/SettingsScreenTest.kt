@@ -6,11 +6,9 @@ import android.os.Build
 import androidx.compose.ui.graphics.toPixelMap
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.SemanticsMatcher
-import androidx.compose.ui.test.assertHasNoClickAction
+import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.assertTextEquals
 import androidx.compose.ui.test.captureToImage
-import androidx.compose.ui.test.hasAnyAncestor
-import androidx.compose.ui.test.hasTestTag
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createEmptyComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -104,6 +102,11 @@ class SettingsScreenTest {
         compose.waitForIdle()
     }
 
+    private fun tap(tag: String) {
+        compose.onNodeWithTag(tag).performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+    }
+
     private fun exists(text: String, substring: Boolean = false) =
         runCatching { compose.onNodeWithText(text, substring = substring).assertExists() }.isSuccess
 
@@ -129,17 +132,22 @@ class SettingsScreenTest {
     fun aSerbLearningRussianGetsASerbianInterfaceAndRussianCards() {
         compose.onNodeWithContentDescription("Настройки").performClick()
         compose.waitForIdle()
-        compose.onNode(hasText("Сербский") and hasAnyAncestor(hasTestTag("target"))).assertExists()
-        compose.onNode(hasText("Русский") and hasAnyAncestor(hasTestTag("native"))).assertExists()
-        compose.onNode(hasText("Русский") and hasAnyAncestor(hasTestTag("target")))
-            .performSemanticsAction(SemanticsActions.OnClick)
-        compose.waitForIdle()
+        compose.onNodeWithTag("target").assert(hasText("Сербский"))
+        compose.onNodeWithTag("native").assert(hasText("Русский"))
+        tap("target")
+        compose.onNodeWithTag("target:sr").assert(hasText("Сербский"))
+        tap("target:ru")
         try {
             compose.waitUntil(10_000) { Decks.current.id == "ru-sr" && Repo.isLoaded }
             compose.onNodeWithText("Подешавања").assertExists()
-            compose.onNodeWithText("Учим").assertExists()
-            // Only one deck learns Russian: its translations are a plain row.
-            compose.onNode(hasText("Српски") and hasAnyAncestor(hasTestTag("native"))).assertHasNoClickAction()
+            compose.onNodeWithTag("target").assert(hasText("Учим")).assert(hasText("Руски"))
+            // Only one deck learns Russian: its menu has one option.
+            compose.onNodeWithTag("native").assert(hasText("Српски"))
+            tap("native")
+            compose.onNodeWithTag("native:sr").assertExists()
+            compose.onNodeWithTag("native:ru").assertDoesNotExist()
+            tap("native:sr")
+            assertEquals("ru-sr", Decks.current.id)
             compose.onNodeWithText("Писмо").assertExists()
             click("Latinica")
             compose.onNodeWithText("Podešavanja").assertExists()

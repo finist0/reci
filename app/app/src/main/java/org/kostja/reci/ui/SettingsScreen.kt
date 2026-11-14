@@ -19,7 +19,6 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -35,6 +34,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Slider
@@ -171,19 +172,20 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
             GroupTitle(t("Язык"))
             Panel {
                 val deck = Decks.current
-                LangChoice(t("Учу"), "target", Decks.targets, deck.target) { Repo.switchDeck(Decks.pick(it, deck.native).id) }
+                MenuChoice(t("Учу"), "target", Decks.targets, deck.target, Decks::name) {
+                    Repo.switchDeck(Decks.pick(it, deck.native).id)
+                }
                 Line()
-                LangChoice(t("Перевод на"), "native", Decks.natives(deck.target), deck.native) {
+                MenuChoice(t("Перевод на"), "native", Decks.natives(deck.target), deck.native, Decks::name) {
                     Repo.switchDeck(Decks.pick(deck.target, it).id)
                 }
                 Line()
                 // Each language is named in itself, so that a user who cannot read the
                 // interface finds their own.
-                Choice(
-                    t("Язык интерфейса"),
-                    listOf(t("Как у колоды"), "Русский", "Српски", "English"),
-                    uiLangs.indexOf(Prefs.uiLang).coerceAtLeast(0),
-                ) { Prefs.uiLang = uiLangs[it] }
+                val uiNames = listOf(t("Как у колоды"), "Русский", "Српски", "English")
+                MenuChoice(t("Язык интерфейса"), "uilang", uiLangs, Prefs.uiLang, { uiNames[uiLangs.indexOf(it).coerceAtLeast(0)] }) {
+                    Prefs.uiLang = it
+                }
             }
 
             GroupTitle(t("Учёба"))
@@ -660,34 +662,65 @@ private fun NavRow(title: String, summary: String?, onClick: () -> Unit) {
     }
 }
 
-// A language of the deck: a choice among several, a plain row when there is nothing to choose.
+// A choice that grows with the languages: the row shows the value, a tap opens the options.
+// Each option is tagged "<tag>:<value>" for the tests.
 @Composable
-private fun LangChoice(title: String, tag: String, langs: List<String>, lang: String, onSelect: (String) -> Unit) {
-    if (langs.size > 1) {
-        Choice(title, langs.map(Decks::name), langs.indexOf(lang), tag) { onSelect(langs[it]) }
-        return
-    }
+private fun MenuChoice(
+    title: String,
+    tag: String,
+    values: List<String>,
+    value: String,
+    label: (String) -> String,
+    onSelect: (String) -> Unit,
+) {
     val p = LocalPalette.current
-    Row(
-        Modifier.fillMaxWidth().testTag(tag).padding(horizontal = 18.dp, vertical = 14.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(title, fontSize = 16.sp, color = p.text, modifier = Modifier.weight(1f))
-        Text(Decks.name(lang), fontSize = 16.sp, color = p.secondary)
+    var open by remember { mutableStateOf(false) }
+    Box {
+        Row(
+            Modifier
+                .fillMaxWidth()
+                .testTag(tag)
+                .clickable { open = true }
+                .padding(start = 18.dp, end = 12.dp, top = 14.dp, bottom = 14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(title, fontSize = 16.sp, color = p.text, modifier = Modifier.weight(1f))
+            Spacer(Modifier.width(12.dp))
+            Text(label(value), fontSize = 16.sp, color = p.secondary)
+            Icon(painterResource(R.drawable.ic_expand_more), null, tint = p.faint, modifier = Modifier.size(22.dp))
+        }
+        DropdownMenu(open, onDismissRequest = { open = false }) {
+            values.forEach { v ->
+                val on = v == value
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            label(v),
+                            fontSize = 16.sp,
+                            color = if (on) p.accent else p.text,
+                            fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+                        )
+                    },
+                    onClick = {
+                        open = false
+                        onSelect(v)
+                    },
+                    modifier = Modifier.testTag("$tag:$v"),
+                )
+            }
+        }
     }
 }
 
 @Composable
-private fun Choice(title: String, options: List<String>, selected: Int, tag: String? = null, onSelect: (Int) -> Unit) {
+private fun Choice(title: String, options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val p = LocalPalette.current
-    Column((if (tag != null) Modifier.testTag(tag) else Modifier).padding(horizontal = 18.dp, vertical = 12.dp)) {
+    Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
         Text(title, fontSize = 16.sp, color = p.text)
         Spacer(Modifier.height(8.dp))
-        // A long option takes two lines; the others grow to its height.
         Row(
             Modifier
                 .fillMaxWidth()
-                .height(IntrinsicSize.Min)
                 .clip(RoundedCornerShape(14.dp))
                 .background(p.panel)
                 .padding(3.dp)
@@ -697,7 +730,6 @@ private fun Choice(title: String, options: List<String>, selected: Int, tag: Str
                 Box(
                     Modifier
                         .weight(1f)
-                        .fillMaxHeight()
                         .clip(RoundedCornerShape(11.dp))
                         .background(if (on) p.card else Color.Transparent)
                         .clickable { onSelect(i) }
@@ -710,7 +742,7 @@ private fun Choice(title: String, options: List<String>, selected: Int, tag: Str
                         fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
                         color = if (on) p.accent else p.secondary,
                         textAlign = TextAlign.Center,
-                        maxLines = 2,
+                        maxLines = 1,
                     )
                 }
             }
