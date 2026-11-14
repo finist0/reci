@@ -77,10 +77,13 @@ public enum Decks {
     // Serbian and the languages close to it.
     static let serbian: Set<String> = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"]
 
-    // A first start opens Serbian for Russians on a phone set to Russian, Russian for Serbs on
-    // one set to Serbian or a close language, and Serbian with English translations elsewhere.
+    static let russianReaders: Set<String> = ["ru", "uk", "be"]
+
+    // A first start opens Serbian with Russian translations on a phone set to Russian, Ukrainian
+    // or Belarusian, Russian for Serbs on one set to Serbian or a close language, and Serbian with
+    // English translations elsewhere.
     public static func guess(_ language: String) -> String {
-        let id = language == "ru" ? first : serbian.contains(language) ? "ru-sr" : "sr-en"
+        let id = russianReaders.contains(language) ? first : serbian.contains(language) ? "ru-sr" : "sr-en"
         return all.contains { $0.id == id } ? id : first
     }
 

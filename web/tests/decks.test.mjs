@@ -272,6 +272,7 @@ test("a first start in a browser in another language learns Serbian with English
         assert.equal(Decks.guess(["ru-RU"]), "sr-ru");
         assert.equal(Decks.guess(["sr-RS"]), "ru-sr");
         for (const l of ["en-US", "de", ""]) assert.equal(Decks.guess([l]), "sr-en", l);
+        for (const l of ["uk-UA", "be-BY"]) assert.equal(Decks.guess([l]), "sr-ru", l);
     });
     const decks = Decks.all;
     Decks.init([srRu, ruSr], {});

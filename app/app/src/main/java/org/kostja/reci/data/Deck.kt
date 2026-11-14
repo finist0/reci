@@ -60,11 +60,14 @@ object Decks {
     // Serbian and the languages close to it.
     private val serbian = setOf("sr", "hr", "bs", "sh", "cnr", "mk", "sl")
 
-    // A first start opens Serbian for Russians on a phone set to Russian, Russian for Serbs on
-    // one set to Serbian or a close language, and Serbian with English translations elsewhere.
+    private val russianReaders = setOf("ru", "uk", "be")
+
+    // A first start opens Serbian with Russian translations on a phone set to Russian, Ukrainian
+    // or Belarusian, Russian for Serbs on one set to Serbian or a close language, and Serbian with
+    // English translations elsewhere.
     fun guess(lang: String = Locale.getDefault().language): String {
         val id = when {
-            lang == "ru" -> FIRST
+            lang in russianReaders -> FIRST
             lang in serbian -> "ru-sr"
             else -> "sr-en"
         }

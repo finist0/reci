@@ -301,6 +301,8 @@ class DeckTest {
             assertEquals("sr-ru", Decks.guess("ru"))
             assertEquals("ru-sr", Decks.guess("sr"))
             assertEquals("ru-sr", Decks.guess("hr"))
+            assertEquals("sr-ru", Decks.guess("uk"))
+            assertEquals("sr-ru", Decks.guess("be"))
             assertEquals("sr-en", Decks.guess("en"))
             assertEquals("sr-en", Decks.guess("de"))
             assertEquals("sr-en", Decks.guess(""))

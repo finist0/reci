@@ -383,6 +383,8 @@ final class DeckTests: XCTestCase {
             XCTAssertEqual(Decks.guess("ru"), "sr-ru")
             XCTAssertEqual(Decks.guess("sr"), "ru-sr")
             XCTAssertEqual(Decks.guess("hr"), "ru-sr")
+            XCTAssertEqual(Decks.guess("uk"), "sr-ru")
+            XCTAssertEqual(Decks.guess("be"), "sr-ru")
             XCTAssertEqual(Decks.guess("en"), "sr-en")
             XCTAssertEqual(Decks.guess("de"), "sr-en")
             XCTAssertEqual(Decks.guess(""), "sr-en")

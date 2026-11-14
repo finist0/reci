@@ -12,13 +12,15 @@ let table = {};
 
 // Serbian and the languages close to it.
 const SERBIAN = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"];
+const RUSSIAN_READERS = ["ru", "uk", "be"];
 const browserLang = langs => String(langs[0] ?? "").toLowerCase().split(/[-_]/)[0];
 
-// A first start opens Serbian for Russians in a browser set to Russian, Russian for Serbs in one
-// set to Serbian or a close language, and Serbian with English translations elsewhere.
+// A first start opens Serbian with Russian translations in a browser set to Russian, Ukrainian or
+// Belarusian, Russian for Serbs in one set to Serbian or a close language, and Serbian with
+// English translations elsewhere.
 export function guess(langs = navigator.languages ?? [navigator.language]) {
     const lang = browserLang(langs);
-    const id = lang === "ru" ? FIRST : SERBIAN.includes(lang) ? "ru-sr" : "sr-en";
+    const id = RUSSIAN_READERS.includes(lang) ? FIRST : SERBIAN.includes(lang) ? "ru-sr" : "sr-en";
     return all.some(d => d.id === id) ? id : FIRST;
 }
 
