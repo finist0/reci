@@ -1,6 +1,9 @@
 // Labels and text helpers, the same as in the Android app (data/Models.kt, Translit.kt, Accents.kt).
+// The labels are Russian; t() turns them into the user's language when they are read.
 
-export const levels = [
+import { t } from "./decks.js";
+
+const levelsRu = [
     [1, "A1 · Начальный"],
     [2, "A2 · Элементарный"],
     [3, "B1 · Средний"],
@@ -8,7 +11,7 @@ export const levels = [
     [5, "C1 · Продвинутый"],
 ];
 
-export const topics = [
+const topicsRu = [
     ["basic", "Базовые слова"],
     ["people", "Люди"],
     ["family", "Семья"],
@@ -41,22 +44,29 @@ export const topics = [
     ["abstract", "Абстрактные понятия"],
 ];
 
-export const sections = [["X:phrase", "Выражения"], ["X:compare", "Похожие слова"], ["X:note", "Заметки"]];
+const sectionsRu = [["X:phrase", "Выражения"], ["X:compare", "Похожие слова"], ["X:note", "Заметки"]];
 
-export const lists = [["M:dontknow", "Не знаю"], ["M:known", "Знаю"], ["M:fav", "Избранное"]];
+const listsRu = [["M:dontknow", "Не знаю"], ["M:known", "Знаю"], ["M:fav", "Избранное"]];
 
-export const orders = ["По частоте", "Вперемешку", "По алфавиту"];
+const ordersRu = ["По частоте", "Вперемешку", "По алфавиту"];
 
-const levelNames = new Map(levels);
-const topicNames = new Map(topics);
-const sectionNames = new Map(sections);
-const listNames = new Map(lists);
+const translated = list => list.map(([id, name]) => [id, t(name)]);
+
+export const levels = () => translated(levelsRu);
+export const topics = () => translated(topicsRu);
+export const sections = () => translated(sectionsRu);
+export const lists = () => translated(listsRu);
+export const orders = () => ordersRu.map(o => t(o));
+
+const levelNames = new Map(levelsRu);
+const topicNames = new Map(topicsRu);
+const sectionNames = new Map(sectionsRu);
+const listNames = new Map(listsRu);
 
 export function category(id) {
-    if (id.startsWith("L")) return levelNames.get(Number(id.slice(1))) ?? id;
-    if (id.startsWith("T:")) return topicNames.get(id.slice(2)) ?? id;
-    if (id.startsWith("X:")) return sectionNames.get(id) ?? id;
-    return listNames.get(id) ?? id;
+    const name = id.startsWith("L") ? levelNames.get(Number(id.slice(1)))
+        : id.startsWith("T:") ? topicNames.get(id.slice(2)) : id.startsWith("X:") ? sectionNames.get(id) : listNames.get(id);
+    return name ? t(name) : id;
 }
 
 export function levelShort(level) {
@@ -69,14 +79,7 @@ const posNames = {
     compare: "похожие слова", note: "заметка",
 };
 
-export const pos = code => posNames[code] ?? code;
-
-export function plural(n, one, few, many) {
-    const m10 = n % 10, m100 = n % 100;
-    if (m10 === 1 && m100 !== 11) return one;
-    if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-    return many;
-}
+export const pos = code => (posNames[code] ? t(posNames[code]) : code);
 
 const latin = {
     "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "ђ": "đ", "е": "e", "ж": "ž", "з": "z",
@@ -127,7 +130,7 @@ export function strip(text) {
     for (const ch of s) {
         const mark = STRESS.has(ch) || ch === "̄";
         if (!mark || !vowel) out += ch;
-        if (!/\p{Mn}/u.test(ch)) vowel = "аеиоурАЕИОУР".includes(ch);
+        if (!/\p{Mn}/u.test(ch)) vowel = "аеиоурАЕИОУРяюыэёЯЮЫЭЁ".includes(ch);
     }
     return out.length === s.length ? text : out.normalize("NFC");
 }

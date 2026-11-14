@@ -3,6 +3,8 @@
 
 import * as D from "./data.js";
 import * as R from "./repo.js";
+import * as Decks from "./decks.js";
+import { t, plural, primary, native } from "./decks.js";
 import { prefs, setPref, setPrefs, onChange, exportData, importData, hasProgress, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
 import { speak, voiceName, onVoices, canSpeak } from "./speech.js";
 import * as T from "./telemetry.js";
@@ -69,23 +71,22 @@ const icon = (name, cls = "") => `<svg class="ic ${cls}" viewBox="0 0 24 24" ari
 // An element that runs action `act` with `arg` when tapped.
 const act = (a, arg = "") => `data-act="${a}" data-arg="${esc(arg)}"`;
 
-// --- Text helpers (Prefs.primary, headword, secondary) ---
-
-const primary = s => (prefs.latinFirst ? D.toLatin(s) : s);
+// --- Text helpers (Prefs.primary, native, headword, secondary) ---
 
 function headword(w) {
-    // A note's title is Russian; transliterating it would garble it.
-    if (w.pos === "note") return w.cyr;
+    // A note's title is in the user's language.
+    if (w.pos === "note") return native(w.cyr);
     return primary(w.acc ? D.showAccents(w.acc, prefs.accentMode) : w.cyr);
 }
 
 // Serbian text that may carry stress marks: an example, a note.
 const marked = s => D.showAccents(s, prefs.accentMode);
 
-// A word a card refers to, with the stress of its own card when there is one.
-const linked = sr => primary(R.wordByCyr(sr)?.acc ? marked(R.wordByCyr(sr).acc) : sr);
+// A word a card refers to, stressed as given or as on its own card.
+const linked = (word, acc = "") => primary(acc ? marked(acc) : R.wordByCyr(word)?.acc ? marked(R.wordByCyr(word).acc) : word);
 
-const secondary = cyr => (prefs.showBothScripts ? (prefs.latinFirst ? cyr : D.toLatin(cyr)) : null);
+const secondary = cyr =>
+    (prefs.showBothScripts && Decks.current().target === "sr" ? (prefs.latinFirst ? cyr : D.toLatin(cyr)) : null);
 
 // "[x]" marks the headword inside an example sentence.
 const highlighted = text => esc(text).replace(/\[([^\]]*)\]/g, '<b class="hl">$1</b>');
@@ -168,7 +169,7 @@ function openWord(sr, from) {
 
 const header = title => `
     <header class="head">
-        <button class="round" ${act("back")} aria-label="Назад">${icon("back")}</button>
+        <button class="round" ${act("back")} aria-label="${t("Назад")}">${icon("back")}</button>
         <h1>${esc(title)}</h1>
     </header>`;
 
@@ -190,10 +191,10 @@ const mark = (on, color, state, label, brief, extra = "") => `
 function marksRow(answered, article) {
     return `
     <div class="marks">${article
-        ? mark(answered === DONT_KNOW, "var(--secondary)", DONT_KNOW, "Перечитать позже", "Позже") +
-          mark(answered === KNOWN, "var(--known)", KNOWN, "Не показывать", "Скрыть")
-        : mark(answered === DONT_KNOW, "var(--red)", DONT_KNOW, "Не знаю") +
-          mark(answered === KNOWN, "var(--known)", KNOWN, "Знаю", "", 'data-long="learned"')}
+        ? mark(answered === DONT_KNOW, "var(--secondary)", DONT_KNOW, t("Перечитать позже"), t("Позже")) +
+          mark(answered === KNOWN, "var(--known)", KNOWN, t("Не показывать"), t("Скрыть"))
+        : mark(answered === DONT_KNOW, "var(--red)", DONT_KNOW, t("Не знаю")) +
+          mark(answered === KNOWN, "var(--known)", KNOWN, t("Знаю"), "", 'data-long="learned"')}
     </div>`;
 }
 
@@ -202,51 +203,51 @@ function marksRow(answered, article) {
 function gramLine(w) {
     let out = `<span>${esc(D.pos(w.pos))}</span>`;
     if (!w.gram) return out;
-    if (!w.ruGram) return out + `<b class="${w.pos === "noun" ? "noun-gram" : ""}">${esc(w.gram)}</b>`;
+    if (!w.ruGram) return out + `<b class="${w.pos === "noun" ? "noun-gram" : ""}">${esc(native(w.gram))}</b>`;
     const strong = !!w.ruNoun;
-    const rest = strong ? `  ≠ рус. «${esc(w.ruNoun)}» ${esc(w.ruGram)}` : `  · в рус. ${esc(w.ruGram)}`;
-    return out + `<span class="gender ${strong ? "strong" : ""}"><b>${esc(w.gram)}</b>${rest}</span>`;
+    const rest = strong ? t("  ≠ рус. «%s» %s", w.ruNoun, w.ruGram) : t("  · в рус. %s", w.ruGram);
+    return out + `<span class="gender ${strong ? "strong" : ""}"><b>${esc(native(w.gram))}</b>${esc(rest)}</span>`;
 }
 
 const meanings = w => `<div class="meanings">${w.meanings.map((m, i) =>
-    `<div class="meaning"><span class="num">${i + 1}</span><span>${esc(m)}</span></div>`).join("")}</div>`;
+    `<div class="meaning"><span class="num">${i + 1}</span><span>${esc(native(m))}</span></div>`).join("")}</div>`;
 
 function grammarLinks(w) {
     const compares = R.comparesFor(w), links = R.linksFor(w);
     if (!compares.length && !links.length) return "";
     return `<div class="links">${compares.map(c =>
-        `<button class="link cmp" ${act("ref", c.key)}>≈ ${esc(c.meanings[0] || c.cyr)}</button>`).join("")}${links.map(id =>
+        `<button class="link cmp" ${act("ref", c.key)}>≈ ${esc(native(c.meanings[0] ?? "") || primary(c.cyr))}</button>`).join("")}${links.map(id =>
         `<button class="link" ${act("ref", id)}>§ ${esc(R.topic(id).title)}</button>`).join("")}</div>`;
 }
 
 const sectionLabel = t => `<div class="label">${esc(t)}</div>`;
 const divider = '<div class="divider"></div>';
-const more = sr => (R.wordByCyr(sr) ? '<span class="more"> ›</span>' : "");
+const more = word => (R.wordByCyr(word) ? '<span class="more"> ›</span>' : "");
 
 function details(w) {
     let out = "";
     if (w.examples.length) {
-        out += divider + sectionLabel("Примеры") + '<div class="examples">' + w.examples.map(e => `
-            <button class="example" ${act("say", plain(e.sr))}>
-                <span class="sr-text">${highlighted(primary(marked(e.sr)))}</span><span class="ru">${esc(e.ru)}</span>
+        out += divider + sectionLabel(t("Примеры")) + '<div class="examples">' + w.examples.map(e => `
+            <button class="example" ${act("say", plain(e.text))}>
+                <span class="sr-text">${highlighted(primary(marked(e.text)))}</span><span class="ru">${esc(native(e.tr))}</span>
             </button>`).join("") + "</div>";
     }
     if (w.syn.length || w.ant.length) {
         out += divider;
-        const chips = (items, cls) => `<div class="chips">${items.map(s =>
-            `<button class="wchip ${cls}" ${act("word", s)}>${esc(linked(s))}${more(s)}</button>`).join("")}</div>`;
-        if (w.syn.length) out += sectionLabel("Синонимы") + chips(w.syn, "syn");
+        const chips = (items, accs, cls) => `<div class="chips">${items.map((s, i) =>
+            `<button class="wchip ${cls}" ${act("word", s)}>${esc(linked(s, accs[i] ?? ""))}${more(s)}</button>`).join("")}</div>`;
+        if (w.syn.length) out += sectionLabel(t("Синонимы")) + chips(w.syn, w.synAcc, "syn");
         if (w.syn.length && w.ant.length) out += '<div class="gap"></div>';
-        if (w.ant.length) out += sectionLabel("Антонимы") + chips(w.ant, "ant");
+        if (w.ant.length) out += sectionLabel(t("Антонимы")) + chips(w.ant, w.antAcc, "ant");
     }
     if (w.related.length) {
-        out += divider + sectionLabel("Связанные слова") + '<div class="related">' + w.related.map(r => `
-            <button class="rel" ${act("word", r.sr)}><b>${esc(linked(r.sr))}</b>${more(r.sr)}<span class="dash">—</span>${esc(r.ru)}</button>`).join("") + "</div>";
+        out += divider + sectionLabel(t("Связанные слова")) + '<div class="related">' + w.related.map(r => `
+            <button class="rel" ${act("word", r.word)}><b>${esc(linked(r.word, r.acc))}</b>${more(r.word)}<span class="dash">—</span>${esc(native(r.tr))}</button>`).join("") + "</div>";
     }
     const notes = [w.note, ...w.tips].filter(Boolean);
     if (notes.length) {
-        out += `<div class="useful"><div class="useful-title">Полезно знать</div>${notes.map(t =>
-            `<div class="bullet"><span>•</span><span>${esc(marked(t))}</span></div>`).join("")}</div>`;
+        out += `<div class="useful"><div class="useful-title">${t("Полезно знать")}</div>${notes.map(s =>
+            `<div class="bullet"><span>•</span><span>${esc(native(marked(s)))}</span></div>`).join("")}</div>`;
     }
     return out;
 }
@@ -261,48 +262,48 @@ function wordBody(w, { slide = false, covered = slide, hideWord = false } = {}) 
         ${sec !== null ? `<div class="secondary">${esc(sec)}</div>` : ""}
         <div class="headword" style="font-size:${size}">${esc(headword(w))}</div>
         <div class="gramrow">
-            <button class="speak" ${act("say", w.cyr)} aria-label="Произнести">${icon("volume")}</button>
+            <button class="speak" ${act("say", w.cyr)} aria-label="${t("Произнести")}">${icon("volume")}</button>
             <div><div class="gram">${gramLine(w)}</div>${w.forms ? `<div class="forms">${esc(primary(w.forms))}</div>` : ""}</div>
         </div>
         ${grammarLinks(w)}
-        <div class="meanings-box">${meanings(w)}${covered ? `<button class="cover" ${act("uncover")}>Показать перевод</button>` : ""}</div>
+        <div class="meanings-box">${meanings(w)}${covered ? `<button class="cover" ${act("uncover")}>${t("Показать перевод")}</button>` : ""}</div>
         ${details(w)}`;
 }
 
 // The translation side only: meanings and grammar, with a button that shows the word.
 function recallBody(w) {
-    // The Russian side of the examples as a hint; the Serbian sentences would give the word away.
+    // The translations of the examples as a hint; the sentences themselves would give the word away.
     const hints = w.examples.length
-        ? divider + sectionLabel("Как сказать по-сербски") + `<div class="hints">${w.examples.map(e => `<div>«${esc(e.ru)}»</div>`).join("")}</div>`
+        ? divider + sectionLabel(Decks.howToSay()) + `<div class="hints">${w.examples.map(e => `<div>«${esc(native(e.tr))}»</div>`).join("")}</div>`
         : "";
     return `
         <div class="hidden-word">· · ·</div>
         <div class="gram">${gramLine(w)}</div>
         ${meanings(w)}
         ${hints}
-        <button class="reveal" ${act("reveal")}>Показать слово</button>`;
+        <button class="reveal" ${act("reveal")}>${t("Показать слово")}</button>`;
 }
 
 // Comparisons ("compare") and short notes ("note") share the card but not the word layout.
 function articleBody(w) {
     const compare = w.pos === "compare";
-    let out = sectionLabel(compare ? "Похожие слова" : "Заметка") +
-        `<div class="article-title">${esc(compare ? (w.meanings[0] || primary(w.cyr)) : w.cyr)}</div>`;
+    let out = sectionLabel(compare ? t("Похожие слова") : t("Заметка")) +
+        `<div class="article-title">${esc(compare ? (native(w.meanings[0] ?? "") || primary(w.cyr)) : native(w.cyr))}</div>`;
     if (compare) {
         out += '<div class="items">' + w.related.map(r => `
-            <button class="item" ${act("word", r.sr)}><b>${esc(linked(r.sr))}${more(r.sr)}</b><span>${esc(r.ru)}</span></button>`).join("") + "</div>";
-        if (w.note) out += `<p class="article-text">${esc(marked(w.note))}</p>`;
+            <button class="item" ${act("word", r.word)}><b>${esc(linked(r.word, r.acc))}${more(r.word)}</b><span>${esc(native(r.tr))}</span></button>`).join("") + "</div>";
+        if (w.note) out += `<p class="article-text">${esc(native(marked(w.note)))}</p>`;
     } else {
-        out += `<p class="article-text">${esc(marked(w.note))}</p>`;
+        out += `<p class="article-text">${esc(native(marked(w.note)))}</p>`;
         if (w.related.length) {
-            out += sectionLabel("Слова") + '<div class="related">' + w.related.map(r => `
-                <button class="rel" ${act("word", r.sr)}><b>${esc(linked(r.sr))}</b><span class="dash">—</span>${esc(r.ru)}</button>`).join("") + "</div>";
+            out += sectionLabel(t("Слова")) + '<div class="related">' + w.related.map(r => `
+                <button class="rel" ${act("word", r.word)}><b>${esc(linked(r.word, r.acc))}</b><span class="dash">—</span>${esc(native(r.tr))}</button>`).join("") + "</div>";
         }
     }
     if (w.examples.length) {
-        out += divider + sectionLabel("Примеры") + '<div class="examples">' + w.examples.map(e => `
-            <button class="example plain" ${act("say", plain(e.sr))}>
-                <span class="sr-text">${highlighted(primary(marked(e.sr)))}</span><span class="ru">${esc(e.ru)}</span>
+        out += divider + sectionLabel(t("Примеры")) + '<div class="examples">' + w.examples.map(e => `
+            <button class="example plain" ${act("say", plain(e.text))}>
+                <span class="sr-text">${highlighted(primary(marked(e.text)))}</span><span class="ru">${esc(native(e.tr))}</span>
             </button>`).join("") + "</div>";
     }
     return out;
@@ -314,12 +315,12 @@ function articleBody(w) {
 function stageLabel(w) {
     if (R.isArticle(w)) return null;
     const p = R.shownProgress(w);
-    const what = prefs.cardMode === 2 ? "перевод" : "слово";
-    if (R.isDue(p)) return `Проверка: вспомните ${what}`;
-    if (p.phase === R.RECALL) return `Вспомните ${what} · «Знаю» ${p.streak} из 3`;
-    if (p.phase === R.LEARNED) return "Выучено";
-    if (p.state === DONT_KNOW || p.state === UNSURE) return "Ещё раз: запомните слово";
-    return "Новое слово";
+    const what = prefs.cardMode === 2 ? t("перевод") : t("слово");
+    if (R.isDue(p)) return t("Проверка: вспомните %s", what);
+    if (p.phase === R.RECALL) return t("Вспомните %s · «Знаю» %d из 3", what, p.streak);
+    if (p.phase === R.LEARNED) return t("Выучено");
+    if (p.state === DONT_KNOW || p.state === UNSURE) return t("Ещё раз: запомните слово");
+    return t("Новое слово");
 }
 
 // Fixed for one showing of a card: answering moves the word to its next stage, but the card on
@@ -333,7 +334,7 @@ function cardShow(w) {
         const p = R.shownProgress(w);
         show = {
             id, key: w.key, recall: R.asksRecall(w), stage: stageLabel(w), answered, revealed: answered !== null,
-            covered: prefs.cardMode === 2 && !R.isArticle(w), mode: prefs.cardMode,
+            covered: prefs.cardMode === 2 && !R.isArticle(w), mode: prefs.cardMode, latin: prefs.latinFirst,
             fresh: !R.isArticle(w) && p.phase <= R.INTRO && p.streak === 0, hintCounted: false, hint: false,
         };
         if (R.markShown(w)) T.count("cards");
@@ -344,11 +345,20 @@ function cardShow(w) {
             covered: prefs.cardMode === 2 && !R.isArticle(w),
         });
     }
+    if (show.latin !== prefs.latinFirst) Object.assign(show, { latin: prefs.latinFirst, stage: stageLabel(w) });
     return show;
 }
 
-const clockFmt = new Intl.DateTimeFormat("ru", { hour: "2-digit", minute: "2-digit" });
-const dateFmt = new Intl.DateTimeFormat("ru", { weekday: "short", day: "numeric", month: "short" });
+// The clock and the date in the user's language.
+const formats = new Map();
+
+function dateFormat(time) {
+    const locale = Decks.locale(), key = locale + time;
+    if (!formats.has(key)) {
+        formats.set(key, new Intl.DateTimeFormat(locale, time ? { hour: "2-digit", minute: "2-digit" } : { weekday: "short", day: "numeric", month: "short" }));
+    }
+    return formats.get(key);
+}
 
 function deckChip() {
     const cats = prefs.categories;
@@ -375,22 +385,22 @@ function cardScreen() {
     const now = new Date();
     const head = `
         <header class="topbar">
-            <div class="clock"><div class="time">${clockFmt.format(now)}</div><div class="date">${esc(dateFmt.format(now))}</div></div>
+            <div class="clock"><div class="time">${dateFormat(true).format(now)}</div><div class="date">${esc(dateFormat(false).format(now))}</div></div>
             <div class="bar">
                 ${deckChip()}
                 <div class="icons">
-                    <button ${act("search")} aria-label="Поиск">${icon("search")}</button>
-                    <button ${act("ref")} aria-label="Грамматика">${icon("book")}</button>
-                    <button ${act("settings")} aria-label="Настройки">${icon("settings")}</button>
+                    <button ${act("search")} aria-label="${t("Поиск")}">${icon("search")}</button>
+                    <button ${act("ref")} aria-label="${t("Грамматика")}">${icon("book")}</button>
+                    <button ${act("settings")} aria-label="${t("Настройки")}">${icon("settings")}</button>
                 </div>
             </div>
         </header>`;
     if (!w) {
         return head + `
             <div class="card-wrap"><div class="empty">
-                <div class="empty-title">Здесь пока пусто</div>
-                <div class="empty-text">В выбранных разделах не осталось слов</div>
-                <button class="primary" ${act("categories")}>Выбрать слова</button>
+                <div class="empty-title">${t("Здесь пока пусто")}</div>
+                <div class="empty-text">${t("В выбранных разделах не осталось слов")}</div>
+                <button class="primary" ${act("categories")}>${t("Выбрать слова")}</button>
             </div></div>` + bottomNav();
     }
     const s = cardShow(w);
@@ -400,11 +410,11 @@ function cardScreen() {
             ${cardScroll(`card-${esc(s.id)}`, w, `
                 ${s.stage ? `<div class="stage">${esc(s.stage)}</div>` : ""}
                 ${wordBody(w, { slide: prefs.cardMode === 2 && !R.isArticle(w), covered: s.covered, hideWord: s.recall && !s.revealed })}`,
-                `<button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="Избранное">${icon(fav ? "star" : "star_border")}</button>`)}
-            ${learnedToast ? toast("Слово отмечено выученным") : sentToast ? toast(sentToast) : ""}
+                `<button class="star ${fav ? "on" : ""}" ${act("fav", w.key)} aria-label="${t("Избранное")}">${icon(fav ? "star" : "star_border")}</button>`)}
+            ${learnedToast ? toast(t("Слово отмечено выученным")) : sentToast ? toast(sentToast) : ""}
         </div>
         ${statsNotice()}
-        ${prefs.useMarks && s.hint ? longPressHint : ""}
+        ${prefs.useMarks && s.hint ? longPressHint() : ""}
         <div class="controls">
             ${prefs.useMarks ? marksRow(s.answered, R.isArticle(w)) : ""}
             ${bottomNav()}
@@ -414,18 +424,17 @@ function cardScreen() {
 
 // --- Statistics notice and messages to the developer ---
 
-const STATS_SUMMARY = "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки";
-
 const statsNotice = () => {
     if (T.state.noticeClosed) return "";
     T.noticeShown();
-    return `<div class="tip notice"><span>Приложение раз в день отправляет анонимную статистику: сколько карточек
-        показано, какие разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика».</span>
-        <button ${act("closenotice")} aria-label="Понятно">✕</button></div>`;
+    return `<div class="tip notice"><span>${t("Приложение раз в день отправляет анонимную статистику: сколько карточек показано, какие ") +
+        t("разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика».")}</span>
+        <button ${act("closenotice")} aria-label="${t("Понятно")}">✕</button></div>`;
 };
 
-const WORD_PROBLEMS = [["translation", "Перевод"], ["stress", "Ударение"], ["example", "Пример"], ["forms", "Род или формы"], ["other", "Другое"]];
-const ARTICLE_PROBLEMS = [["text", "Ошибка в тексте"], ["other", "Другое"]];
+const wordProblems = () =>
+    [["translation", t("Перевод")], ["stress", t("Ударение")], ["example", t("Пример")], ["forms", t("Род или формы")], ["other", t("Другое")]];
+const articleProblems = () => [["text", t("Ошибка в тексте")], ["other", t("Другое")]];
 
 // The text of a card. The star, the flag and the school button scroll with it; the flag and the
 // school button come after the text, in the bottom corner of a short card and at the end of a
@@ -433,12 +442,12 @@ const ARTICLE_PROBLEMS = [["text", "Ошибка в тексте"], ["other", "�
 const cardScroll = (id, w, body, star = "") => `<div class="card-scroll" data-scroll="${id}">
     <div class="card-body">${body}</div>${star}
     <div class="card-icons">
-        <button class="flag schools" ${act("schools")} aria-label="Куда пойти учиться">${icon("school")}</button>
-        <button class="flag" ${act("report", w.key)} aria-label="Сообщить об ошибке">${icon("flag")}</button>
+        <button class="flag schools" ${act("schools")} aria-label="${t("Куда пойти учиться")}">${icon("school")}</button>
+        <button class="flag" ${act("report", w.key)} aria-label="${t("Сообщить об ошибке")}">${icon("flag")}</button>
     </div></div>`;
 
 const emailField = (name, value) =>
-    `<input type="email" inputmode="email" autocomplete="email" data-input="${name}" placeholder="Почта для ответа, если нужен ответ" value="${esc(value)}">`;
+    `<input type="email" inputmode="email" autocomplete="email" data-input="${name}" placeholder="${t("Почта для ответа, если нужен ответ")}" value="${esc(value)}">`;
 
 const formError = f => (f.error ? `<div class="form-error">${esc(f.error)}</div>` : "");
 
@@ -446,16 +455,16 @@ function reportDialog(e) {
     const r = e.report;
     if (!r) return "";
     const w = R.word(r.key);
-    const problems = R.isArticle(w) ? ARTICLE_PROBLEMS : WORD_PROBLEMS;
+    const problems = R.isArticle(w) ? articleProblems() : wordProblems();
     return `<div class="modal"><div class="dialog form">
-        <div class="dialog-title">Что не так с карточкой?</div>
-        <div class="dialog-text">${esc(primary(w.cyr))}</div>
-        <div class="chips">${problems.map(([k, t]) => chip(t, r.problem === k, "problem", k)).join("")}</div>
-        <textarea data-input="reporttext" rows="4" maxlength="2000" placeholder="Что именно не так">${esc(r.text)}</textarea>
+        <div class="dialog-title">${t("Что не так с карточкой?")}</div>
+        <div class="dialog-text">${esc(w.pos === "note" ? native(w.cyr) : primary(w.cyr))}</div>
+        <div class="chips">${problems.map(([k, label]) => chip(label, r.problem === k, "problem", k)).join("")}</div>
+        <textarea data-input="reporttext" rows="4" maxlength="2000" placeholder="${t("Что именно не так")}">${esc(r.text)}</textarea>
         ${emailField("reportemail", r.email)}
         ${formError(r)}
-        <div class="dialog-buttons"><button ${act("closeform")}>Отмена</button>
-            <button ${act("sendreport")} ${r.problem ? "" : "disabled"}>Отправить</button></div>
+        <div class="dialog-buttons"><button ${act("closeform")}>${t("Отмена")}</button>
+            <button ${act("sendreport")} ${r.problem ? "" : "disabled"}>${t("Отправить")}</button></div>
     </div></div>`;
 }
 
@@ -463,11 +472,11 @@ function reportDialog(e) {
 let crashOffer = null;
 
 const crashDialog = () => (crashOffer === null ? "" : `<div class="modal"><div class="dialog form">
-        <div class="dialog-title">В прошлый раз случилась ошибка</div>
-        <div class="dialog-text">В прошлый раз в приложении случилась ошибка. Отправить разработчику отчёт, чтобы он мог
-        это исправить? В отчёте место в коде, где случилась ошибка, браузер, размер экрана и настройки приложения.
-        Слова и прогресс не отправляются.</div>
-        <div class="dialog-buttons"><button ${act("dropcrash")}>Не отправлять</button><button ${act("sendcrash")}>Отправить</button></div>
+        <div class="dialog-title">${t("В прошлый раз случилась ошибка")}</div>
+        <div class="dialog-text">${t("В прошлый раз в приложении случилась ошибка. Отправить разработчику отчёт, чтобы он мог это исправить?")}
+        ${t("В отчёте место в коде, где случилась ошибка, браузер, размер экрана и настройки приложения.")}
+        ${t("Слова и прогресс не отправляются.")}</div>
+        <div class="dialog-buttons"><button ${act("dropcrash")}>${t("Не отправлять")}</button><button ${act("sendcrash")}>${t("Отправить")}</button></div>
     </div></div>`);
 
 // The news of an update, shown once after the report of an error, if any.
@@ -477,10 +486,10 @@ function newsDialog() {
     if (!news.length || crashOffer !== null) return "";
     const one = news.length === 1;
     return `<div class="modal"><div class="dialog form news">
-        <div class="dialog-title">${one ? `Что нового в версии ${esc(news[0].version)}` : "Что нового"}</div>
-        ${news.map(e => `${one ? "" : `<div class="news-version">Версия ${esc(e.version)}</div>`}
+        <div class="dialog-title">${esc(one ? t("Что нового в версии %s", news[0].version) : t("Что нового"))}</div>
+        ${news.map(e => `${one ? "" : `<div class="news-version">${esc(t("Версия %s", e.version))}</div>`}
             <ul class="news-items">${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("")}
-        <div class="dialog-buttons"><button ${act("closenews")}>Понятно</button></div>
+        <div class="dialog-buttons"><button ${act("closenews")}>${t("Понятно")}</button></div>
     </div></div>`;
 }
 
@@ -488,19 +497,18 @@ function writeDialog(e) {
     const f = e.write;
     if (!f) return "";
     return `<div class="modal"><div class="dialog form">
-        <div class="dialog-title">Написать разработчику</div>
-        <div class="dialog-text">Идея, ошибка, вопрос — что угодно.</div>
-        <textarea data-input="writetext" rows="6" maxlength="4000" placeholder="Сообщение" autofocus>${esc(f.text)}</textarea>
+        <div class="dialog-title">${t("Написать разработчику")}</div>
+        <div class="dialog-text">${t("Идея, ошибка, вопрос — что угодно.")}</div>
+        <textarea data-input="writetext" rows="6" maxlength="4000" placeholder="${t("Сообщение")}" autofocus>${esc(f.text)}</textarea>
         ${emailField("writeemail", f.email)}
         ${formError(f)}
-        <div class="dialog-buttons"><button ${act("closeform")}>Отмена</button><button ${act("sendwrite")}>Отправить</button></div>
+        <div class="dialog-buttons"><button ${act("closeform")}>${t("Отмена")}</button><button ${act("sendwrite")}>${t("Отправить")}</button></div>
     </div></div>`;
 }
 
 const PLAY = "https://play.google.com/store/apps/details?id=org.kostja.reci";
 const GITHUB = "https://github.com/finist0/reci";
-const SHARE_TEXT = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, " +
-    `примерами и грамматикой. Бесплатно.\nAndroid: ${PLAY}\niPhone и компьютер: https://finist0.github.io/reci/web/`;
+const shareText = () => Decks.shareText() + `\nAndroid: ${PLAY}\n` + t("iPhone и компьютер:") + " https://finist0.github.io/reci/web/";
 
 const linkRow = (title, summary, a, href) => `
     <a class="setting" href="${href}" target="_blank" rel="noopener" ${act(a)}>
@@ -511,12 +519,12 @@ const linkRow = (title, summary, a, href) => `
 function helpDialog(e) {
     if (!e.help) return "";
     return `<div class="modal"><div class="dialog form">
-        <div class="dialog-title">Помочь автору</div>
-        <div class="dialog-text">Приложение бесплатное. Вот чем можно помочь:</div>
-        ${panel(navRow("Поделиться с другом", "Ссылки на Android, iPhone и компьютер", "share") + line +
-            linkRow("Оценить приложение", "В Google Play, для Android", "rate", PLAY) + line +
-            linkRow("Поставить звезду на GitHub", "Там лежит код приложения", "star", GITHUB))}
-        <div class="dialog-buttons"><button ${act("closeform")}>Закрыть</button></div>
+        <div class="dialog-title">${t("Помочь автору")}</div>
+        <div class="dialog-text">${t("Приложение бесплатное. Вот чем можно помочь:")}</div>
+        ${panel(navRow(t("Поделиться с другом"), t("Ссылки на Android, iPhone и компьютер"), "share") + line +
+            linkRow(t("Оценить приложение"), t("В Google Play, для Android"), "rate", PLAY) + line +
+            linkRow(t("Поставить звезду на GitHub"), t("Там лежит код приложения"), "star", GITHUB))}
+        <div class="dialog-buttons"><button ${act("closeform")}>${t("Закрыть")}</button></div>
     </div></div>`;
 }
 
@@ -524,36 +532,35 @@ function whatSentDialog(e) {
     if (!e.whatSent) return "";
     const last = T.state.last;
     return `<div class="modal"><div class="dialog form">
-        <div class="dialog-title">Анонимная статистика</div>
-        <div class="dialog-text">Раз в день уходит: случайный номер этой установки, платформа, версии приложения и
-            системы, язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы и
-            настройки, какие экраны открывали.<br><br>Не уходит: слова и ответы по отдельным словам, имя, почта,
-            точное местоположение. Адрес IP сервер не сохраняет.</div>
-        <div class="setting-title">${last ? `Последний пакет, ${esc(last.day)}` : "Пока ничего не отправлялось"}</div>
+        <div class="dialog-title">${t("Анонимная статистика")}</div>
+        <div class="dialog-text">${t("Раз в день уходит: случайный номер этой установки, платформа, версии приложения и системы, ") +
+            t("язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы ") +
+            t("и настройки, какие экраны открывали.")}<br><br>${t("Не уходит: слова и ответы по отдельным словам, имя, почта, точное местоположение. Адрес IP сервер не сохраняет.")}</div>
+        <div class="setting-title">${esc(last ? t("Последний пакет, %s", last.day) : t("Пока ничего не отправлялось"))}</div>
         ${last ? `<pre class="packet">${esc(JSON.stringify(last, null, 1))}</pre>` : ""}
         <div class="ids">
-            <div class="setting-sub">Номер этой установки, для статистики</div>
+            <div class="setting-sub">${t("Номер этой установки, для статистики")}</div>
             <code data-id="install">${esc(T.state.id)}</code>
-            <div class="setting-sub">Номер для сообщений разработчику</div>
+            <div class="setting-sub">${t("Номер для сообщений разработчику")}</div>
             <code data-id="feedback">${esc(T.state.feedbackId)}</code>
         </div>
-        <a class="policy" href="privacy.html" target="_blank" rel="noopener">Политика конфиденциальности</a>
-        <button class="forget-link" ${act("forgetask")}>Удалить мои данные с сервера</button>
-        <div class="dialog-buttons"><button ${act("closeform")}>Закрыть</button></div>
-    </div></div>${e.forget ? forgetDialog : ""}`;
+        <a class="policy" href="privacy.html" target="_blank" rel="noopener">${t("Политика конфиденциальности")}</a>
+        <button class="forget-link" ${act("forgetask")}>${t("Удалить мои данные с сервера")}</button>
+        <div class="dialog-buttons"><button ${act("closeform")}>${t("Закрыть")}</button></div>
+    </div></div>${e.forget ? forgetDialog() : ""}`;
 }
 
-const forgetDialog = `<div class="modal"><div class="dialog form">
-        <div class="dialog-title">Удалить данные с сервера?</div>
-        <div class="dialog-text">С сервера разработчика удалятся статистика и сообщения, отправленные из этого браузера.
-        Прогресс и настройки останутся. Приложение получит новые номера и дальше будет отправлять статистику уже с
-        ними, если она включена.</div>
-        <div class="dialog-buttons"><button ${act("forgetno")}>Отмена</button><button ${act("forgetyes")}>Удалить</button></div>
+const forgetDialog = () => `<div class="modal"><div class="dialog form">
+        <div class="dialog-title">${t("Удалить данные с сервера?")}</div>
+        <div class="dialog-text">${t("С сервера разработчика удалятся статистика и сообщения, отправленные из этого браузера.")}
+        ${t("Прогресс и настройки останутся.")}
+        ${t("Приложение получит новые номера и дальше будет отправлять статистику уже с ними, если она включена.")}</div>
+        <div class="dialog-buttons"><button ${act("forgetno")}>${t("Отмена")}</button><button ${act("forgetyes")}>${t("Удалить")}</button></div>
     </div></div>`;
 
-const longPressHint = `
-    <div class="tip"><span>Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.</span>
-        <button ${act("hintclose")} aria-label="Закрыть">✕</button></div>`;
+const longPressHint = () => `
+    <div class="tip"><span>${t("Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.")}</span>
+        <button ${act("hintclose")} aria-label="${t("Закрыть")}">✕</button></div>`;
 
 // The long-press hint is shown on the 1st, 10th and 30th «Знаю» given to a new word, until it is
 // closed or the long press is used once.
@@ -595,8 +602,8 @@ function showSentToast(text) {
 
 const bottomNav = () => `
     <nav class="bottom">
-        <button class="circle" ${act("prev")} aria-label="Предыдущее слово">${icon("chevron_left")}</button>
-        <button class="next" ${act("next")} aria-label="Дальше"><span class="next-label">Дальше</span> ${icon("arrow_forward")}</button>
+        <button class="circle" ${act("prev")} aria-label="${t("Предыдущее слово")}">${icon("chevron_left")}</button>
+        <button class="next" ${act("next")} aria-label="${t("Дальше")}"><span class="next-label">${t("Дальше")}</span> ${icon("arrow_forward")}</button>
     </nav>`;
 
 // --- Categories (ui/Screens.kt CategoriesScreen) ---
@@ -612,65 +619,68 @@ function categoriesScreen(e) {
     const knownN = id => counts.get(id)?.[1] ?? 0;
     const dots = { "M:dontknow": "var(--red)", "M:known": "var(--known)", "M:fav": "var(--unsure)" };
 
-    const levels = D.levels.map(([lvl, name], i) => {
+    const levels = D.levels().map(([lvl, name], i) => {
         const id = "L" + lvl, on = sel.has(id), n = count(id), k = knownN(id);
         return (i ? line : "") + `
             <div class="level" ${act("toggle", id)}>
                 <span class="level-badge ${on ? "on" : ""}">${esc(name.split(" ")[0])}</span>
                 <span class="level-main"><span class="level-name">${esc(name.split("· ")[1])}</span>
                     <span class="bar-track"><span class="bar-fill" style="width:${n ? (100 * k) / n : 0}%"></span></span>
-                    <span class="level-count">знаю ${k} из ${n}</span></span>
-                <button class="round small" ${act("list", id)} aria-label="Список слов">${icon("chevron_right")}</button>
+                    <span class="level-count">${t("знаю %d из %d", k, n)}</span></span>
+                <button class="round small" ${act("list", id)} aria-label="${t("Список слов")}">${icon("chevron_right")}</button>
                 <span class="check ${on ? "on" : ""}">${on ? icon("check") : ""}</span>
             </div>`;
     }).join("");
     const flow = items => `<div class="flow">${items.join("")}</div>`;
-    return `<div class="screen-col">${header("Что учим")}
+    return `<div class="screen-col">${header(t("Что учим"))}
         <div class="scroll" data-scroll="cats">
-            ${groupTitle("Уровни")}${panel(levels)}
-            ${groupTitle("Разделы")}
-            <div class="hint">Долгое нажатие на раздел, тему или отметку открывает список слов</div>
-            ${flow(D.sections.filter(([id]) => count(id) > 0).map(([id, name]) => chip(`${name} · ${count(id)}`, sel.has(id), "toggle", id, { long: "list" })))}
-            ${groupTitle("Мои отметки")}
-            ${flow(D.lists.map(([id, name]) => chip(`${name} · ${count(id)}`, sel.has(id), "toggle", id, { long: "list", dot: dots[id] })))}
-            ${groupTitle("Темы")}
-            ${flow(D.topics.filter(([c]) => count("T:" + c) > 0).map(([c, name]) => chip(`${name} · ${count("T:" + c)}`, sel.has("T:" + c), "toggle", "T:" + c, { long: "list" })))}
-            ${groupTitle("Порядок")}
-            ${flow(D.orders.map((name, i) => chip(name, e.order === i, "order", i)))}
+            ${groupTitle(t("Уровни"))}${panel(levels)}
+            ${groupTitle(t("Разделы"))}
+            <div class="hint">${t("Долгое нажатие на раздел, тему или отметку открывает список слов")}</div>
+            ${flow(D.sections().filter(([id]) => count(id) > 0).map(([id, name]) => chip(`${name} · ${count(id)}`, sel.has(id), "toggle", id, { long: "list" })))}
+            ${groupTitle(t("Мои отметки"))}
+            ${flow(D.lists().map(([id, name]) => chip(`${name} · ${count(id)}`, sel.has(id), "toggle", id, { long: "list", dot: dots[id] })))}
+            ${groupTitle(t("Темы"))}
+            ${flow(D.topics().filter(([c]) => count("T:" + c) > 0).map(([c, name]) => chip(`${name} · ${count("T:" + c)}`, sel.has("T:" + c), "toggle", "T:" + c, { long: "list" })))}
+            ${groupTitle(t("Порядок"))}
+            ${flow(D.orders().map((name, i) => chip(name, e.order === i, "order", i)))}
             <div class="spacer"></div>
         </div>
-        <button class="primary wide ${sel.size ? "" : "off"}" ${act("learn")}>Учить ${total} ${D.plural(total, "карточку", "карточки", "карточек")}</button>
+        <button class="primary wide ${sel.size ? "" : "off"}" ${act("learn")}>${esc(t("Учить %d %s", total, plural(total, "карточку", "карточки", "карточек")))}</button>
     </div>`;
 }
 
 // --- Search, detail and word lists ---
 
+// Serbian may be typed in either script, Russian without ё.
+const norm = s => s.toLowerCase().replaceAll("ё", "е");
+
 function searchMatch(w, q, byMeaning) {
-    if (byMeaning) return w.meanings.some(m => m.toLowerCase().includes(q));
-    return w.cyr.toLowerCase().startsWith(q) || D.toLatin(w.cyr).toLowerCase().startsWith(q);
+    if (byMeaning) return w.meanings.some(m => norm(m).includes(q) || D.toLatin(norm(m)).includes(q));
+    return norm(w.cyr).startsWith(q) || D.toLatin(norm(w.cyr)).startsWith(q);
 }
 
 function searchResults(e) {
-    const q = (e.q ?? "").trim().toLowerCase();
+    const q = norm((e.q ?? "").trim());
     if (!q) return "";
     return R.words.filter(w => searchMatch(w, q, e.byMeaning)).slice(0, 200).map(w => {
         const shown = primary(w.cyr);
-        const n = !e.byMeaning && shown.toLowerCase().startsWith(q) ? q.length : 0;
+        const n = !e.byMeaning && norm(shown).startsWith(q) ? q.length : 0;
         return `<button class="row" ${act("detail", w.key)}>
             <span class="row-top"><span class="row-word"><span class="match">${esc(shown.slice(0, n))}</span>${esc(shown.slice(n))}</span>
             <span class="row-level">${esc(D.levelShort(w.level))}</span></span>
-            <span class="row-sub">${esc(w.meanings.join(" · "))}</span></button>`;
+            <span class="row-sub">${esc(native(w.meanings.join(" · ")))}</span></button>`;
     }).join("");
 }
 
 function searchScreen(e) {
     return `<div class="screen-col">
         <div class="searchbar">
-            <button class="round" ${act("back")} aria-label="Назад">${icon("back")}</button>
+            <button class="round" ${act("back")} aria-label="${t("Назад")}">${icon("back")}</button>
             <label class="field">${icon("search")}<input data-input="search" type="search" autocomplete="off" autocapitalize="off"
-                spellcheck="false" placeholder="${e.byMeaning ? "слово по-русски" : "реч, reč"}" value="${esc(e.q ?? "")}" autofocus></label>
+                spellcheck="false" placeholder="${esc(e.byMeaning ? Decks.meaningHint() : Decks.wordHint())}" value="${esc(e.q ?? "")}" autofocus></label>
         </div>
-        <div class="flow tabs">${chip("Сербское слово", !e.byMeaning, "bymeaning", "0")}${chip("Перевод", !!e.byMeaning, "bymeaning", "1")}</div>
+        <div class="flow tabs">${chip(Decks.wordChip(), !e.byMeaning, "bymeaning", "0")}${chip(t("Перевод"), !!e.byMeaning, "bymeaning", "1")}</div>
         <div class="scroll list" data-scroll="search" data-results>${searchResults(e)}</div>
     </div>`;
 }
@@ -681,28 +691,28 @@ function detailScreen(e) {
     e.answered ??= R.answerOf(w);
     return `<div class="screen-col">${header("")}
         <div class="card-wrap detail">${cardScroll("detail", w, wordBody(w))}
-            ${e.learned ? toast("Слово отмечено выученным") : sentToast ? toast(sentToast) : ""}</div>
+            ${e.learned ? toast(t("Слово отмечено выученным")) : sentToast ? toast(sentToast) : ""}</div>
         ${marksRow(e.answered, R.isArticle(w))}
         ${reportDialog(e)}
     </div>`;
 }
 
 function listResults(e) {
-    const q = (e.q ?? "").trim().toLowerCase();
+    const q = norm((e.q ?? "").trim());
     const all = R.words.filter(w => R.inCategory(w, e.arg));
-    const shown = !q ? all : all.filter(w => w.cyr.toLowerCase().includes(q) || D.toLatin(w.cyr).toLowerCase().includes(q) ||
-        w.meanings.some(m => m.toLowerCase().includes(q)));
+    const shown = !q ? all : all.filter(w => norm(w.cyr).includes(q) || D.toLatin(norm(w.cyr)).includes(q) ||
+        w.meanings.some(m => norm(m).includes(q) || D.toLatin(norm(m)).includes(q)));
     return shown.map(w => `
         <button class="row" ${act("detail", w.key)}>
-            <span class="row-top"><span class="row-word">${esc(w.pos === "compare" ? (w.meanings[0] || w.cyr) : headword(w))}</span>${dot(R.progress(w).state)}</span>
-            ${w.pos !== "note" && w.pos !== "compare" ? `<span class="row-sub">${esc(w.meanings.join(" · "))}</span>` : ""}
+            <span class="row-top"><span class="row-word">${esc(w.pos === "compare" ? (native(w.meanings[0] ?? "") || primary(w.cyr)) : headword(w))}</span>${dot(R.progress(w).state)}</span>
+            ${w.pos !== "note" && w.pos !== "compare" ? `<span class="row-sub">${esc(native(w.meanings.join(" · ")))}</span>` : ""}
         </button>`).join("");
 }
 
 function listScreen(e) {
     const n = R.words.filter(w => R.inCategory(w, e.arg)).length;
     return `<div class="screen-col">${header(`${D.category(e.arg)} · ${n}`)}
-        <label class="field inset">${icon("search")}<input data-input="list" type="search" autocomplete="off" placeholder="найти в списке" value="${esc(e.q ?? "")}"></label>
+        <label class="field inset">${icon("search")}<input data-input="list" type="search" autocomplete="off" placeholder="${t("найти в списке")}" value="${esc(e.q ?? "")}"></label>
         <div class="scroll list" data-scroll="list" data-results>${listResults(e)}</div>
     </div>`;
 }
@@ -713,26 +723,26 @@ function grammarResults(e) {
     if (!e.tab) {
         // A group's topics are not contiguous in the file, so group them before listing.
         const groups = new Map();
-        for (const t of R.topics) {
-            if (!groups.has(t.group)) groups.set(t.group, []);
-            groups.get(t.group).push(t);
+        for (const tp of R.topics) {
+            if (!groups.has(tp.group)) groups.set(tp.group, []);
+            groups.get(tp.group).push(tp);
         }
         return [...groups].map(([g, ts]) => groupTitle(g) +
-            ts.map(t => `<button class="tile" ${act("ref", t.id)}>${esc(t.title)}</button>`).join("")).join("");
+            ts.map(tp => `<button class="tile" ${act("ref", tp.id)}>${esc(tp.title)}</button>`).join("")).join("");
     }
-    const q = (e.q ?? "").trim().toLowerCase();
-    return R.words.filter(w => w.pos === (e.tab === 1 ? "compare" : "note")).filter(w => !q || w.cyr.toLowerCase().includes(q) ||
-        D.toLatin(w.cyr).toLowerCase().includes(q) || w.meanings.some(m => m.toLowerCase().includes(q)) || w.related.some(r => r.sr.includes(q)))
-        .map(w => `<button class="tile" ${act("detail", w.key)}><span>${esc(w.pos === "compare" ? (w.meanings[0] || w.cyr) : w.cyr)}</span>${dot(R.progress(w).state)}</button>`).join("");
+    const q = norm((e.q ?? "").trim());
+    return R.words.filter(w => w.pos === (e.tab === 1 ? "compare" : "note")).filter(w => !q || norm(w.cyr).includes(q) ||
+        D.toLatin(norm(w.cyr)).includes(q) || w.meanings.some(m => norm(m).includes(q)) || w.related.some(r => r.word.includes(q)))
+        .map(w => `<button class="tile" ${act("detail", w.key)}><span>${esc(w.pos === "compare" ? (native(w.meanings[0] ?? "") || primary(w.cyr)) : native(w.cyr))}</span>${dot(R.progress(w).state)}</button>`).join("");
 }
 
 function grammarScreen(e) {
     e.tab ??= 0;
     const n = pos => R.words.filter(w => w.pos === pos).length;
-    const tabs = ["Грамматика", `Похожие · ${n("compare")}`, `Заметки · ${n("note")}`];
-    return `<div class="screen-col">${header("Справочник")}
-        <div class="flow tabs">${tabs.map((t, i) => chip(t, e.tab === i, "tab", i)).join("")}</div>
-        ${e.tab ? `<label class="field inset">${icon("search")}<input data-input="grammar" type="search" autocomplete="off" placeholder="найти по слову или названию" value="${esc(e.q ?? "")}"></label>` : ""}
+    const tabs = [t("Грамматика"), `${t("Похожие")} · ${n("compare")}`, `${t("Заметки")} · ${n("note")}`];
+    return `<div class="screen-col">${header(t("Справочник"))}
+        <div class="flow tabs">${tabs.map((name, i) => chip(name, e.tab === i, "tab", i)).join("")}</div>
+        ${e.tab ? `<label class="field inset">${icon("search")}<input data-input="grammar" type="search" autocomplete="off" placeholder="${t("найти по слову или названию")}" value="${esc(e.q ?? "")}"></label>` : ""}
         <div class="scroll tiles" data-scroll="grammar-${e.tab}" data-results>${grammarResults(e)}</div>
     </div>`;
 }
@@ -750,13 +760,13 @@ function block(b) {
 }
 
 function topicScreen(e) {
-    const t = R.topic(e.arg);
-    if (!t) return `<div class="screen-col">${header("")}</div>`;
-    const next = R.topics[R.topics.indexOf(t) + 1];
-    return `<div class="screen-col topic">${header(t.title)}
+    const tp = R.topic(e.arg);
+    if (!tp) return `<div class="screen-col">${header("")}</div>`;
+    const next = R.topics[R.topics.indexOf(tp) + 1];
+    return `<div class="screen-col topic">${header(tp.title)}
         <div class="scroll" data-scroll="topic">
-            ${t.blocks.map(block).join("")}
-            ${next ? `<button class="next-topic" ${act("topic", next.id)}>Дальше: ${esc(next.title)} ›</button>` : ""}
+            ${tp.blocks.map(block).join("")}
+            ${next ? `<button class="next-topic" ${act("topic", next.id)}>${esc(t("Дальше: %s ›", next.title))}</button>` : ""}
         </div>
     </div>`;
 }
@@ -780,6 +790,14 @@ const navRow = (title, summary, a, arg = "") => `
         ${icon("arrow_forward", "faint")}
     </button>`;
 
+// A deck, titled in its own native language; tapping it switches to it.
+const deckRow = d => {
+    const on = d.id === Decks.current().id;
+    return `<button class="setting ${on ? "on" : ""}" ${act("deck", d.id)}>
+        <span class="setting-main"><span class="setting-title">${esc(Decks.title(d))}</span></span>${on ? icon("check") : ""}
+    </button>`;
+};
+
 const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 
 let appVersion = "";
@@ -789,76 +807,84 @@ function settingsScreen(e) {
     for (const w of R.words) counts[R.progress(w).state]++;
     const all = R.words.length, knownN = counts[KNOWN];
     const cats = prefs.categories;
-    const modeText = ["Слово учится по шагам: сначала показано целиком, после «Знаю» надо вспомнить его по переводу, после трёх «Знаю» подряд оно выучено. «Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо.",
-        "Видно только перевод: вспомните слово и откройте его кнопкой или ответом.",
-        "Видно только слово: перевод открывается по нажатию."][prefs.cardMode];
+    const modeText = [t("Слово учится по шагам: сначала показано целиком, после «Знаю» ") +
+        t("надо вспомнить его по переводу, после трёх «Знаю» подряд оно выучено. ") +
+        t("«Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо."),
+    t("Видно только перевод: вспомните слово и откройте его кнопкой или ответом."),
+    t("Видно только слово: перевод открывается по нажатию.")][prefs.cardMode];
     const sizes = [10, 15, 20, 30];
     const voice = voiceName();
+    const serbian = Decks.current().target === "sr";
     const themes = palettes.map(([name, bg, , accent], i) => `
         <button class="theme ${prefs.theme === i ? "on" : ""}" ${act("theme", i)}>
             <span class="swatch" style="background:${bg}"><span style="background:${accent}"></span></span><span>${esc(name)}</span>
         </button>`).join("");
 
-    const install = standalone() ? "" : groupTitle("Как приложение") + panel(`<div class="note">
-        <b>iPhone:</b> откройте эту страницу в Safari, нажмите «Поделиться» и «На экран „Домой“».<br>
-        <b>Android:</b> в Chrome меню ⋮ → «Добавить на главный экран» или «Установить приложение».<br>
-        <b>Компьютер:</b> в Chrome или Edge значок установки в адресной строке.<br>
-        Прогресс хранится в этом браузере на этом устройстве.</div>`);
+    const install = standalone() ? "" : groupTitle(t("Как приложение")) + panel(`<div class="note">
+        <b>iPhone:</b> ${t("откройте эту страницу в Safari, нажмите «Поделиться» и «На экран „Домой“».")}<br>
+        <b>Android:</b> ${t("в Chrome меню ⋮ → «Добавить на главный экран» или «Установить приложение».")}<br>
+        <b>${t("Компьютер:")}</b> ${t("в Chrome или Edge значок установки в адресной строке.")}<br>
+        ${t("Прогресс хранится в этом браузере на этом устройстве.")}</div>`);
+    const decks = Decks.all.length > 1 ? groupTitle(t("Язык")) + panel(Decks.all.map(deckRow).join(line)) : "";
+    const accents = serbian ? choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode, "accents")
+        // One kind of mark only: "with" is mode 1, "without" is mode 2.
+        : choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode === 2 ? 1 : 0, "stressplace");
+    const credits = [t("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n"), t("Ударения: Викисловарь (kaikki.org), CC BY-SA.\n"),
+        t("Часть карточек и подсказок составлена по материалам из открытых источников.\n"),
+        t("Шрифты Literata и Ruslan Display: SIL Open Font License.\n"), t("Иконки: Material Icons, Apache 2.0.")];
 
-    return `<div class="screen-col">${header("Настройки")}
+    return `<div class="screen-col">${header(t("Настройки"))}
         <div class="scroll" data-scroll="settings">
             <div class="progress-card">
-                <div class="pc-top"><span class="pc-known">${knownN}</span><span class="pc-of">из ${all} слов знаю</span></div>
+                <div class="pc-top"><span class="pc-known">${knownN}</span><span class="pc-of">${t("из %d слов знаю", all)}</span></div>
                 <div class="bar-track big"><span class="bar-fill" style="width:${all ? (100 * knownN) / all : 0}%"></span></div>
-                <div class="pc-counts"><span><span class="dot" style="background:var(--red)"></span>${counts[DONT_KNOW] + counts[UNSURE]} не знаю</span>
-                    <span><span class="dot" style="background:var(--accent)"></span>${R.todayCount()} сегодня</span></div>
+                <div class="pc-counts"><span><span class="dot" style="background:var(--red)"></span>${counts[DONT_KNOW] + counts[UNSURE]} ${t("не знаю")}</span>
+                    <span><span class="dot" style="background:var(--accent)"></span>${R.todayCount()} ${t("сегодня")}</span></div>
             </div>
             ${install}
-            ${groupTitle("Учёба")}
-            ${panel(navRow("Что учим", (cats.length === 1 ? D.category(cats[0]) : `Разделов: ${cats.length}`) + " · " + D.orders[prefs.order], "categories") + line +
-                choice("Карточки", ["Обучение", "Перевод", "Слово"], prefs.cardMode, "cardmode") + `<div class="note">${esc(modeText)}</div>` + line +
-                choice("Слов в работе одновременно", sizes.map(String), Math.max(0, sizes.indexOf(prefs.activeSize)), "activesize") + line +
-                toggle("Кнопки «Не знаю / Знаю»", null, prefs.useMarks, "usemarks") + line +
-                toggle("Проверять выученные слова", "Через неделю, потом через 3\u00a0недели, 2\u00a0месяца, полгода и год", prefs.reviewKnown, "reviewknown") + line +
-                navRow("Куда пойти учиться?", "Школы сербского языка", "schools"))}
-            ${groupTitle("Оформление")}
-            ${panel(`<div class="choice"><div class="setting-title">Тема</div><div class="themes">${themes}</div></div>` + line +
-                choice("Алфавит", ["Кириллица", "Latinica"], prefs.latinFirst ? 1 : 0, "alphabet") + line +
-                toggle("Подпись другим алфавитом", null, prefs.showBothScripts, "bothscripts") + line +
-                choice("Ударения", ["ку̏ћа", "ку́ћа", "кућа"], prefs.accentMode, "accents") + line +
-                `<div class="choice"><div class="size-row"><span class="setting-title" data-size-label>Размер шрифта: ${prefs.wordSize}</span>
-                    <span class="size-sample" style="font-size:${prefs.wordSize * 0.6}px">реч</span></div>
-                    <input type="range" min="28" max="72" value="${prefs.wordSize}" data-input="wordsize"></div>`)}
-            ${groupTitle("Звук")}
-            ${panel(toggle("Произносить слово сразу", null, prefs.autoSpeak, "autospeak") + line +
-                navRow("Голос", !canSpeak() ? "Браузер не умеет озвучивать" : voice ? voice[0].toUpperCase() + voice.slice(1) + " · нажмите, чтобы послушать"
-                    : "Нет сербского, хорватского или боснийского голоса", "testvoice"))}
-            ${groupTitle("Данные")}
-            ${panel(navRow("Сохранить прогресс в файл", "Чтобы перенести его на другое устройство", "export") + line +
-                navRow("Загрузить прогресс из файла", "Заменит прогресс на этом устройстве", "import") + line +
-                [["compare", "Снова показывать разборы"], ["note", "Снова показывать заметки"]].map(([pos, title]) => {
+            ${decks}
+            ${groupTitle(t("Учёба"))}
+            ${panel(navRow(t("Что учим"), (cats.length === 1 ? D.category(cats[0]) : t("Разделов: %d", cats.length)) + " · " + D.orders()[prefs.order], "categories") + line +
+                choice(t("Карточки"), [t("Обучение"), t("Перевод"), t("Слово")], prefs.cardMode, "cardmode") + `<div class="note">${esc(modeText)}</div>` + line +
+                choice(t("Слов в работе одновременно"), sizes.map(String), Math.max(0, sizes.indexOf(prefs.activeSize)), "activesize") + line +
+                toggle(t("Кнопки «Не знаю / Знаю»"), null, prefs.useMarks, "usemarks") + line +
+                toggle(t("Проверять выученные слова"), t("Через неделю, потом через 3\u00A0недели, 2\u00A0месяца, полгода и год"), prefs.reviewKnown, "reviewknown") +
+                (serbian ? line + navRow(t("Куда пойти учиться?"), t("Школы сербского языка"), "schools") : ""))}
+            ${groupTitle(t("Оформление"))}
+            ${panel([`<div class="choice"><div class="setting-title">${t("Тема")}</div><div class="themes">${themes}</div></div>`,
+                Decks.hasSerbian() ? choice(t("Алфавит"), [t("Кириллица"), "Latinica"], prefs.latinFirst ? 1 : 0, "alphabet") : "",
+                serbian ? toggle(t("Подпись другим алфавитом"), null, prefs.showBothScripts, "bothscripts") : "",
+                accents,
+                `<div class="choice"><div class="size-row"><span class="setting-title" data-size-label>${t("Размер шрифта: %d", prefs.wordSize)}</span>
+                    <span class="size-sample" style="font-size:${prefs.wordSize * 0.6}px">${esc(Decks.sample())}</span></div>
+                    <input type="range" min="28" max="72" value="${prefs.wordSize}" data-input="wordsize"></div>`].filter(Boolean).join(line))}
+            ${groupTitle(t("Звук"))}
+            ${panel(toggle(t("Произносить слово сразу"), null, prefs.autoSpeak, "autospeak") + line +
+                navRow(t("Голос"), !canSpeak() ? t("Браузер не умеет озвучивать")
+                    : voice ? t("%s · нажмите, чтобы послушать", voice[0].toUpperCase() + voice.slice(1)) : Decks.noVoice(), "testvoice"))}
+            ${groupTitle(t("Данные"))}
+            ${panel(navRow(t("Сохранить прогресс в файл"), t("Чтобы перенести его на другое устройство"), "export") + line +
+                navRow(t("Загрузить прогресс из файла"), t("Заменит прогресс на этом устройстве"), "import") + line +
+                [["compare", t("Снова показывать разборы")], ["note", t("Снова показывать заметки")]].map(([pos, title]) => {
                     const hidden = R.hiddenArticles(pos);
-                    return navRow(title, hidden ? `Скрыто: ${hidden}` : "Скрытых нет", "articles", pos) + line;
+                    return navRow(title, hidden ? t("Скрыто: %d", hidden) : t("Скрытых нет"), "articles", pos) + line;
                 }).join("") +
-                `<button class="setting danger" ${act("reset")}>Сбросить прогресс</button>` +
+                `<button class="setting danger" ${act("reset")}>${t("Сбросить прогресс")}</button>` +
                 (e.msg ? `<div class="note">${esc(e.msg)}</div>` : ""))}
             <input type="file" accept="application/json,.json" data-input="importfile" hidden>
-            ${groupTitle("Обратная связь")}
-            ${panel(navRow("Написать разработчику", T.state.queue.length ? `Ждут отправки: ${T.state.queue.length}` : "Идея, ошибка или вопрос", "write") + line +
-                toggle("Анонимная статистика", STATS_SUMMARY, T.state.enabled, "stats") + line +
-                navRow("Что отправляется", T.state.last ? `Последний раз: ${T.state.last.day}` : "Ещё ничего не отправлялось", "whatsent") + line +
-                navRow("Помочь автору", "Поделиться, оценить, поставить звезду", "help"))}
-            ${groupTitle("О приложении")}
+            ${groupTitle(t("Обратная связь"))}
+            ${panel(navRow(t("Написать разработчику"), T.state.queue.length ? t("Ждут отправки: %d", T.state.queue.length) : t("Идея, ошибка или вопрос"), "write") + line +
+                toggle(t("Анонимная статистика"), t("Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки"),
+                    T.state.enabled, "stats") + line +
+                navRow(t("Что отправляется"), T.state.last ? t("Последний раз: %s", T.state.last.day) : t("Ещё ничего не отправлялось"), "whatsent") + line +
+                navRow(t("Помочь автору"), t("Поделиться, оценить, поставить звезду"), "help"))}
+            ${groupTitle(t("О приложении"))}
             ${panel(`<div class="about">
                 <div class="app-title"><span>НЕ</span>РОДНАЯ РЕЧЬ</div>
-                <div>Версия ${esc(appVersion)} · веб-версия</div>
-                <div>Автор: Константин Хоренко</div>
-                <div>Лицензия: GNU GPL v3 или новее</div>
-                <div class="credits">Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.<br>
-                    Ударения: Викисловарь (kaikki.org), CC BY-SA.<br>
-                    Часть карточек и подсказок составлена по материалам из открытых источников.<br>
-                    Шрифты Literata и Ruslan Display: SIL Open Font License.<br>
-                    Иконки: Material Icons, Apache 2.0.</div></div>`)}
+                <div>${esc(t("Версия %s", appVersion))} · ${t("веб-версия")}</div>
+                <div>${t("Автор: Константин Хоренко")}</div>
+                <div>${t("Лицензия: GNU GPL v3 или новее")}</div>
+                <div class="credits">${credits.map(s => esc(s.trim())).join("<br>")}</div></div>`)}
             <div class="spacer"></div>
         </div>
         ${sentToast ? toast(sentToast) : ""}
@@ -866,21 +892,21 @@ function settingsScreen(e) {
         ${whatSentDialog(e)}
         ${helpDialog(e)}
         ${e.articles ? `<div class="modal"><div class="dialog">
-            <div class="dialog-title">Снова показывать ${e.articles === "compare" ? "разборы похожих слов" : "заметки"}?</div>
-            <div class="dialog-text">Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.</div>
-            <div class="dialog-buttons"><button ${act("cancel")}>Отмена</button><button ${act("showagain")}>Показывать</button></div>
+            <div class="dialog-title">${t("Снова показывать %s?", e.articles === "compare" ? t("разборы похожих слов") : t("заметки"))}</div>
+            <div class="dialog-text">${t("Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.")}</div>
+            <div class="dialog-buttons"><button ${act("cancel")}>${t("Отмена")}</button><button ${act("showagain")}>${t("Показывать")}</button></div>
         </div></div>` : ""}
         ${e.confirm ? `<div class="modal"><div class="dialog">
-            <div class="dialog-title">Сбросить прогресс?</div>
-            <div class="dialog-text">Все слова снова станут новыми, избранное очистится.</div>
-            <div class="dialog-buttons"><button ${act("cancel")}>Отмена</button><button ${act("doreset")}>Сбросить</button></div>
+            <div class="dialog-title">${t("Сбросить прогресс?")}</div>
+            <div class="dialog-text">${t("Все слова снова станут новыми, избранное очистится.")}</div>
+            <div class="dialog-buttons"><button ${act("cancel")}>${t("Отмена")}</button><button ${act("doreset")}>${t("Сбросить")}</button></div>
         </div></div>` : ""}
     </div>`;
 }
 
 // A place for Serbian language schools to tell about themselves; empty for now.
-const schoolsScreen = () => `<div class="screen-col">${header("Куда пойти учиться?")}
-    <div class="schools-empty">Здесь могла быть реклама вашей школы сербского языка</div></div>`;
+const schoolsScreen = () => `<div class="screen-col">${header(t("Куда пойти учиться?"))}
+    <div class="schools-empty">${t("Здесь могла быть реклама вашей школы сербского языка")}</div></div>`;
 
 const screens = {
     schools: schoolsScreen,
@@ -899,6 +925,7 @@ function render() {
     if (rendered === e) saveScroll(e);
     const focused = document.activeElement?.dataset?.input;
     applyTheme();
+    document.documentElement.lang = Decks.lang();
     root.innerHTML = `<div class="screen ${e.name}">${screens[e.name](e)}</div>${crashDialog()}${newsDialog()}`;
     for (const el of root.querySelectorAll("[data-scroll]")) el.scrollTop = e.scroll?.[el.dataset.scroll] ?? 0;
     if (rendered !== e) {
@@ -950,16 +977,15 @@ function schedule() {
     });
 }
 
-onChange(schedule);
 onVoices(() => top().name === "settings" && schedule());
 
 // The clock on the card ticks once a minute while the page is visible.
 setInterval(() => {
     if (document.visibilityState !== "visible") return;
     const now = new Date();
-    const t = root.querySelector(".time"), d = root.querySelector(".date");
-    if (t) t.textContent = clockFmt.format(now);
-    if (d) d.textContent = dateFmt.format(now);
+    const time = root.querySelector(".time"), d = root.querySelector(".date");
+    if (time) time.textContent = dateFormat(true).format(now);
+    if (d) d.textContent = dateFormat(false).format(now);
 }, 15000);
 
 // A new day or a due check may be waiting when the app comes back.
@@ -1054,8 +1080,14 @@ const actions = {
     alphabet: arg => setPref("latinFirst", arg === "1"),
     bothscripts: () => setPref("showBothScripts", !prefs.showBothScripts),
     accents: arg => setPref("accentMode", Number(arg)),
+    stressplace: arg => setPref("accentMode", Number(arg) + 1),
+    deck: arg => {
+        // The card on screen belongs to the deck left.
+        show = null;
+        R.switchDeck(arg).catch(() => showSentToast(t("Не удалось загрузить словарь. Проверьте интернет и откройте снова.")));
+    },
     autospeak: () => setPref("autoSpeak", !prefs.autoSpeak),
-    testvoice: () => speak("Добар дан"),
+    testvoice: () => speak(Decks.greeting()),
     export: exportProgress,
     import: () => root.querySelector('[data-input="importfile"]')?.click(),
     reset: () => {
@@ -1093,7 +1125,7 @@ const actions = {
         const w = R.word(r.key);
         if (!r.problem) return;
         if (!r.text.trim()) {
-            r.error = "Напишите, что не так";
+            r.error = t("Напишите, что не так");
             return schedule();
         }
         if (!checkEmail(r)) return;
@@ -1108,7 +1140,7 @@ const actions = {
     sendwrite: () => {
         const f = top().write;
         if (!f.text.trim()) {
-            f.error = "Напишите сообщение";
+            f.error = t("Напишите сообщение");
             return schedule();
         }
         if (!checkEmail(f)) return;
@@ -1154,7 +1186,7 @@ const actions = {
         top().forget = false;
         schedule();
         const ok = await T.forget();
-        showSentToast(ok ? "Данные удалены с сервера" : "Не удалось связаться с сервером. Попробуйте позже");
+        showSentToast(ok ? t("Данные удалены с сервера") : t("Не удалось связаться с сервером. Попробуйте позже"));
     },
     help: () => {
         top().help = true;
@@ -1164,20 +1196,20 @@ const actions = {
     share: async () => {
         T.count("opened", "share");
         if (navigator.share) {
-            navigator.share({ title: "НЕРодная речь", text: SHARE_TEXT }).catch(() => {});
+            navigator.share({ title: "НЕРодная речь", text: shareText() }).catch(() => {});
             return;
         }
         try {
-            await navigator.clipboard.writeText(SHARE_TEXT);
-            showSentToast("Текст со ссылками скопирован");
+            await navigator.clipboard.writeText(shareText());
+            showSentToast(t("Текст со ссылками скопирован"));
         } catch {
-            showSentToast("Не получилось скопировать");
+            showSentToast(t("Не получилось скопировать"));
         }
     },
     rate: () => T.count("opened", "rate"),
     star: () => T.count("opened", "star"),
     doreset: () => {
-        Object.assign(top(), { confirm: false, msg: "Прогресс сброшен." });
+        Object.assign(top(), { confirm: false, msg: t("Прогресс сброшен.") });
         R.resetAll();
         R.resetPosition();
     },
@@ -1272,7 +1304,7 @@ root.addEventListener("input", ev => {
         const v = Number(ev.target.value);
         document.documentElement.style.setProperty("--word-size", v + "px");
         const label = root.querySelector("[data-size-label]");
-        if (label) label.textContent = `Размер шрифта: ${v}`;
+        if (label) label.textContent = t("Размер шрифта: %d", v);
         const sample = root.querySelector(".size-sample");
         if (sample) sample.style.fontSize = v * 0.6 + "px";
         return;
@@ -1294,9 +1326,9 @@ root.addEventListener("change", async ev => {
         try {
             const n = importData(JSON.parse(await file.text()));
             R.resetPosition();
-            top().msg = `Загружен прогресс по ${n} ${D.plural(n, "слову", "словам", "словам")}.`;
+            top().msg = t("Загружен прогресс по %d %s.", n, plural(n, "слову", "словам", "словам"));
         } catch {
-            top().msg = "Это не файл с прогрессом.";
+            top().msg = t("Это не файл с прогрессом.");
         }
         schedule();
     }
@@ -1305,7 +1337,7 @@ root.addEventListener("change", async ev => {
 function checkEmail(f) {
     const email = f.email.trim();
     if (!email || T.isEmail(email)) return true;
-    f.error = "Проверьте адрес почты";
+    f.error = t("Проверьте адрес почты");
     schedule();
     return false;
 }
@@ -1313,7 +1345,7 @@ function checkEmail(f) {
 async function send(message, email) {
     schedule();
     const sent = await T.sendFeedback(message, email, appVersion);
-    showSentToast(sent ? "Спасибо! Сообщение отправлено" : "Сообщение уйдёт, когда появится интернет");
+    showSentToast(sent ? t("Спасибо! Сообщение отправлено") : t("Сообщение уйдёт, когда появится интернет"));
 }
 
 const learnedCount = () => R.words.reduce((n, w) => n + (R.progress(w).state === KNOWN ? 1 : 0), 0);
@@ -1327,6 +1359,8 @@ document.addEventListener("visibilitychange", () => document.visibilityState ===
 window.addEventListener("online", () => T.flush());
 
 export async function start() {
+    // Not before: the deck picked on a first start changes the settings while the cards load.
+    onChange(schedule);
     history.replaceState({ depth: 1 }, "");
     crashOffer = T.pendingCrash();
     // Showing the first card already counts as progress.

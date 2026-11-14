@@ -595,6 +595,8 @@ input { font: inherit; color: var(--text); }
 .setting-title { font-size: 16px; color: var(--text); }
 .setting-sub { font-size: 13px; line-height: 17px; color: var(--secondary); }
 .setting.danger { color: var(--red); padding: 15px 18px; }
+.setting.on .setting-title { color: var(--accent); font-weight: 600; }
+.setting.on .ic { color: var(--accent); }
 
 .switch {
     width: 52px;

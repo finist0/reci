@@ -1,7 +1,8 @@
 // The dictionary and the learning rules, ported from data/Repo.kt; keep the two in step.
 
 import { lists } from "./data.js";
-import { prefs, setPref, setPrefs, getProgress, putProgress, clearProgress, emptyProgress, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
+import * as Decks from "./decks.js";
+import { prefs, setPref, setPrefs, getProgress, putProgress, clearProgress, emptyProgress, useDeck, NEW, DONT_KNOW, UNSURE, KNOWN } from "./store.js";
 
 export const ASSETS = "../app/app/src/main/assets/";
 
@@ -10,17 +11,52 @@ let byKey = new Map();
 export let topics = [];
 
 export async function load() {
-    const [w, g] = await Promise.all([
-        fetch(ASSETS + "words.json").then(r => r.json()),
-        fetch(ASSETS + "grammar.json").then(r => r.json()).catch(() => []),
+    const [decks, ui] = await Promise.all([
+        fetch(ASSETS + "decks.json").then(r => r.json()).catch(() => null),
+        fetch(ASSETS + "ui.json").then(r => r.json()).catch(() => ({})),
     ]);
-    words = w.map(x => ({
+    Decks.init(decks, ui);
+    install(...await fetchDeck(Decks.current()));
+}
+
+// Examples and related words are keyed by language: the learned text, its translation and, for
+// a related word, the learned word with stress marks.
+export function parse(x, d = Decks.current()) {
+    return {
         acc: "", gram: "", ruGram: "", ruNoun: "", forms: "", meanings: [], level: 1, topic: "basic", rank: 0,
-        examples: [], syn: [], ant: [], related: [], note: "", tips: [], ...x,
-    }));
+        syn: [], ant: [], synAcc: [], antAcc: [], note: "", tips: [], ...x,
+        examples: (x.examples ?? []).map(e => ({ text: e[d.target] ?? "", tr: e[d.native] ?? "" })),
+        related: (x.related ?? []).map(r => ({ word: r[d.target] ?? "", tr: r[d.native] ?? "", acc: r.acc ?? "" })),
+    };
+}
+
+async function fetchDeck(d) {
+    const [w, g] = await Promise.all([
+        fetch(ASSETS + d.words).then(r => r.json()),
+        d.grammar ? fetch(ASSETS + d.grammar).then(r => r.json()).catch(() => []) : [],
+    ]);
+    return [w.map(x => parse(x, d)), g];
+}
+
+function install(w, g) {
+    words = w;
     byKey = new Map(words.map(x => [x.key, x]));
     topics = g;
-    restorePending();
+    byCyr = null;
+    compareIndex = null;
+    shuffledList = [];
+    queueKey = "";
+    restart();
+}
+
+// Switches to another deck: its cards, its progress and its place in the cards. The cards come
+// in before the deck changes, so that nothing is drawn with the cards of the other one.
+export async function switchDeck(id) {
+    const d = Decks.all.find(x => x.id === id);
+    if (!d || d === Decks.current()) return;
+    const [w, g] = await fetchDeck(d);
+    useDeck(id);
+    install(w, g);
 }
 
 export const word = key => byKey.get(key);
@@ -47,8 +83,8 @@ export function comparesFor(w) {
         for (const c of words) {
             if (c.pos !== "compare") continue;
             for (const r of c.related) {
-                if (!compareIndex.has(r.sr)) compareIndex.set(r.sr, []);
-                compareIndex.get(r.sr).push(c);
+                if (!compareIndex.has(r.word)) compareIndex.set(r.word, []);
+                compareIndex.get(r.word).push(c);
             }
         }
     }
@@ -231,12 +267,13 @@ export function counts() {
         if (known) a[1]++;
         out.set(id, a);
     };
+    const listIds = lists().map(([id]) => id);
     for (const w of words) {
         const known = getProgress(w.key)?.state === KNOWN;
         if (w.level > 0) add("L" + w.level, known);
         else add("X:" + w.pos, known);
         add("T:" + w.topic, known);
-        for (const [id] of lists) if (inCategory(w, id)) add(id, known);
+        for (const id of listIds) if (inCategory(w, id)) add(id, known);
     }
     return out;
 }

@@ -61,8 +61,9 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 // `telemetry` is the stored statistics state the page starts with; by default the notice about
 // statistics was already shown and closed, so that it does not get in the way of other tests.
-// `storage` holds more local storage entries, set for the first page load only.
-export async function launch({ telemetry = { noticeShown: true, noticeClosed: true }, storage = {} } = {}) {
+// `storage` holds more local storage entries, set for the first page load only. `lang` is the
+// language the browser asks pages in.
+export async function launch({ telemetry = { noticeShown: true, noticeClosed: true }, storage = {}, lang = null } = {}) {
     const profile = mkdtempSync(join(tmpdir(), "reci-ui-"));
     const chrome = spawn(process.env.CHROME ?? "google-chrome", ["--headless=new", "--disable-gpu", "--no-first-run",
         "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--lang=ru", "about:blank"],
@@ -104,6 +105,7 @@ export async function launch({ telemetry = { noticeShown: true, noticeClosed: tr
     await send("Network.enable");
     await send("Emulation.setDeviceMetricsOverride", { width: 390, height: 844, deviceScaleFactor: 2, mobile: true });
     await send("Emulation.setTouchEmulationEnabled", { enabled: true, maxTouchPoints: 5 });
+    if (lang) await send("Emulation.setUserAgentOverride", { userAgent: (await send("Browser.getVersion")).userAgent, acceptLanguage: lang });
     await send("Page.addScriptToEvaluateOnNewDocument", { source: `
         window.reciServer = location.origin + "/srv";
         try {

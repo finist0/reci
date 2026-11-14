@@ -138,7 +138,7 @@ test("Stress marks: full, the stressed vowel only, none", async t => {
 
 test("Examples follow the stress setting", async t => {
     const page = await app(t);
-    const marked = "import('./js/repo.js').then(R => R.current().examples.map(e => e.sr).find(s => /[̀-ͯ]/.test(s)) ?? null)";
+    const marked = "import('./js/repo.js').then(R => R.current().examples.map(e => e.text).find(s => /[̀-ͯ]/.test(s)) ?? null)";
     for (let i = 0; i < 20 && !(await page.eval(marked)); i++) await page.tap('[data-act="next"]');
     const sr = await page.eval(marked);
     assert.ok(sr, "no example with stress marks in the first cards");

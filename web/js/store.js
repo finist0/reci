@@ -1,9 +1,10 @@
 // Settings and progress kept in the browser, the counterpart of Prefs and ProgressDb.
 
-import { sections } from "./data.js";
-
 const PREFS = "reci.prefs";
 const PROGRESS = "reci.progress";
+
+// The deck learned before there were others (decks.js).
+export const FIRST = "sr-ru";
 
 // States in the same order as the Android enum, so exported progress means the same there.
 export const NEW = 0, DONT_KNOW = 1, UNSURE = 2, KNOWN = 3;
@@ -23,7 +24,8 @@ const defaults = {
     order: 0,
     shuffleSeed: 1,
     currentKey: null,
-    categories: ["L3", "L4", ...sections.map(s => s[0])],
+    // B1, B2 and the sections of data.js, which imports this module through decks.js.
+    categories: ["L3", "L4", "X:phrase", "X:compare", "X:note"],
     todayDate: 0,
     todayCount: 0,
     hintDone: false,
@@ -52,22 +54,42 @@ const listeners = new Set();
 export const onChange = f => listeners.add(f);
 const changed = () => listeners.forEach(f => f());
 
-export const prefs = { ...defaults, ...read(PREFS) };
+const stored = read(PREFS);
+
+// The deck in use; null until decks.js picks one on a first start.
+export const deck = () => stored.deck ?? null;
+
+// Storage names of what belongs to one deck: the first deck keeps the old names.
+const scoped = (name, id = deck()) => (!id || id === FIRST ? name : `${id}.${name}`);
+
+const PER_DECK = new Set(["cardCount", "shuffleSeed", "currentKey", "categories", "lastShown", "pendingAnswer"]);
+
+// The settings under their plain names, those of one deck read from the deck in use.
+export const prefs = {};
+for (const name of Object.keys(defaults)) {
+    const key = () => (PER_DECK.has(name) ? scoped(name) : name);
+    Object.defineProperty(prefs, name, {
+        enumerable: true,
+        get: () => stored[key()] ?? defaults[name],
+        set: v => (stored[key()] = v),
+    });
+}
 
 export function setPref(name, value) {
     prefs[name] = value;
-    write(PREFS, prefs);
+    write(PREFS, stored);
     changed();
 }
 
 export function setPrefs(values) {
-    Object.assign(prefs, values);
-    write(PREFS, prefs);
+    for (const [k, v] of Object.entries(values)) if (k in defaults) prefs[k] = v;
+    write(PREFS, stored);
     changed();
 }
 
-// key -> {state, fav, seen, last, due, step, phase, streak}; only words that were touched.
-const progress = new Map(Object.entries(read(PROGRESS)));
+// key -> {state, fav, seen, last, due, step, phase, streak}; only words that were touched. Each
+// deck keeps its own: Russian вода and Serbian вода are different cards.
+const progress = new Map(Object.entries(read(scoped(PROGRESS))));
 
 // showAt: the card number from which a word answered «Не знаю» is shown again; 0 when none.
 export const emptyProgress = { state: NEW, fav: false, seen: 0, last: 0, due: 0, step: 0, phase: 0, streak: 0, showAt: 0 };
@@ -82,7 +104,17 @@ let saveTimer = 0;
 function saveProgress() {
     clearTimeout(saveTimer);
     saveTimer = 0;
-    write(PROGRESS, Object.fromEntries(progress));
+    write(scoped(PROGRESS), Object.fromEntries(progress));
+}
+
+// Switches the settings of the cards and the progress to another deck.
+export function useDeck(id) {
+    if (saveTimer) saveProgress();
+    stored.deck = id;
+    write(PREFS, stored);
+    progress.clear();
+    for (const [k, v] of Object.entries(read(scoped(PROGRESS)))) progress.set(k, v);
+    changed();
 }
 
 export function putProgress(key, p) {
