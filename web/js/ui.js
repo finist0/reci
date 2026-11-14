@@ -790,13 +790,11 @@ const navRow = (title, summary, a, arg = "") => `
         ${icon("arrow_forward", "faint")}
     </button>`;
 
-// A deck, titled in its own native language; tapping it switches to it.
-const deckRow = d => {
-    const on = d.id === Decks.current().id;
-    return `<button class="setting ${on ? "on" : ""}" ${act("deck", d.id)}>
-        <span class="setting-main"><span class="setting-title">${esc(Decks.title(d))}</span></span>${on ? icon("check") : ""}
-    </button>`;
-};
+// A language of the deck: a choice among several, a plain row when there is nothing to choose.
+const langChoice = (title, langs, lang, a) => (langs.length > 1
+    ? choice(title, langs.map(Decks.name), langs.indexOf(lang), a, "wrap")
+    : `<div class="setting" data-lang="${a}"><span class="setting-main"><span class="setting-title">${esc(title)}</span></span>
+        <span class="setting-value">${esc(Decks.name(lang))}</span></div>`);
 
 // The values of prefs.uiLang in the order of the interface language choice.
 const UI_LANGS = ["", "ru", "sr", "en"];
@@ -829,7 +827,9 @@ function settingsScreen(e) {
         <b>${t("Компьютер:")}</b> ${t("в Chrome или Edge значок установки в адресной строке.")}<br>
         ${t("Прогресс хранится в этом браузере на этом устройстве.")}</div>`);
     // Each language is named in itself, so that a user who cannot read the interface finds their own.
-    const languages = groupTitle(t("Язык")) + panel((Decks.all.length > 1 ? Decks.all.map(deckRow).join(line) + line : "") +
+    const deck = Decks.current();
+    const languages = groupTitle(t("Язык")) + panel(langChoice(t("Учу"), Decks.targets(), deck.target, "target") + line +
+        langChoice(t("Перевод на"), Decks.natives(deck.target), deck.native, "native") + line +
         choice(t("Язык интерфейса"), [t("Как у колоды"), "Русский", "Српски", "English"], Math.max(0, UI_LANGS.indexOf(prefs.uiLang)), "uilang", "wrap"));
     const accents = serbian ? choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode, "accents")
         // One kind of mark only: "with" is mode 1, "without" is mode 2.
@@ -1010,6 +1010,13 @@ function exportProgress() {
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
 }
 
+function switchDeck(d) {
+    if (d === Decks.current()) return;
+    // The card on screen belongs to the deck left.
+    show = null;
+    R.switchDeck(d.id).catch(() => showSentToast(t("Не удалось загрузить словарь. Проверьте интернет и откройте снова.")));
+}
+
 const actions = {
     back,
     categories: () => go("categories"),
@@ -1083,10 +1090,10 @@ const actions = {
     bothscripts: () => setPref("showBothScripts", !prefs.showBothScripts),
     accents: arg => setPref("accentMode", Number(arg)),
     stressplace: arg => setPref("accentMode", Number(arg) + 1),
-    deck: arg => {
-        // The card on screen belongs to the deck left.
-        show = null;
-        R.switchDeck(arg).catch(() => showSentToast(t("Не удалось загрузить словарь. Проверьте интернет и откройте снова.")));
+    target: arg => switchDeck(Decks.pick(Decks.targets()[Number(arg)], Decks.current().native)),
+    native: arg => {
+        const target = Decks.current().target;
+        switchDeck(Decks.pick(target, Decks.natives(target)[Number(arg)]));
     },
     autospeak: () => setPref("autoSpeak", !prefs.autoSpeak),
     testvoice: () => speak(Decks.greeting()),

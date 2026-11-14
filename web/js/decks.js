@@ -69,9 +69,20 @@ export const hasSerbian = () => current().target === "sr" || current().native ==
 
 const langName = (code, l) => tIn(l, code === "sr" ? "сербский" : code === "ru" ? "русский" : code === "en" ? "английский" : code);
 
-// "Учу сербский · перевод на русский", in the deck's own native language, so that a user finds the
-// line in their language among the others.
-export const title = d => format(tIn(d.native, "Учу %s · перевод на %s"), [langName(d.target, d.native), langName(d.native, d.native)]);
+// A language as an option of the settings, named in the interface language.
+export const name = code => {
+    const s = langName(code, lang());
+    return s[0].toUpperCase() + s.slice(1);
+};
+
+// The settings choose the language learned and the language of the translations, not a deck.
+export const targets = () => [...new Set(all.map(d => d.target))];
+export const natives = target => all.filter(d => d.target === target).map(d => d.native);
+
+// The deck of the two languages, else the first one of the language learned: a change of the
+// language learned keeps the translations where a deck has them.
+export const pick = (target, native) =>
+    all.find(d => d.target === target && d.native === native) ?? all.find(d => d.target === target);
 
 const target = () => current().target;
 

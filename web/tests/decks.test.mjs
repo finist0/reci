@@ -110,12 +110,13 @@ test("the Serbian interface, in either script", () => {
         assert.equal(D.category("L1"), "A1 · Почетни");
         assert.equal(D.pos("noun"), "имен.");
         assert.equal(D.orders()[0], t("По частоте"));
+        assert.equal(Decks.name("ru"), "Руски");
         S.setPref("latinFirst", true);
         assert.equal(t("Настройки"), "Podešavanja");
+        assert.equal(Decks.name("ru"), "Ruski");
         S.setPref("latinFirst", false);
     });
-    assert.equal(Decks.title(ruSr), "Учим руски · превод на српски");
-    assert.equal(Decks.title(srRu), "Учу сербский · перевод на русский");
+    assert.equal(Decks.name("sr"), "Сербский");
 });
 
 test("the English interface", () => {
@@ -150,6 +151,52 @@ test("the interface language is chosen apart from the deck and stays over a deck
     assert.equal(t("Настройки"), "Подешавања");
     assert.equal(Decks.lang(), "sr");
     S.setPref("uiLang", "");
+});
+
+// What the settings do on a tap of the language learned.
+const learn = target => R.switchDeck(Decks.pick(target, Decks.current().native).id);
+
+test("the language learned picks the deck, and each deck keeps its progress", async () => {
+    assert.deepEqual(Decks.targets(), ["sr", "ru"]);
+    assert.deepEqual(Decks.natives("sr"), ["ru"]);
+    assert.deepEqual(Decks.natives("ru"), ["sr"]);
+    R.resetAll();
+    R.step(1);
+    const sr = R.current();
+    R.answer(sr, S.KNOWN);
+
+    await learn("ru");
+    assert.equal(Decks.current(), ruSr);
+    R.step(1);
+    const ru = R.current();
+    R.answer(ru, S.DONT_KNOW);
+
+    await learn("sr");
+    assert.equal(Decks.current(), srRu);
+    assert.equal(R.word("хотеть"), undefined);
+    assert.equal(R.progress(sr).phase, R.RECALL);
+    await learn("ru");
+    assert.equal(R.progress(ru).state, S.DONT_KNOW);
+    await learn("sr");
+});
+
+test("the translations follow the language learned and stay where a deck has them", () => {
+    const decks = Decks.all;
+    const ui = JSON.parse(readFileSync(resolve(WEB, R.ASSETS, "ui.json"), "utf-8"));
+    const srEn = { id: "sr-en", target: "sr", native: "en", words: "words.json", grammar: "" };
+    Decks.init([srRu, ruSr, srEn], ui);
+    try {
+        assert.deepEqual(Decks.targets(), ["sr", "ru"]);
+        assert.deepEqual(Decks.natives("sr"), ["ru", "en"]);
+        assert.deepEqual(Decks.natives("ru"), ["sr"]);
+        assert.equal(Decks.pick("sr", "en"), srEn, "English translations stay");
+        assert.equal(Decks.pick("sr", "ru"), srRu);
+        assert.equal(Decks.pick("sr", "sr"), srRu, "no Serbian deck translates into Serbian");
+        assert.equal(Decks.pick("ru", "en"), ruSr, "no Russian deck translates into English");
+        assert.equal(inLanguage("en", () => Decks.name("en")), "English");
+    } finally {
+        Decks.init(decks, ui);
+    }
 });
 
 test("plural forms in Russian, Serbian and English", () => {
