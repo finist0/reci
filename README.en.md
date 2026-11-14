@@ -8,8 +8,8 @@ You turn your screen on dozens of times a day. Now each of those moments brings 
 the lock screen: Serbian or Russian, with its stress, examples and an English translation.
 Ten seconds, and you go on with your day, but the word stays with you.
 
-The app began as Serbian for Russian speakers, and that is still its largest part. It
-also teaches Russian to Serbs. The interface is in English, Serbian or Russian.
+You can also learn Serbian with Russian translations, or Russian with Serbian ones. The
+interface is in English, Serbian or Russian.
 
 <p align="center">
   <img src="screenshots/1-card.png" width="250" alt="A new word card">
@@ -32,13 +32,12 @@ also teaches Russian to Serbs. The interface is in English, Serbian or Russian.
 - **Recall, not reread.** After the first look, you have to recall the word from its
   translation. Learned words come back for a check after a week, three weeks, two months,
   half a year and a year.
-- **Made for the language you speak.** Every pair has its own comparisons of similar
-  words and notes, written for its readers:
-  - with English translations: Serbian *уговор* or *договор*, Russian *идти* or *ехать*,
-    and why Russian has no "is" in the present tense;
-  - for Russian speakers: Serbian *проблем* is masculine, while Russian *проблема* is
-    feminine, and Serbian *празан* means "empty", not "idle";
-  - for Serbs: Russian *живот* is the belly, and Serbian *живот* is Russian *жизнь*.
+- **Written for English speakers.** The English decks have their own comparisons and
+  notes:
+  - comparisons of similar words in the language you learn: Serbian *уговор* or
+    *договор*, Russian *синий* or *голубой*;
+  - notes on usage: Russian *идти* or *ехать*, and why Russian has no "is" in the
+    present tense.
 
 <a id="whats-inside"></a>
 ## What is inside
@@ -48,11 +47,10 @@ also teaches Russian to Serbs. The interface is in English, Serbian or Russian.
     idioms, 380 comparisons of similar words and 630 notes on the language and customs;
   - Russian with English translations: 4,200 words with stress, forms and examples, 340
     comparisons and notes;
-  - Serbian for Russian speakers: the same words and phrases with Russian translations,
-    warnings where Serbian trips a Russian speaker up, and a grammar reference in Russian,
-    26 topics with tables;
-  - Russian for Serbian speakers: the same 4,200 words with Serbian translations, 400
-    comparisons and notes on language and customs.
+  - Serbian with Russian translations: the same words and phrases, and a grammar
+    reference in Russian, 26 topics with tables;
+  - Russian with Serbian translations: the same 4,200 words, 400 comparisons and notes
+    on language and customs.
 - **Choose in the settings** what you learn ("Learning") and the translations ("Translated
   into"). A learned word stays learned with any translation.
 - **Almost 30,000 Serbian and over 9,000 Russian examples** with translations, synonyms,
