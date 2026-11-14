@@ -25,6 +25,12 @@ enum LockDeck {
         if let data = Bundle.main.url(forResource: "ui", withExtension: "json").flatMap({ try? Data(contentsOf: $0) }) { I18n.load(data) }
     }
 
+    // When the wallpaper action last drew a card: the setup tells by it whether the automation runs.
+    static var wallpaperDrawn: Date? {
+        get { UserDefaults(suiteName: appGroup)?.object(forKey: "wallpaperDrawn") as? Date }
+        set { UserDefaults(suiteName: appGroup)?.set(newValue, forKey: "wallpaperDrawn") }
+    }
+
     // The widgets have little memory, so they read a short copy of the dictionary: only the
     // fields the learning rules and a lock screen card need, with the first example only. The
     // app writes it at start and when the deck changes, one copy per deck.

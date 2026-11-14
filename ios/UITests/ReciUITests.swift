@@ -135,6 +135,16 @@ final class ReciUITests: XCTestCase {
         XCTAssertTrue(empty.waitForExistence(timeout: 5))
     }
 
+    func testTheWallpaperSetupTellsWhetherTheShortcutRan() {
+        openSettings()
+        reach(app.buttons["Обои"].firstMatch).tap()
+        let drawn = reach(mark("wallpaperDrawn"))
+        XCTAssertTrue(drawn.waitForExistence(timeout: 5))
+        XCTAssertTrue(drawn.label.contains("Card Wallpaper ещё не запускалась"))
+        XCTAssertTrue(app.buttons["Создать команду"].exists)
+        XCTAssertTrue(app.buttons["Запустить Card Wallpaper"].exists)
+    }
+
     func testLatinAlphabet() {
         openSettings()
         reach(app.buttons["Latinica"].firstMatch).tap()

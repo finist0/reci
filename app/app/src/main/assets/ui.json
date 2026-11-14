@@ -47,13 +47,41 @@
   "en": "C1 · Advanced",
   "sr": "C1 · Напредни"
  },
+ "Card Wallpaper ещё не запускалась.": {
+  "en": "Card Wallpaper has not run yet.",
+  "sr": "Card Wallpaper се још није покренула."
+ },
+ "Card Wallpaper последний раз рисовала карточку: %s.": {
+  "en": "Card Wallpaper last drew the card: %s.",
+  "sr": "Card Wallpaper је последњи пут нацртала картицу: %s."
+ },
  "Settings → Apps → НЕРодная речь.": {
   "en": "Settings → Apps → НЕРодная речь.",
   "sr": "Settings → Apps → НЕРодная речь."
  },
+ "iOS видит все виджеты на экране блокировки.": {
+  "en": "iOS sees all the widgets on the lock screen.",
+  "sr": "iOS види све виџете на закључаном екрану."
+ },
+ "iOS пока не видит на экране блокировки: %s.": {
+  "en": "iOS does not see on the lock screen yet: %s.",
+  "sr": "iOS још не види на закључаном екрану: %s."
+ },
  "iPhone и компьютер:": {
   "en": "iPhone and computer:",
   "sr": "iPhone и рачунар:"
+ },
+ "«Знаю»": {
+  "en": "“Know”",
+  "sr": "„Знам”"
+ },
+ "«Карточка»": {
+  "en": "“Card”",
+  "sr": "„Картица”"
+ },
+ "«Не знаю»": {
+  "en": "“Don't know”",
+  "sr": "„Не знам”"
  },
  "«Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо.": {
   "en": "“Don't know” brings the word back after five cards. A long press on “Know”: the word is already familiar.",
@@ -138,6 +166,10 @@
  "В прошлый раз случилась ошибка": {
   "en": "Something went wrong last time",
   "sr": "Прошли пут је дошло до грешке"
+ },
+ "В этой же команде добавьте из Automation триггеры Time of Day (время, Daily) и App → НЕРодная речь → Is Closed.": {
+  "en": "In the same shortcut add the triggers from Automation: Time of Day (a time, Daily) and App → НЕРодная речь → Is Closed.",
+  "sr": "У истој пречици додајте окидаче из Automation: Time of Day (време, Daily) и App → НЕРодная речь → Is Closed."
  },
  "Вернитесь сюда и снова нажмите «выдать».": {
   "en": "Come back here and tap “grant” again.",
@@ -247,13 +279,9 @@
   "en": "Until the end of the day",
   "sr": "До краја дана"
  },
- "Добавьте действие Set Wallpaper Photo → Lock Screen, выключите Show Preview.": {
-  "en": "Add the Set Wallpaper Photo action → Lock Screen, turn Show Preview off.",
-  "sr": "Додајте радњу Set Wallpaper Photo → Lock Screen, искључите Show Preview."
- },
- "Добавьте действие «Обои с карточкой» (НЕРодная речь).": {
-  "en": "Add the “Обои с карточкой” action (НЕРодная речь).",
-  "sr": "Додајте радњу „Обои с карточкой” (НЕРодная речь)."
+ "Добавьте действие Set Wallpaper Photo: выберите Lock Screen, раскройте его стрелкой и выключите Show Preview и Crop to Subject.": {
+  "en": "Add the Set Wallpaper Photo action: choose Lock Screen, expand it with the arrow and turn off Show Preview and Crop to Subject.",
+  "sr": "Додајте радњу Set Wallpaper Photo: изаберите Lock Screen, отворите је стрелицом и искључите Show Preview и Crop to Subject."
  },
  "Добавьте рядом «Знаю» и «Не знаю» (круглые виджеты).": {
   "en": "Next to it add “Know” and “Don't know” (the round widgets).",
@@ -274,6 +302,10 @@
  "Еда и напитки": {
   "en": "Food and drink",
   "sr": "Храна и пиће"
+ },
+ "Если Set Wallpaper Photo не даёт выбрать обои, сначала поставьте обои из фото: Settings → Wallpaper → Add New Wallpaper → Photos.": {
+  "en": "If Set Wallpaper Photo offers no wallpaper to choose, first set a photo wallpaper: Settings → Wallpaper → Add New Wallpaper → Photos.",
+  "sr": "Ако Set Wallpaper Photo не нуди позадину за избор, прво поставите позадину од фотографије: Settings → Wallpaper → Add New Wallpaper → Photos."
  },
  "Если переключатель не включается, Android ограничил настройки. Так бывает у приложений, ": {
   "en": "If the switch does not turn on, Android has restricted the settings. This happens to apps ",
@@ -322,6 +354,10 @@
  "Заметки": {
   "en": "Notes",
   "sr": "Белешке"
+ },
+ "Запустить Card Wallpaper": {
+  "en": "Run Card Wallpaper",
+  "sr": "Покрени Card Wallpaper"
  },
  "Зачем эти разрешения": {
   "en": "Why these permissions",
@@ -399,9 +435,9 @@
   "en": "A card when the screen turns on",
   "sr": "Картица кад се екран упали"
  },
- "Карточка становится обоями экрана блокировки. Её рисует действие «Обои с карточкой» для приложения «Команды»; ответы — круглыми виджетами «Знаю» и «Не знаю».": {
-  "en": "The card becomes the lock screen wallpaper. The “Обои с карточкой” action for the Shortcuts app draws it; answers go through the round “Know” and “Don't know” widgets.",
-  "sr": "Картица постаје позадина закључаног екрана. Црта је радња „Обои с карточкой” за апликацију „Пречице”; одговара се округлим виџетима „Знам” и „Не знам”."
+ "Карточка становится обоями экрана блокировки. Её рисует действие Card Wallpaper для приложения Shortcuts; ответы — круглыми виджетами «Знаю» и «Не знаю».": {
+  "en": "The card becomes the lock screen wallpaper. The Card Wallpaper action for the Shortcuts app draws it; answers go through the round “Know” and “Don't know” widgets.",
+  "sr": "Картица постаје позадина закључаног екрана. Црта је радња Card Wallpaper за апликацију Shortcuts; одговара се округлим виџетима „Знам” и „Не знам”."
  },
  "Карточки": {
   "en": "Cards",
@@ -463,25 +499,45 @@
   "en": "On older Android versions and some phones the path differs: Battery → Battery optimization → ",
   "sr": "На старим верзијама Android-а и на неким телефонима пут је другачији: Battery → Battery optimization → "
  },
- "На экран блокировки добавьте круглые виджеты «Знаю» и «Не знаю».": {
-  "en": "Add the round “Know” and “Don't know” widgets to the lock screen.",
-  "sr": "На закључани екран додајте округле виџете „Знам” и „Не знам”."
- },
  "Надёжнее понять, идёт ли звонок": {
   "en": "Tells more reliably whether a call is on",
   "sr": "Поузданије препознаје да ли је позив у току"
+ },
+ "Нажмите Add Action, найдите действие Card Wallpaper (НЕРодная речь) и добавьте его.": {
+  "en": "Tap Add Action, find the Card Wallpaper action (НЕРодная речь) and add it.",
+  "sr": "Додирните Add Action, пронађите радњу Card Wallpaper (НЕРодная речь) и додајте је."
+ },
+ "Нажмите Add Widgets (поле под часами) → НЕРодная речь → «Карточка» (широкий виджет).": {
+  "en": "Tap Add Widgets (the field below the clock) → НЕРодная речь → “Card” (the wide widget).",
+  "sr": "Додирните Add Widgets (поље испод сата) → НЕРодная речь → „Картица” (широки виџет)."
  },
  "Нажмите Done.": {
   "en": "Tap Done.",
   "sr": "Додирните Done."
  },
+ "Нажмите Done. Откройте Automation → New Automation (или +) → Time of Day: время, Daily → Run Immediately → Next → команда Card Wallpaper.": {
+  "en": "Tap Done. Open Automation → New Automation (or +) → Time of Day: a time, Daily → Run Immediately → Next → the Card Wallpaper shortcut.",
+  "sr": "Додирните Done. Отворите Automation → New Automation (или +) → Time of Day: време, Daily → Run Immediately → Next → пречица Card Wallpaper."
+ },
+ "Нажмите «Создать команду» ниже: в Shortcuts откроется новая команда. Нажмите New Shortcut → Rename и назовите её Card Wallpaper.": {
+  "en": "Tap “Create the shortcut” below: Shortcuts opens a new shortcut. Tap New Shortcut → Rename and name it Card Wallpaper.",
+  "sr": "Додирните „Направи пречицу” испод: у Shortcuts се отвара нова пречица. Додирните New Shortcut → Rename и назовите је Card Wallpaper."
+ },
+ "Нажмите и удерживайте экран блокировки → Customize → Add Widgets: добавьте под часами круглые «Знаю» и «Не знаю». Внизу их не ставьте: там карточка.": {
+  "en": "Touch and hold the lock screen → Customize → Add Widgets: add the round “Know” and “Don't know” below the clock. Not at the bottom: the card is there.",
+  "sr": "Притисните и држите закључани екран → Customize → Add Widgets: додајте испод сата округле „Знам” и „Не знам”. Не стављајте их доле: тамо је картица."
+ },
+ "Нажмите и удерживайте экран блокировки → Customize → Lock Screen → Add Widgets: добавьте круглые «Знаю» и «Не знаю».": {
+  "en": "Touch and hold the lock screen → Customize → Lock Screen → Add Widgets: add the round “Know” and “Don't know”.",
+  "sr": "Притисните и држите закључани екран → Customize → Lock Screen → Add Widgets: додајте округле „Знам” и „Не знам”."
+ },
  "Нажмите и удерживайте экран блокировки → Customize → Lock Screen.": {
   "en": "Touch and hold the lock screen → Customize → Lock Screen.",
   "sr": "Притисните и држите закључани екран → Customize → Lock Screen."
  },
- "Нажмите на рамку под часами → добавьте «Карточка» (широкий виджет).": {
-  "en": "Tap the frame below the clock → add “Card” (the wide widget).",
-  "sr": "Додирните оквир испод сата → додајте „Картица” (широки виџет)."
+ "Нажмите и удерживайте экран блокировки → Customize.": {
+  "en": "Touch and hold the lock screen → Customize.",
+  "sr": "Притисните и држите закључани екран → Customize."
  },
  "Назад": {
   "en": "Back",
@@ -630,10 +686,6 @@
  "Откроется страница приложения в настройках Android. Там:": {
   "en": "The app's page in the Android settings will open. There:",
   "sr": "Отвориће се страница апликације у подешавањима Android-а. Тамо:"
- },
- "Откройте «Команды» → Automation → New Automation → Time of Day (например, каждый час) → Run Immediately.": {
-  "en": "Open Shortcuts → Automation → New Automation → Time of Day (say, every hour) → Run Immediately.",
-  "sr": "Отворите „Пречице” → Automation → New Automation → Time of Day (на пример, сваког сата) → Run Immediately."
  },
  "Откройте приложение": {
   "en": "Open the app",
@@ -1015,6 +1067,10 @@
   "en": "End the pause",
   "sr": "Укини паузу"
  },
+ "Создать команду": {
+  "en": "Create the shortcut",
+  "sr": "Направи пречицу"
+ },
  "Сообщение": {
   "en": "Message",
   "sr": "Порука"
@@ -1046,6 +1102,10 @@
  "Ссылки на Android, iPhone и компьютер": {
   "en": "Links for Android, iPhone and computer",
   "sr": "Везе за Android, iPhone и рачунар"
+ },
+ "Так же добавьте вторую: App → Choose → НЕРодная речь, отметьте только Is Closed → Run Immediately → Next → Card Wallpaper.": {
+  "en": "Add a second one the same way: App → Choose → НЕРодная речь, check only Is Closed → Run Immediately → Next → Card Wallpaper.",
+  "sr": "Исто додајте другу: App → Choose → НЕРодная речь, означите само Is Closed → Run Immediately → Next → Card Wallpaper."
  },
  "Там лежит код приложения": {
   "en": "The app's code is there",
@@ -1166,6 +1226,10 @@
  "Что учим": {
   "en": "What to learn",
   "sr": "Шта учимо"
+ },
+ "Чтобы команда не спрашивала разрешения: Info (ⓘ) → Privacy → включите Allow Running When Locked. Нажмите Done.": {
+  "en": "So that the shortcut does not ask for permission: Info (ⓘ) → Privacy → turn on Allow Running When Locked. Tap Done.",
+  "sr": "Да пречица не би тражила дозволу: Info (ⓘ) → Privacy → укључите Allow Running When Locked. Додирните Done."
  },
  "Чтобы перенести его на другое устройство": {
   "en": "To move it to another device",

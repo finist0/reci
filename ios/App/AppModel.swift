@@ -47,6 +47,7 @@ final class AppModel: ObservableObject {
         // UI tests start from a fresh install.
         if ProcessInfo.processInfo.arguments.contains("-uitest-reset") {
             try? FileManager.default.removeItem(at: LockDeck.dir)
+            LockDeck.wallpaperDrawn = nil
             try? FileManager.default.removeItem(at: Dict.dir)
             UserDefaults.standard.removeObject(forKey: Self.newsSeen)
             crash.clear()

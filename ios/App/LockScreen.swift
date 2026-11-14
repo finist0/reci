@@ -3,12 +3,23 @@ import ReciCore
 import SwiftUI
 import UIKit
 import UniformTypeIdentifiers
+import WidgetKit
 
-// How to put the card on the lock screen; iOS lets an app neither draw there nor set a wallpaper
-// itself, so both ways need a few steps from the user.
+// How to put the card on the lock screen. iOS lets an app neither draw there nor set a wallpaper
+// itself, so both ways need a few steps from the user. The steps follow the iOS on the phone,
+// the buttons open Shortcuts where the steps begin, and the checks show what the app can see of
+// the result.
 struct LockSetup: View {
     @EnvironmentObject var model: AppModel
+    @Environment(\.openURL) private var openURL
+    @Environment(\.scenePhase) private var phase
     let mode: Int
+    // The kinds of our widgets iOS reports on lock screens; nil until it answers.
+    @State private var placed: Set<String>?
+    @State private var drawn: Date?
+
+    // iOS 26 opens the lock screen editor at once; iOS 27 keeps automations inside shortcuts.
+    private let ios = ProcessInfo.processInfo.operatingSystemVersion.majorVersion
 
     var body: some View {
         let p = model.palette
@@ -16,23 +27,101 @@ struct LockSetup: View {
             if mode == 0 {
                 Text(t("Карточка и кнопки — виджеты экрана блокировки. Ответ виджетом сразу показывает следующее слово."))
                 steps([
-                    t("Нажмите и удерживайте экран блокировки → Customize → Lock Screen."),
-                    t("Нажмите на рамку под часами → добавьте «Карточка» (широкий виджет)."),
+                    ios >= 26 ? t("Нажмите и удерживайте экран блокировки → Customize.")
+                        : t("Нажмите и удерживайте экран блокировки → Customize → Lock Screen."),
+                    t("Нажмите Add Widgets (поле под часами) → НЕРодная речь → «Карточка» (широкий виджет)."),
                     t("Добавьте рядом «Знаю» и «Не знаю» (круглые виджеты)."),
                     t("Нажмите Done."),
                 ])
+                widgetCheck(["card", "know", "dontknow"])
             } else {
-                Text(t("Карточка становится обоями экрана блокировки. Её рисует действие «Обои с карточкой» для приложения «Команды»; ответы — круглыми виджетами «Знаю» и «Не знаю»."))
-                steps([
-                    t("Откройте «Команды» → Automation → New Automation → Time of Day (например, каждый час) → Run Immediately."),
-                    t("Добавьте действие «Обои с карточкой» (НЕРодная речь)."),
-                    t("Добавьте действие Set Wallpaper Photo → Lock Screen, выключите Show Preview."),
-                    t("На экран блокировки добавьте круглые виджеты «Знаю» и «Не знаю»."),
-                ])
+                Text(t("Карточка становится обоями экрана блокировки. Её рисует действие Card Wallpaper для приложения Shortcuts; ответы — круглыми виджетами «Знаю» и «Не знаю»."))
+                steps(wallpaperSteps)
+                Text(t("Если Set Wallpaper Photo не даёт выбрать обои, сначала поставьте обои из фото: Settings → Wallpaper → Add New Wallpaper → Photos."))
+                HStack(spacing: 20) {
+                    link(t("Создать команду"), "shortcuts://create-shortcut")
+                    link(t("Запустить Card Wallpaper"), "shortcuts://run-shortcut?name=Card%20Wallpaper")
+                }
+                .padding(.vertical, 4)
                 Text(t("Обои обновляются, когда срабатывает команда, а не сразу после ответа."))
+                check(drawn != nil, drawn.map { t("Card Wallpaper последний раз рисовала карточку: %s.", $0.formatted(Date.FormatStyle(date: .abbreviated, time: .shortened, locale: model.locale))) }
+                      ?? t("Card Wallpaper ещё не запускалась."))
+                    .accessibilityIdentifier("wallpaperDrawn")
+                widgetCheck(["know", "dontknow"])
             }
         }
         .font(.ui(13)).foregroundStyle(p.secondary)
+        .onAppear(perform: refresh)
+        .onChange(of: phase) { _, now in
+            if now == .active { refresh() }
+        }
+    }
+
+    private var wallpaperSteps: [String] {
+        var s = [
+            t("Нажмите «Создать команду» ниже: в Shortcuts откроется новая команда. Нажмите New Shortcut → Rename и назовите её Card Wallpaper."),
+            t("Нажмите Add Action, найдите действие Card Wallpaper (НЕРодная речь) и добавьте его."),
+            t("Добавьте действие Set Wallpaper Photo: выберите Lock Screen, раскройте его стрелкой и выключите Show Preview и Crop to Subject."),
+        ]
+        if ios >= 27 {
+            s += [
+                t("В этой же команде добавьте из Automation триггеры Time of Day (время, Daily) и App → НЕРодная речь → Is Closed."),
+                t("Чтобы команда не спрашивала разрешения: Info (ⓘ) → Privacy → включите Allow Running When Locked. Нажмите Done."),
+            ]
+        } else {
+            s += [
+                t("Нажмите Done. Откройте Automation → New Automation (или +) → Time of Day: время, Daily → Run Immediately → Next → команда Card Wallpaper."),
+                t("Так же добавьте вторую: App → Choose → НЕРодная речь, отметьте только Is Closed → Run Immediately → Next → Card Wallpaper."),
+            ]
+        }
+        // iOS 26 lets the widgets go down to the bottom, where the card is drawn.
+        s.append(ios >= 26 ? t("Нажмите и удерживайте экран блокировки → Customize → Add Widgets: добавьте под часами круглые «Знаю» и «Не знаю». Внизу их не ставьте: там карточка.")
+                 : t("Нажмите и удерживайте экран блокировки → Customize → Lock Screen → Add Widgets: добавьте круглые «Знаю» и «Не знаю»."))
+        return s
+    }
+
+    private func refresh() {
+        drawn = LockDeck.wallpaperDrawn
+        Task { placed = await Self.lockWidgets() }
+    }
+
+    // The accessory families are the lock screen ones on a phone. iOS may report a widget for a
+    // while after it is removed, so a missing one is the sure finding.
+    private static func lockWidgets() async -> Set<String>? {
+        await withCheckedContinuation { done in
+            WidgetCenter.shared.getCurrentConfigurations { result in
+                let lock: [WidgetFamily] = [.accessoryCircular, .accessoryRectangular, .accessoryInline]
+                done.resume(returning: (try? result.get()).map { infos in Set(infos.filter { lock.contains($0.family) }.map(\.kind)) })
+            }
+        }
+    }
+
+    @ViewBuilder
+    private func widgetCheck(_ kinds: [String]) -> some View {
+        if let placed {
+            let names = ["card": t("«Карточка»"), "know": t("«Знаю»"), "dontknow": t("«Не знаю»")]
+            let missing = kinds.filter { !placed.contains($0) }.compactMap { names[$0] }
+            check(missing.isEmpty, missing.isEmpty ? t("iOS видит все виджеты на экране блокировки.")
+                  : t("iOS пока не видит на экране блокировки: %s.", missing.joined(separator: ", ")))
+                .accessibilityIdentifier("widgetsPlaced")
+        }
+    }
+
+    private func check(_ ok: Bool, _ text: String) -> some View {
+        let p = model.palette
+        return HStack(alignment: .firstTextBaseline, spacing: 6) {
+            Image(systemName: ok ? "checkmark.circle.fill" : "exclamationmark.circle").foregroundStyle(ok ? p.known : p.accent)
+            Text(text).foregroundStyle(p.text)
+        }
+        .padding(.top, 4)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(text)
+    }
+
+    private func link(_ title: String, _ url: String) -> some View {
+        Button(title) { openURL(URL(string: url)!) }
+            .font(.ui(14, .semibold)).foregroundStyle(model.palette.accent)
+            .accessibilityIdentifier(title)
     }
 
     private func steps(_ items: [String]) -> some View {
@@ -143,8 +232,9 @@ struct WallpaperCard: View {
 }
 
 struct CardWallpaperIntent: AppIntent {
-    static var title: LocalizedStringResource = "Обои с карточкой"
-    static var description = IntentDescription("Рисует текущую карточку как картинку для обоев экрана блокировки.")
+    // One English name on every phone, which the setup steps in every interface language quote.
+    static var title: LocalizedStringResource = "Card Wallpaper"
+    static var description = IntentDescription("Draws the current word card as a picture for the lock screen wallpaper.")
 
     // The widgets' short deck lacks examples, forms and synonyms; the app's own dictionary has them.
     @MainActor
@@ -167,13 +257,14 @@ struct CardWallpaperIntent: AppIntent {
         // The picture has the pixels of the screen, so the lock screen shows it whole, without cropping.
         renderer.scale = screen.bounds.width * screen.scale / WallpaperCard.width
         guard let data = renderer.uiImage?.pngData() else { throw CocoaError(.fileWriteUnknown) }
+        LockDeck.wallpaperDrawn = Date()
         return .result(value: IntentFile(data: data, filename: "reci-card.png", type: .png))
     }
 }
 
 struct ReciShortcuts: AppShortcutsProvider {
     static var appShortcuts: [AppShortcut] {
-        AppShortcut(intent: CardWallpaperIntent(), phrases: ["Обои с карточкой в \(.applicationName)"],
-                    shortTitle: "Обои с карточкой", systemImageName: "photo")
+        AppShortcut(intent: CardWallpaperIntent(), phrases: ["Card wallpaper in \(.applicationName)", "Обои с карточкой в \(.applicationName)"],
+                    shortTitle: "Card Wallpaper", systemImageName: "photo")
     }
 }
