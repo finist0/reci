@@ -46,8 +46,9 @@ The app's interface and translations are in Russian.
   - 380 comparisons of similar words, such as *ugovor* or *dogovor*;
   - 670 short notes on the language.
 - **30,000 examples** with translations, synonyms, antonyms, related words, all stressed.
-- **For Serbs learning Russian:** 4,200 Russian words with Serbian translations and a
-  Serbian interface. The language is chosen in the settings.
+- **For Serbs learning Russian:** 4,200 Russian words with Serbian translations, 400
+  comparisons of similar words and notes on language and customs, a Serbian interface.
+  The language pair is chosen in the settings, and so is the interface language.
 - **Grammar reference:** 26 topics with tables.
 - **Cyrillic or Latin script**, three ways to show stress, pronunciation.
 - **Eight colour themes**, light and dark.
