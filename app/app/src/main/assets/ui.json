@@ -1531,9 +1531,13 @@
   "en": "New language choice in the settings: the language you learn and the language of the translations.",
   "sr": "Нови избор језика у подешавањима: који језик учите и на који језик је превод."
  },
- "Русский для тех, кто говорит по-сербски: 4 200 слов с ударениями и переводом на сербский, разборы похожих слов и заметки.": {
-  "en": "Russian for Serbian speakers: 4,200 words with stress marks and Serbian translations, comparisons of similar words and notes.",
-  "sr": "Руски за оне који говоре српски: 4.200 речи с нагласцима и преводом на српски, поређења сличних речи и белешке."
+ "Русский для тех, кто говорит по-сербски: больше 4 200 слов с ударениями и переводом на сербский, разборы похожих слов и заметки.": {
+  "en": "Russian for Serbian speakers: over 4,200 words with stress marks and Serbian translations, comparisons of similar words and notes.",
+  "sr": "Руски за оне који говоре српски: више од 4.200 речи с нагласцима и преводом на српски, поређења сличних речи и белешке."
+ },
+ "Исправлены ошибки в карточках: значения, рассыпавшиеся на отдельные буквы, опечатки в примерах, неверные ударения в примечаниях.": {
+  "en": "Card mistakes fixed: meanings broken into single letters, typos in examples, wrong stress in notes.",
+  "sr": "Исправљене грешке у картицама: значења растурена на појединачна слова, грешке у куцању у примерима, погрешни нагласци у белешкама."
  },
  "Язык интерфейса можно выбрать отдельно: русский, сербский или английский.": {
   "en": "The interface language can be chosen on its own: Russian, Serbian or English.",
