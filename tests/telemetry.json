@@ -1,12 +1,15 @@
 {
-    "comment": "What the apps may send to the server (reci.server, src/index.js). The server rejects any other field, so every platform checks its packets against this list.",
+    "comment": "What the apps may send to the server (reci.server, src/index.js). The server rejects any other field, so every platform checks its packets against this list. lockans counts the answers given on the lock screen (the lock card on Android, the widget buttons on iOS) since the last ping, answers only those given in the app: the two never overlap. widgets (iOS): the kinds of the app's widgets iOS reports on lock screens and on home screens; iOS may report a removed one for a while, so it is an upper bound. wallpaper (iOS): how long ago the Card Wallpaper action last drew a card. overlay (Android): whether the app may show its card over the lock screen.",
     "ping": {
         "required": ["id", "day", "platform", "app", "os", "locale"],
-        "optional": ["cards", "answers", "learned", "lock", "cats", "mode", "theme", "latin", "opened", "deck", "ui"]
+        "optional": ["cards", "answers", "learned", "lock", "cats", "mode", "theme", "latin", "opened", "deck", "ui",
+                     "lockans", "widgets", "wallpaper", "overlay"]
     },
     "answers": ["know", "dontknow", "long", "later", "hide"],
     "platforms": ["android", "ios", "web-ios", "web-android", "web-desktop"],
     "lock": ["widget", "wallpaper", "overlay", "off"],
+    "widgets": {"places": ["lock", "home"], "kinds": ["card", "know", "dontknow"]},
+    "wallpaper": ["48h", "week", "older", "never"],
     "feedback": {
         "required": ["id", "kind", "platform", "app", "os"],
         "optional": ["text", "email", "card", "env"],
