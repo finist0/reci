@@ -1,0 +1,47 @@
+<!-- The README in the visitor's language: a visitor who comes to the Russian index from another
+     site goes to README.sr.html or README.en.html by the browser's language. A click on a
+     language link is remembered, and after it the index never sends anyone away. -->
+<script>
+(function () {
+    var base = "{{ '/' | relative_url }}";
+    var key = "reci-readme-lang";
+    var russian = ["ru", "uk", "be"];
+    var serbian = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"];
+
+    function langOf(path) {
+        if (path === base || path === base + "index.html") return "ru";
+        var m = path.slice(0, base.length) === base ? /^README\.(sr|en)(\.html)?$/.exec(path.slice(base.length)) : null;
+        return m ? m[1] : "";
+    }
+
+    var here = langOf(location.pathname);
+    if (!here) return;
+
+    document.addEventListener("click", function (e) {
+        var a = e.target && e.target.closest ? e.target.closest("a[href]") : null;
+        if (!a || a.origin !== location.origin) return;
+        var lang = langOf(a.pathname);
+        if (!lang || lang === here) return;
+        try { localStorage.setItem(key, lang); } catch (err) {}
+    });
+
+    if (here !== "ru") return;
+    if (document.referrer.indexOf(location.origin + base) === 0) return;
+    if (navigator.webdriver || /bot|crawl|spider|slurp|preview/i.test(navigator.userAgent)) return;
+    try {
+        if (localStorage.getItem(key)) return;
+    } catch (err) {
+        return;
+    }
+    var langs = navigator.languages && navigator.languages.length ? navigator.languages : [navigator.language];
+    var to = "";
+    for (var i = 0; i < langs.length; i++) {
+        var lang = String(langs[i] || "").toLowerCase().split(/[-_]/)[0];
+        if (russian.indexOf(lang) >= 0) return;
+        if (serbian.indexOf(lang) >= 0) { to = "README.sr.html"; break; }
+        if (lang === "en") { to = "README.en.html"; break; }
+        if (lang && !to) to = "README.en.html";
+    }
+    if (to) location.replace(base + to + location.search + location.hash);
+})();
+</script>

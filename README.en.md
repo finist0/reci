@@ -1,14 +1,15 @@
-[Russian](README.md) · **English**
+[Русский](README.md) · [Српски](README.sr.md) · **English**
 
 # Nerodnaya Rech
 
-**Serbian for Russian speakers. One word every time you pick up your phone.**
+**Serbian or Russian, one word every time you pick up your phone.**
 
-You turn your screen on dozens of times a day. Now each of those moments brings a Serbian
-word to the lock screen: with its stress, gender, examples and translation. Ten seconds,
-and you go on with your day, but the word stays with you.
+You turn your screen on dozens of times a day. Now each of those moments brings a word to
+the lock screen: Serbian or Russian, with its stress, examples and an English translation.
+Ten seconds, and you go on with your day, but the word stays with you.
 
-The interface and the translations are in Russian, Serbian or English.
+The app began as Serbian for Russian speakers, and that is still its largest part. It
+also teaches Russian to Serbs. The interface is in English, Serbian or Russian.
 
 <p align="center">
   <img src="screenshots/1-card.png" width="250" alt="A new word card">
@@ -31,28 +32,34 @@ The interface and the translations are in Russian, Serbian or English.
 - **Recall, not reread.** After the first look, you have to recall the word from its
   translation. Learned words come back for a check after a week, three weeks, two months,
   half a year and a year.
-- **Made for Russian speakers.** Russian translations, and a warning wherever Serbian trips a
-  Russian speaker up:
-  - a different gender than in Russian: Serbian *problem* is masculine, while Russian
-    *problema* is feminine;
-  - false friends: Serbian *prazan* means "empty", not "idle" like the Russian *prazdny*.
+- **Made for the language you speak.** Every pair has its own comparisons of similar
+  words and notes, written for its readers:
+  - with English translations: Serbian *уговор* or *договор*, Russian *идти* or *ехать*,
+    and why Russian has no "is" in the present tense;
+  - for Russian speakers: Serbian *проблем* is masculine, while Russian *проблема* is
+    feminine, and Serbian *празан* means "empty", not "idle";
+  - for Serbs: Russian *живот* is the belly, and Serbian *живот* is Russian *жизнь*.
 
 <a id="whats-inside"></a>
 ## What is inside
 
-- **16,000 cards:**
-  - 12,500 words with stress, forms and examples;
-  - 2,500 phrases and idioms;
-  - 380 comparisons of similar words, such as *ugovor* or *dogovor*;
-  - 670 short notes on the language.
-- **30,000 examples** with translations, synonyms, antonyms, related words, all stressed.
-- **For Serbs learning Russian:** 4,200 Russian words with Serbian translations, 400
-  comparisons of similar words and notes on language and customs, a Serbian interface.
-  The language pair is chosen in the settings, and so is the interface language.
-- **For English speakers:** Serbian and Russian with English translations. A learned word
-  stays learned with any translation.
-- **Grammar reference:** 26 topics with tables.
-- **Cyrillic or Latin script**, three ways to show stress, pronunciation.
+- **Four language pairs:**
+  - Serbian with English translations: 16,000 cards with 12,500 words, 2,500 phrases and
+    idioms, 380 comparisons of similar words and 630 notes on the language and customs;
+  - Russian with English translations: 4,200 words with stress, forms and examples, 340
+    comparisons and notes;
+  - Serbian for Russian speakers: the same words and phrases with Russian translations,
+    warnings where Serbian trips a Russian speaker up, and a grammar reference in Russian,
+    26 topics with tables;
+  - Russian for Serbian speakers: the same 4,200 words with Serbian translations, 400
+    comparisons and notes on language and customs.
+- **Choose in the settings** what you learn ("Learning") and the translations ("Translated
+  into"). A learned word stays learned with any translation.
+- **Almost 30,000 Serbian and over 9,000 Russian examples** with translations, synonyms,
+  antonyms, related words, all stressed.
+- **Interface in English, Serbian or Russian.** On the first start the language pair and the
+  interface follow the phone's language; both can be changed in the settings.
+- **Cyrillic or Latin script** for Serbian, three ways to show stress, pronunciation.
 - **Eight colour themes**, light and dark.
 - **No sign-up, no text messages.** Open source.
 
@@ -65,7 +72,8 @@ The interface and the translations are in Russian, Serbian or English.
 - A word you already know: a long press on "Know" marks it learned at once.
 - Answered by mistake? The "‹" button brings back the previous card, and the answer can be
   changed.
-- Comparisons and notes can be put off with "Read later" or removed with "Don't show".
+- Comparisons and notes can be put off with "Read again later" or removed with "Don't
+  show".
 - "Translation" and "Word" modes show only one side of the card. Choice of levels, topics
   and sections, search, favourites.
 
@@ -104,11 +112,10 @@ Then [set it up on Android](#android-setup).
 1. Install TestFlight from the App Store.
 2. Open https://testflight.apple.com/join/3x3Hs9DV on the iPhone and install the app.
    Updates then come through TestFlight.
-3. Open the app → Settings → "Карточка на экране блокировки" (lock screen card) → "Обои"
-   (wallpaper). The card becomes the lock screen wallpaper: the Card Wallpaper action
-   (НЕРодная речь) for the Shortcuts app draws it.
-4. Build the shortcut: the "Создать команду" (create the shortcut) button there opens
-   Shortcuts.
+3. Open the app → Settings → "Card on the lock screen" → "Wallpaper". The card becomes the
+   lock screen wallpaper: the Card Wallpaper action (НЕРодная речь) for the Shortcuts app
+   draws it.
+4. Build the shortcut: the "Create the shortcut" button there opens Shortcuts.
    1. New Shortcut → Rename → Card Wallpaper.
    2. Add Action → Card Wallpaper (НЕРодная речь).
    3. Add Action → Set Wallpaper Photo: Lock Screen, turn off Show Preview and
@@ -120,8 +127,8 @@ Then [set it up on Android](#android-setup).
    - iOS 27: in the shortcut itself add the Time of Day and
      App → НЕРодная речь → Is Closed triggers from Automation, then Info (ⓘ) → Privacy →
      Allow Running When Locked.
-6. Add the round "Знаю" (I know) and "Не знаю" (I don't know) widgets under the clock:
-   touch and hold the lock screen → Customize (on iOS 17 and 18 also → Lock Screen) →
+6. Add the round "Know" and "Don't know" widgets under the clock: touch and hold the lock
+   screen → Customize (on iOS 17 and 18 also → Lock Screen) →
    Add Widgets.
 
 A new wallpaper appears when the automation runs, not right after an answer.
@@ -129,8 +136,8 @@ A new wallpaper appears when the automation runs, not right after an answer.
 The app shows these steps for your iOS version, when the shortcut last drew the card and
 which widgets iOS does not see on the lock screen yet.
 
-Widgets alone work too: choose "Виджеты" (widgets) in the same switch and also add the wide
-"Карточка" widget under the clock. Then an answer from a round widget shows the next word at
+Widgets alone work too: choose "Widgets" in the same switch and also add the wide "Card"
+widget under the clock. Then an answer from a round widget shows the next word at
 once.
 
 iOS 17 or later is required.
@@ -148,9 +155,10 @@ one; the progress is kept. Then [set it up on Android](#android-setup).
 <a id="android-setup"></a>
 ### Setting up on Android
 
-1. Open the app's settings, the lock screen section:
-   - turn on the card when the screen turns on;
-   - grant "Display over other apps"; without it Android shows no card.
+1. Open the app's settings, the "Lock screen" section:
+   - turn on "A card when the screen turns on";
+   - grant "Over other windows" (Android calls it "Display over other apps"); without it
+     Android shows no card.
 
    Android also asks for permission to post notifications. The background service needs it,
    and it shows words to review in the notification shade.
@@ -166,8 +174,8 @@ one; the progress is kept. Then [set it up on Android](#android-setup).
    open the menu again.
 
 3. If cards stop appearing, in the same section:
-   - lift the battery restrictions;
-   - grant the calls permission. Without it a call is told by the audio mode, and a messenger
+   - turn on "No battery restrictions";
+   - grant "Calls". Without it a call is told by the audio mode, and a messenger
      that forgets to reset the ringing mode after its call turns the cards off. With it,
      Android itself reports phone calls and such a mode no longer matters. The app makes no
      calls and sees no numbers.
@@ -208,8 +216,8 @@ screen settings stay on the phone.
 ## Statistics and feedback
 
 - **Anonymous statistics.** Once a day the app sends how many cards were shown and answers
-  given, how many words are learned, and which sections and settings are chosen. No words,
-  no answers about single words and no personal data.
+  given, how many words are learned, and which languages, sections and settings are
+  chosen. No words, no answers about single words and no personal data.
   - To turn them off: Settings, "Anonymous statistics".
   - To see what is sent: Settings, "What is sent".
   - [Privacy policy](https://finist0.github.io/reci/web/privacy.html) (in Russian).
@@ -233,7 +241,7 @@ possible; corrections are welcome, most easily through the flag on the card.
 | What | License |
 |---|---|
 | App and script code | GNU GPL v3 or later, `LICENSE` |
-| Dictionary (`data/`, `assets/words.json`, `assets/grammar.json`) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
+| Dictionary (`data/`, `assets/words*.json`, `assets/grammar.json`) | [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/) |
 | Literata and Ruslan Display fonts | SIL Open Font License 1.1, `licenses/OFL.txt` |
 | Interface icons after Material Icons | Apache 2.0, `licenses/Apache-2.0.txt` |
 
