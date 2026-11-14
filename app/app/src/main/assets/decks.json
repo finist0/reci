@@ -1,4 +1,6 @@
 [
   {"id": "sr-ru", "target": "sr", "native": "ru", "words": "words.json", "grammar": "grammar.json"},
-  {"id": "ru-sr", "target": "ru", "native": "sr", "words": "words-ru-sr.json", "grammar": ""}
+  {"id": "ru-sr", "target": "ru", "native": "sr", "words": "words-ru-sr.json", "grammar": ""},
+  {"id": "sr-en", "target": "sr", "native": "en", "words": "words-sr-en.json", "grammar": ""},
+  {"id": "ru-en", "target": "ru", "native": "en", "words": "words-ru-en.json", "grammar": ""}
 ]

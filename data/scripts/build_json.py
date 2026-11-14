@@ -2,7 +2,8 @@
 """Merge data/words/*.jsonl into the app's assets/words.json, validating entries.
 
 With --deck ru-sr it builds the deck for Serbian speakers learning Russian instead, from
-data/ru-sr/words/ into assets/words-ru-sr.json.
+data/ru-sr/words/ into assets/words-ru-sr.json. The English decks sr-en and ru-en take the cards
+of sr-ru and ru-sr and the English side of each card from data/en/sr/ and data/en/ru/.
 
 Levels are assigned here from the frequency order of the accepted words, so the
 generated entries only carry the frequency rank of their source candidate.
@@ -22,6 +23,10 @@ ASSETS = ROOT / "app" / "app" / "src" / "main" / "assets"
 DECKS = {
     "sr-ru": {"src": ROOT / "data" / "words", "out": ASSETS / "words.json", "target": "sr", "native": "ru"},
     "ru-sr": {"src": ROOT / "data" / "ru-sr" / "words", "out": ASSETS / "words-ru-sr.json", "target": "ru", "native": "sr"},
+    "sr-en": {"src": ROOT / "data" / "words", "en": ROOT / "data" / "en" / "sr", "out": ASSETS / "words-sr-en.json",
+              "target": "sr", "native": "en"},
+    "ru-en": {"src": ROOT / "data" / "ru-sr" / "words", "en": ROOT / "data" / "en" / "ru", "out": ASSETS / "words-ru-en.json",
+              "target": "ru", "native": "en"},
 }
 DECK = DECKS[sys.argv[sys.argv.index("--deck") + 1] if "--deck" in sys.argv else "sr-ru"]
 SRC = DECK["src"]
@@ -284,9 +289,65 @@ def split_stress(e):
             r[t], r["acc"] = bare, unicodedata.normalize("NFC", r[t])
 
 
+# The grammar labels of both source decks in English.
+EN_GRAM = {"м. р.": "m.", "ж. р.": "f.", "ср. р.": "n.", "с. р.": "n.", "мн.": "pl.", "м. р. мн.": "m. pl.",
+           "ж. р. мн.": "f. pl.", "ср. р. мн.": "n. pl.", "несов.": "impf.", "сов.": "pf.", "несвр.": "impf.",
+           "свр.": "pf.", "двувид.": "impf./pf.", "двовид.": "impf./pf.", "сов. и несов.": "impf./pf.",
+           "сов./несов.": "impf./pf."}
+CYR = re.compile(r"[А-Яа-яЁёЂђЈјЉљЊњЋћЏџ]")
+
+
+def load_en():
+    """English sides of the cards by key; {"skip": reason} for an article left out."""
+    en = {}
+    for path in sorted(DECK["en"].glob("*.jsonl")):
+        for line in path.read_text(encoding="utf-8").splitlines():
+            if line.strip():
+                o = json.loads(line)
+                en[o["key"]] = o
+    return en
+
+
+def to_en(e, o):
+    """The card with its English side, or None with the reason it cannot have one."""
+    t = DECK["target"]
+    if o is None:
+        return None, "no English side"
+    if o.get("skip"):
+        return None, None
+    same = lambda a, b: unstressed(a) == unstressed(b)
+    ex = [x for x in e["examples"]]
+    if [x[t] for x in ex] != [x[t] for x in o.get("examples", [])] and not all(
+            same(a[t], b[t]) for a, b in zip(ex, o.get("examples", []))):
+        return None, "examples changed since the translation"
+    rel = e.get("related", [])
+    if len(rel) != len(o.get("related", [])) or not all(same(a[t], b[t]) for a, b in zip(rel, o["related"])):
+        return None, "related words changed since the translation"
+    if e.get("gram") and e["gram"] not in EN_GRAM:
+        return None, f"no English for gram {e['gram']!r}"
+    article = e["pos"] in ARTICLES
+    words = o.get("meanings", []) + [x["en"] for x in o["examples"]] + ([] if article else [r["en"] for r in o["related"]])
+    if any(CYR.search(re.sub(r"«[^»]*»", "", w)) for w in words if not (article and w in o.get("meanings", []))):
+        return None, "Cyrillic in the English text"
+    if not article and not o.get("meanings"):
+        return None, "no meanings"
+    if e.get("forms") and not o.get("forms"):
+        return None, "forms without their English labels"
+    e = dict(e, meanings=o.get("meanings", []), gram=EN_GRAM.get(e.get("gram", ""), ""), forms=o.get("forms", ""),
+             note=o.get("note", ""), examples=[{t: a[t], "en": b["en"]} for a, b in zip(ex, o["examples"])],
+             related=[{t: a[t], "en": b["en"]} for a, b in zip(rel, o["related"])])
+    if e["pos"] == "note":
+        e["cyr"] = o["title"]
+    if o.get("tips"):
+        e["tips"] = o["tips"]
+    return e, None
+
+
 def main():
     words = {}
     bad = 0
+    en = load_en() if "en" in DECK else {}
+    untranslated = {}
     files = [Path(f) for f in sys.argv[sys.argv.index("--files") + 1:]] if "--files" in sys.argv else sorted(SRC.glob("*.jsonl"))
     for path in files:
         for n, line in enumerate(path.read_text(encoding="utf-8").splitlines(), 1):
@@ -307,6 +368,12 @@ def main():
             if e["key"] in words:
                 print(f"{path.name}:{n}: duplicate key {e['key']}", file=sys.stderr)
                 continue
+            if "en" in DECK:
+                e, why = to_en(e, en.get(e["key"]))
+                if why:
+                    untranslated[why] = untranslated.get(why, 0) + 1
+                if e is None:
+                    continue
             split_stress(e)
             words[e["key"]] = e
     accents = ROOT / "data" / "accents.tsv"
@@ -317,13 +384,14 @@ def main():
             bare = unicodedata.normalize("NFC", "".join(
                 ch for ch in unicodedata.normalize("NFD", acc) if unicodedata.category(ch) != "Mn"))
             if e is None:
-                print(f"accents.tsv:{n}: no card {key!r}", file=sys.stderr)
+                if "en" not in DECK:
+                    print(f"accents.tsv:{n}: no card {key!r}", file=sys.stderr)
             elif bare != e["cyr"]:
                 print(f"accents.tsv:{n}: {acc!r} does not match {e['cyr']!r}", file=sys.stderr)
             elif acc != e["cyr"]:
                 e["acc"] = unicodedata.normalize("NFC", acc)
     tips = ROOT / "data" / "tips.jsonl"
-    if tips.exists() and DECK["target"] == "sr":
+    if tips.exists() and DECK["target"] == "sr" and DECK["native"] == "ru":
         for line in tips.read_text(encoding="utf-8").splitlines():
             t = json.loads(line)
             if t["key"] in words:
@@ -355,7 +423,9 @@ def main():
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{len(out)} words ok, {bad} rejected, {mismatches} nouns differ in gender from Russian")
-    if "--check" not in sys.argv and DECK["target"] == "sr":
+    for why, n in sorted(untranslated.items()):
+        print(f"left out: {n} cards: {why}", file=sys.stderr)
+    if "--check" not in sys.argv and DECK["target"] == "sr" and DECK["native"] == "ru":
         build_patches.write()
 
 

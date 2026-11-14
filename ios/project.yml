@@ -26,6 +26,10 @@ targets:
         buildPhase: resources
       - path: ../app/app/src/main/assets/words-ru-sr.json
         buildPhase: resources
+      - path: ../app/app/src/main/assets/words-sr-en.json
+        buildPhase: resources
+      - path: ../app/app/src/main/assets/words-ru-en.json
+        buildPhase: resources
       - path: ../app/app/src/main/assets/decks.json
         buildPhase: resources
       - path: ../app/app/src/main/assets/ui.json
