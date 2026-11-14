@@ -191,8 +191,38 @@ def ru_stress_ok(text):
     return True
 
 
+def check_ru_article(e):
+    """A comparison of Russian words or a note, explained in Serbian."""
+    errs = [f"missing {f}" for f in ("key", "cyr", "note", "rank") if not e.get(f)]
+    prefix = {"compare": "cmp:", "note": "note:"}[e["pos"]]
+    if not e.get("key", "").startswith(prefix):
+        errs.append(f"key does not start with {prefix}")
+    if e.get("topic") not in TOPICS:
+        errs.append(f"bad topic {e.get('topic')!r}")
+    if e["pos"] == "compare" and (not e.get("meanings") or len(e.get("related", [])) < 2):
+        errs.append("a comparison needs its question and two words at least")
+    if LATIN.search(e.get("note", "")) or LATIN.search(e.get("cyr", "")):
+        errs.append("latin letters")
+    for r in e.get("related", []):
+        if not r.get("ru") or not r.get("sr"):
+            errs.append("related without ru or sr")
+        elif not ru_stress_ok(r["ru"]):
+            errs.append(f"stress missing or misplaced in {r['ru']!r}")
+    for x in e.get("examples", []):
+        b = re.search(r"\[([^\]]+)\]", x.get("ru", ""))
+        if not x.get("sr") or not b:
+            errs.append(f"example without sr or a marked word: {x.get('ru')!r}")
+        elif not ru_stress_ok(b.group(1)):
+            errs.append(f"stress missing or misplaced in [{b.group(1)}]")
+    if e["pos"] == "compare" and len(e.get("examples", [])) < len(e.get("related", [])):
+        errs.append("fewer examples than compared words")
+    return errs
+
+
 def check_ru(e):
     """A card of the deck for Serbian speakers learning Russian."""
+    if e.get("pos") in ARTICLES:
+        return check_ru_article(e)
     errs = [f"missing {f}" for f in ("key", "cyr", "acc", "pos", "meanings", "topic", "rank") if not e.get(f)]
     if e.get("pos") not in POS:
         errs.append(f"bad pos {e.get('pos')!r}")

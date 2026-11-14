@@ -82,6 +82,45 @@ meaning (`вода`, `брат`) need no note; keep their cards short.
 Topic: the main area of meaning. `basic` for function words and very general words, `actions`
 for general verbs, `qualities` for general adjectives.
 
+## Comparisons and notes (`words/articles.jsonl`)
+
+The words of a comparison and the quotes of a note are Russian; everything explaining them is in
+Serbian (Cyrillic, ekavian).
+
+A comparison (`pos` `compare`, key `cmp:<words joined by ->`) sets Russian words side by side
+that a Serb mixes up:
+- a false friend: the Russian look-alike of a Serbian word and the Russian word that means what
+  the Serbian one does (`живот · жизнь`, `позор · внимание`);
+- Russian words that differ in a way Serbian does not mark (`надеть · одеть`, `учить · учиться
+  · изучать`).
+
+Its fields:
+- `cyr` lists the words bare, joined by ` · `; `meanings` holds the question shown as the title;
+- `related` has one object per word: `ru` stressed, `sr` its translation and, after ` — `, when
+  to use it;
+- `examples`: at least one per word, the word in brackets and stressed;
+- `note` adds what `related` does not say (a trap, a rule to remember), never repeats it.
+
+A note (`pos` `note`, key `note:<russian slug>`) has a Serbian title in `cyr` and its Serbian
+text in `note`, on a point of grammar, usage or pronunciation where Russian differs from
+Serbian:
+- `related` translates the Russian words the text is about, `ru` stressed;
+- `examples` are optional, the word in brackets and stressed.
+
+The text of both is written to be read on a phone:
+- short paragraphs separated by an empty line (`\n\n`);
+- parallel facts as lines starting with `• `, steps as `1. `, `2. `;
+- Russian words in the text carry stress marks like everywhere else; Serbian words carry none.
+
+`topic` is the area of the words; ranks are 200000 and up for comparisons, 300000 and up for
+notes, each unique.
+
+```
+{"key":"cmp:живот-жизнь","cyr":"живот · жизнь","pos":"compare","gram":"","forms":"","meanings":["живот или жизнь?"],"topic":"body","rank":200000,"examples":[{"ru":"У меня болит [живо́т].","sr":"Боли ме стомак."},{"ru":"Такова [жизнь].","sr":"Такав је живот."}],"syn":[],"ant":[],"related":[{"ru":"живо́т","sr":"стомак, трбух"},{"ru":"жизнь","sr":"живот"}],"note":"Лажни пријатељ: руски живо́т је стомак, а српском животу одговара жизнь."}
+{"key":"cmp:надеть-одеть","cyr":"надеть · одеть","pos":"compare","gram":"","forms":"","meanings":["надеть или одеть?"],"topic":"clothes","rank":200001,"examples":[{"ru":"[Наде́нь] шапку, на улице холодно.","sr":"Стави капу, напољу је хладно."},{"ru":"Мама [оде́ла] ребёнка.","sr":"Мама је обукла дете."}],"syn":[],"ant":[],"related":[{"ru":"наде́ть","sr":"обући нешто на себе — надеть пальто"},{"ru":"оде́ть","sr":"обући некога — одеть ребёнка"}],"note":"Збуњују и саме Русе. За памћење: наде́ть оде́жду, оде́ть Наде́жду."}
+{"key":"note:идти-ехать","cyr":"Ићи на руском: идти или ехать","pos":"note","gram":"","forms":"","meanings":[],"topic":"transport","rank":300000,"examples":[{"ru":"Я [иду́] в магазин.","sr":"Идем (пешке) у продавницу."},{"ru":"Завтра мы [е́дем] в Москву.","sr":"Сутра путујемо у Москву."}],"syn":[],"ant":[],"related":[{"ru":"идти́","sr":"ићи пешке"},{"ru":"е́хать","sr":"ићи превозом: колима, возом, аутобусом"}],"note":"Српском ићи у руском одговарају два глагола:\n• идти́ - пешке\n• е́хать - било којим превозом\n\nЗато „идем у Београд“ возом није я иду́ в Белгра́д, него я е́ду в Белгра́д.\n\nИсто важи за ходи́ть и е́здить: „често путујем“ је я ча́сто е́зжу."}
+```
+
 ## Gold examples
 
 ```

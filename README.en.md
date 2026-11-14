@@ -228,6 +228,8 @@ Dictionary sources:
   Hermit Dave, from OpenSubtitles subtitles, CC BY-SA 4.0;
 - stress: [Wiktionary](https://en.wiktionary.org/) through the
   [kaikki.org](https://kaikki.org/) dumps, CC BY-SA; where they have none, a model set it;
+- false friends of the Russian deck: [False Friends of the Slavist](https://en.wikibooks.org/wiki/False_Friends_of_the_Slavist)
+  on Wikibooks, CC BY-SA;
 - some cards and tips draw on openly available materials.
 
 © 2026 Konstantin Khorenko

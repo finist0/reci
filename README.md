@@ -226,6 +226,8 @@
   Hermit Dave по субтитрам OpenSubtitles, CC BY-SA 4.0;
 - ударения: [Викисловарь](https://en.wiktionary.org/) через выгрузки
   [kaikki.org](https://kaikki.org/), CC BY-SA; где их нет, ударение поставлено моделью;
+- ложные друзья в русской колоде: [False Friends of the Slavist](https://en.wikibooks.org/wiki/False_Friends_of_the_Slavist)
+  в Викиучебнике, CC BY-SA;
 - часть карточек и подсказок составлена по материалам из открытых источников.
 
 © 2026 Константин Хоренко

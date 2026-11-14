@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
 """Compare the stress marks of the Russian deck with Wiktionary (the kaikki.org Russian dump).
 
-Usage: check_ru_stress.py <ru.jsonl> [--fix]
+Usage: check_ru_stress.py <ru.jsonl> [--fix] [cards.jsonl ...]
 Lists every Russian word whose stress the dump gives otherwise. With --fix, a word whose forms
 in the dump all agree on one stress is set to it; the rest stay listed for a person to decide.
+Without files, all of data/ru-sr/words is checked.
 """
 import json
 import re
@@ -55,8 +56,8 @@ def texts(card):
 def main():
     dump = sys.argv[1]
     fix = "--fix" in sys.argv
-    files = {p: [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()]
-             for p in sorted(SRC.glob("*.jsonl"))}
+    paths = [Path(a) for a in sys.argv[2:] if a != "--fix"] or sorted(SRC.glob("*.jsonl"))
+    files = {p: [json.loads(l) for l in p.read_text(encoding="utf-8").splitlines() if l.strip()] for p in paths}
     need = {bare(w) for cards in files.values() for c in cards for _, t in texts(c)
             for w in WORD.findall(nfc(t)) if sum(ch in VOWELS for ch in w.lower()) > 1}
     known = defaultdict(set)
