@@ -61,15 +61,23 @@ const stored = read(PREFS);
 // The deck in use; null until decks.js picks one on a first start.
 export const deck = () => stored.deck ?? null;
 
-// Storage names of what belongs to one deck: the first deck keeps the old names.
-const scoped = (name, id = deck()) => (!id || id === FIRST ? name : `${id}.${name}`);
+// The deck whose storage a deck uses; decks.js tells, as the decks of one language learned
+// share their progress.
+let storeOf = id => id;
 
-const PER_DECK = new Set(["cardCount", "shuffleSeed", "currentKey", "categories", "lastShown", "pendingAnswer"]);
+// Storage names of what belongs to the language learned: the first deck keeps the old names.
+const scoped = (name, id = deck()) => {
+    const s = id && storeOf(id);
+    return !s || s === FIRST ? name : `${s}.${name}`;
+};
 
-// The settings under their plain names, those of one deck read from the deck in use.
+// The place in the cards goes with the progress, as the card numbers in it do.
+const PER_LANGUAGE = new Set(["cardCount", "shuffleSeed", "currentKey", "categories", "lastShown", "pendingAnswer"]);
+
+// The settings under their plain names, those of the language learned read from its storage.
 export const prefs = {};
 for (const name of Object.keys(defaults)) {
-    const key = () => (PER_DECK.has(name) ? scoped(name) : name);
+    const key = () => (PER_LANGUAGE.has(name) ? scoped(name) : name);
     Object.defineProperty(prefs, name, {
         enumerable: true,
         get: () => stored[key()] ?? defaults[name],
@@ -90,8 +98,19 @@ export function setPrefs(values) {
 }
 
 // key -> {state, fav, seen, last, due, step, phase, streak}; only words that were touched. Each
-// deck keeps its own: Russian вода and Serbian вода are different cards.
+// language learned keeps its own: Russian вода and Serbian вода are different cards, Serbian
+// вода with Russian or English translations is one.
 const progress = new Map(Object.entries(read(scoped(PROGRESS))));
+
+function loadProgress() {
+    progress.clear();
+    for (const [k, v] of Object.entries(read(scoped(PROGRESS)))) progress.set(k, v);
+}
+
+export function setStores(f) {
+    storeOf = f;
+    loadProgress();
+}
 
 // showAt: the card number from which a word answered «Не знаю» is shown again; 0 when none.
 export const emptyProgress = { state: NEW, fav: false, seen: 0, last: 0, due: 0, step: 0, phase: 0, streak: 0, showAt: 0 };
@@ -114,8 +133,7 @@ export function useDeck(id) {
     if (saveTimer) saveProgress();
     stored.deck = id;
     write(PREFS, stored);
-    progress.clear();
-    for (const [k, v] of Object.entries(read(scoped(PROGRESS)))) progress.set(k, v);
+    loadProgress();
     changed();
 }
 

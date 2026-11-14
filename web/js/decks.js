@@ -2,7 +2,7 @@
 // language learned (target) and the user's own (native), the language of the translations.
 // Decks are listed in assets/decks.json, so a new pair needs data only.
 
-import { prefs, setPref, deck, useDeck, hasProgress, FIRST } from "./store.js";
+import { prefs, setPref, deck, useDeck, setStores, hasProgress, FIRST } from "./store.js";
 import { toLatin } from "./data.js";
 
 export let all = [{ id: FIRST, target: "sr", native: "ru", words: "words.json", grammar: "grammar.json" }];
@@ -14,9 +14,20 @@ let table = {};
 const SERBIAN = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"];
 const browserLang = langs => String(langs[0] ?? "").toLowerCase().split(/[-_]/)[0];
 
-// A first start in a browser set to Serbian or a close language opens Russian for Serbs.
+// A first start opens Serbian for Russians in a browser set to Russian, Russian for Serbs in one
+// set to Serbian or a close language, and Serbian with English translations elsewhere.
 export function guess(langs = navigator.languages ?? [navigator.language]) {
-    return SERBIAN.includes(browserLang(langs)) && all.some(d => d.id === "ru-sr") ? "ru-sr" : FIRST;
+    const lang = browserLang(langs);
+    const id = lang === "ru" ? FIRST : SERBIAN.includes(lang) ? "ru-sr" : "sr-en";
+    return all.some(d => d.id === id) ? id : FIRST;
+}
+
+// Progress belongs to the language learned, not to the deck: a Serbian word learned with
+// Russian translations stays learned with English ones. The decks of one language learned keep
+// it under the id of the first of them listed.
+export function store(id) {
+    const d = all.find(x => x.id === id);
+    return d ? all.find(x => x.target === d.target).id : id;
 }
 
 // The interface language of a first start: the browser's, if the interface speaks it.
@@ -31,6 +42,7 @@ export function guessUi(langs = navigator.languages ?? [navigator.language]) {
 export function init(decks, ui) {
     if (decks?.length) all = decks;
     table = ui ?? {};
+    setStores(store);
     const earlier = prefs.currentKey || hasProgress();
     if (!deck()) useDeck(earlier ? FIRST : guess());
     if (!prefs.uiLang) setPref("uiLang", earlier ? current().native : guessUi());
@@ -73,8 +85,13 @@ export function plural(n, one, few, many) {
 // Text in the language learned: Serbian in the script the user reads first.
 export const primary = s => (prefs.latinFirst && current().target === "sr" ? toLatin(s) : s);
 
+// Cyrillic in the translations that the script setting turns into Latin: Serbian ones, or
+// Serbian words quoted in translations into a language not written in Cyrillic.
+const CYRILLIC = ["ru", "sr"];
+export const serbianInNative = d => d.native === "sr" || (d.target === "sr" && !CYRILLIC.includes(d.native));
+
 // Text in the user's own language: a translation, a note, a grammar label.
-export const native = s => (prefs.latinFirst && current().native === "sr" ? toLatin(s) : s);
+export const native = s => (prefs.latinFirst && serbianInNative(current()) ? toLatin(s) : s);
 
 // The script setting matters wherever Serbian is shown.
 export const hasSerbian = () => current().target === "sr" || current().native === "sr" || lang() === "sr";
@@ -120,6 +137,11 @@ export const noVoice = () => (target() === "ru" ? t("Нет русского г�
 // What the voice test says.
 export const greeting = () => (target() === "ru" ? "Добрый день" : target() === "en" ? "Good afternoon" : "Добар дан");
 
-export const shareText = () => (target() === "ru"
-    ? t("НЕРодная речь — русские слова для тех, кто говорит по-сербски: карточки с ударениями и примерами. Бесплатно.")
-    : t("НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно."));
+export function shareText() {
+    switch (current().id) {
+        case "ru-sr": return t("НЕРодная речь — русские слова для тех, кто говорит по-сербски: карточки с ударениями и примерами. Бесплатно.");
+        case "sr-en": return t("НЕРодная речь — сербские слова для тех, кто говорит по-английски: карточки с ударениями и примерами. Бесплатно.");
+        case "ru-en": return t("НЕРодная речь — русские слова для тех, кто говорит по-английски: карточки с ударениями и примерами. Бесплатно.");
+        default: return t("НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно.");
+    }
+}

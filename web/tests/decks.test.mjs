@@ -45,7 +45,7 @@ function inLanguage(l, f) {
 test("a first start learns Serbian, unless the browser speaks Serbian or a close language", () => {
     assert.equal(Decks.current().id, "sr-ru");
     for (const l of ["sr-RS", "sr-Latn", "hr", "bs-BA", "mk", "sl", "cnr"]) assert.equal(Decks.guess([l]), "ru-sr", l);
-    for (const l of ["ru-RU", "en-US", "de", ""]) assert.equal(Decks.guess([l]), "sr-ru", l);
+    assert.equal(Decks.guess(["ru-RU"]), "sr-ru");
 });
 
 test("switching decks brings the other cards and keeps the progress of each apart", async () => {
@@ -189,8 +189,8 @@ const learn = target => R.switchDeck(Decks.pick(target, Decks.current().native).
 
 test("the language learned picks the deck, and each deck keeps its progress", async () => {
     assert.deepEqual(Decks.targets(), ["sr", "ru"]);
-    assert.deepEqual(Decks.natives("sr"), ["ru"]);
-    assert.deepEqual(Decks.natives("ru"), ["sr"]);
+    assert.equal(Decks.natives("sr")[0], "ru");
+    assert.equal(Decks.natives("ru")[0], "sr");
     R.resetAll();
     R.step(1);
     const sr = R.current();
@@ -247,4 +247,121 @@ test("the learned language and the native one each follow the script setting whe
     assert.equal(inLanguage("sr", Decks.howToSay), "Kako se kaže na ruskom");
     await R.switchDeck("sr-ru");
     S.setPref("latinFirst", false);
+});
+
+// Decks with English translations over the cards the app carries in any case: their own assets
+// may not be built yet.
+const srEn = { id: "sr-en", target: "sr", native: "en", words: "words.json", grammar: "" };
+const ruEn = { id: "ru-en", target: "ru", native: "en", words: "words-ru-sr.json", grammar: "" };
+
+async function withEnglish(f) {
+    const decks = Decks.all;
+    const ui = JSON.parse(readFileSync(resolve(WEB, R.ASSETS, "ui.json"), "utf-8"));
+    Decks.init([srRu, ruSr, srEn, ruEn], ui);
+    try {
+        await f();
+    } finally {
+        await R.switchDeck("sr-ru");
+        Decks.init(decks, ui);
+        S.setPref("latinFirst", false);
+    }
+}
+
+test("a first start in a browser in another language learns Serbian with English", async () => {
+    await withEnglish(() => {
+        assert.equal(Decks.guess(["ru-RU"]), "sr-ru");
+        assert.equal(Decks.guess(["sr-RS"]), "ru-sr");
+        for (const l of ["en-US", "de", ""]) assert.equal(Decks.guess([l]), "sr-en", l);
+    });
+    const decks = Decks.all;
+    Decks.init([srRu, ruSr], {});
+    try {
+        assert.equal(Decks.guess(["en-US"]), "sr-ru", "without English translations the first deck");
+    } finally {
+        Decks.init(decks, JSON.parse(readFileSync(resolve(WEB, R.ASSETS, "ui.json"), "utf-8")));
+    }
+});
+
+test("the decks of one language learned share the progress and the place in the cards", async () => {
+    await withEnglish(async () => {
+        assert.equal(Decks.store("sr-en"), "sr-ru");
+        assert.equal(Decks.store("ru-en"), "ru-sr");
+        R.resetAll();
+        R.step(1);
+        const sr = R.current();
+        R.answer(sr, S.KNOWN);
+        S.setPref("categories", ["L1", "L2"]);
+
+        await R.switchDeck("sr-en");
+        assert.equal(Decks.current(), srEn);
+        assert.equal(S.prefs.currentKey, sr.key);
+        assert.deepEqual(S.prefs.categories, ["L1", "L2"]);
+        assert.equal(R.progress(R.word(sr.key)).phase, R.RECALL);
+        const voda = R.word("вода");
+        R.answer(voda, S.DONT_KNOW);
+
+        await learn("ru");
+        assert.equal(Decks.current(), ruEn);
+        R.answer(R.word("дом"), S.KNOWN);
+        await R.switchDeck("ru-sr");
+        assert.equal(R.progress(R.word("дом")).phase, R.RECALL, "Russian with Serbian shares it too");
+
+        await R.switchDeck("sr-ru");
+        assert.equal(R.progress(R.word("вода")).state, S.DONT_KNOW);
+        assert.ok(![...storage.keys()].some(k => k.startsWith("sr-en.") || k.startsWith("ru-en.")));
+        assert.ok(!Object.keys(JSON.parse(storage.get("reci.prefs"))).some(k => k.startsWith("sr-en.") || k.startsWith("ru-en.")));
+        S.setPref("categories", ["L3", "L4", "X:phrase", "X:compare", "X:note"]);
+    });
+});
+
+test("Serbian words in English text follow the script setting, Russian ones do not", async () => {
+    await withEnglish(async () => {
+        const note = "«да» + present tense: хоћу да идем";
+        S.setPref("latinFirst", true);
+        assert.equal(Decks.native(note), note, "Russian translations stay in Cyrillic");
+        await R.switchDeck("sr-en");
+        assert.ok(Decks.hasSerbian());
+        assert.equal(Decks.native(note), "«da» + present tense: hoću da idem");
+        assert.equal(Decks.primary("кућа"), "kuća");
+        await R.switchDeck("ru-en");
+        assert.equal(Decks.native("«дом» is a house"), "«дом» is a house");
+        assert.equal(Decks.primary("дом"), "дом");
+    });
+});
+
+test("a deck without a reference links to no topic", async () => {
+    await withEnglish(async () => {
+        assert.ok(R.linksFor(R.word("кућа")).length > 0);
+        await R.switchDeck("sr-en");
+        assert.deepEqual(R.topics, []);
+        assert.deepEqual(R.linksFor(R.word("кућа")), []);
+    });
+});
+
+test("the texts of the English decks", async () => {
+    await withEnglish(async () => {
+        await R.switchDeck("sr-en");
+        inLanguage("en", () => {
+            assert.equal(Decks.shareText(), "NERodnaya rech: Serbian words for English speakers, cards with stress marks and examples. Free.");
+            assert.equal(Decks.meaningHint(), "word in English");
+            assert.equal(Decks.wordChip(), "Serbian word");
+        });
+        assert.equal(Decks.accentSamples().length, 3);
+        await R.switchDeck("ru-en");
+        inLanguage("en", () => {
+            assert.equal(Decks.shareText(), "NERodnaya rech: Russian words for English speakers, cards with stress marks and examples. Free.");
+            assert.equal(Decks.wordChip(), "Russian word");
+        });
+        assert.equal(Decks.accentSamples().length, 2);
+    });
+});
+
+test("English translations are found in Latin letters, as Serbian Latin is", () => {
+    const w = R.parse({ key: "реч", cyr: "реч", meanings: ["word", "speech"] }, srEn);
+    assert.ok(D.searchMatch(w, "speech", true));
+    assert.ok(D.searchMatch(w, "wor", true));
+    assert.ok(D.searchMatch(w, "reč", false), "Serbian Latin");
+    assert.ok(D.searchMatch(w, "ре", false));
+    assert.ok(!D.searchMatch(w, "word", false), "an English word is not a Serbian one");
+    assert.ok(!D.searchMatch(w, "reč", true));
 });

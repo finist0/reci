@@ -19,6 +19,8 @@ globalThis.localStorage = {
     removeItem: k => storage.delete(k),
 };
 globalThis.document = { addEventListener() {}, visibilityState: "visible" };
+// The scenarios are cards of the first deck, which a first start in Russian picks.
+Object.defineProperty(globalThis, "navigator", { configurable: true, value: { language: "ru-RU", languages: ["ru-RU"] } });
 globalThis.fetch = async url => {
     const text = readFileSync(resolve(WEB, url), "utf-8");
     return { ok: true, json: async () => JSON.parse(text), text: async () => text };

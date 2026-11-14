@@ -203,7 +203,8 @@ function marksRow(answered, article) {
 function gramLine(w) {
     let out = `<span>${esc(D.pos(w.pos))}</span>`;
     if (!w.gram) return out;
-    if (!w.ruGram) return out + `<b class="${w.pos === "noun" ? "noun-gram" : ""}">${esc(native(w.gram))}</b>`;
+    // The gender in Russian is a hint for those who read Russian translations only.
+    if (!w.ruGram || Decks.current().native !== "ru") return out + `<b class="${w.pos === "noun" ? "noun-gram" : ""}">${esc(native(w.gram))}</b>`;
     const strong = !!w.ruNoun;
     const rest = strong ? t("  ≠ рус. «%s» %s", w.ruNoun, w.ruGram) : t("  · в рус. %s", w.ruGram);
     return out + `<span class="gender ${strong ? "strong" : ""}"><b>${esc(native(w.gram))}</b>${esc(rest)}</span>`;
@@ -652,18 +653,12 @@ function categoriesScreen(e) {
 
 // --- Search, detail and word lists ---
 
-// Serbian may be typed in either script, Russian without ё.
-const norm = s => s.toLowerCase().replaceAll("ё", "е");
-
-function searchMatch(w, q, byMeaning) {
-    if (byMeaning) return w.meanings.some(m => norm(m).includes(q) || D.toLatin(norm(m)).includes(q));
-    return norm(w.cyr).startsWith(q) || D.toLatin(norm(w.cyr)).startsWith(q);
-}
+const { norm } = D;
 
 function searchResults(e) {
     const q = norm((e.q ?? "").trim());
     if (!q) return "";
-    return R.words.filter(w => searchMatch(w, q, e.byMeaning)).slice(0, 200).map(w => {
+    return R.words.filter(w => D.searchMatch(w, q, e.byMeaning)).slice(0, 200).map(w => {
         const shown = primary(w.cyr);
         const n = !e.byMeaning && norm(shown).startsWith(q) ? q.length : 0;
         return `<button class="row" ${act("detail", w.key)}>
@@ -737,11 +732,13 @@ function grammarResults(e) {
 }
 
 function grammarScreen(e) {
-    e.tab ??= 0;
+    // A deck without a reference has the comparisons and the notes only.
+    const withGrammar = !!Decks.current().grammar;
+    e.tab ??= withGrammar ? 0 : 1;
     const n = pos => R.words.filter(w => w.pos === pos).length;
     const tabs = [t("Грамматика"), `${t("Похожие")} · ${n("compare")}`, `${t("Заметки")} · ${n("note")}`];
     return `<div class="screen-col">${header(t("Справочник"))}
-        <div class="flow tabs">${tabs.map((name, i) => chip(name, e.tab === i, "tab", i)).join("")}</div>
+        <div class="flow tabs">${tabs.map((name, i) => (i || withGrammar ? chip(name, e.tab === i, "tab", i) : "")).join("")}</div>
         ${e.tab ? `<label class="field inset">${icon("search")}<input data-input="grammar" type="search" autocomplete="off" placeholder="${t("найти по слову или названию")}" value="${esc(e.q ?? "")}"></label>` : ""}
         <div class="scroll tiles" data-scroll="grammar-${e.tab}" data-results>${grammarResults(e)}</div>
     </div>`;

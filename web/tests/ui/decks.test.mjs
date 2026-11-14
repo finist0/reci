@@ -54,14 +54,13 @@ test("the language learned chosen in the settings brings its cards; the progress
     // A tap anywhere on the row opens the menu.
     assert.equal(await page.eval(`(() => { const r = ${menu("target")}.closest(".menu").getBoundingClientRect();
         return document.elementFromPoint(r.left + 20, r.top + r.height / 2) === ${menu("target")} })()`), true);
-    // One deck learns Serbian: the menu of its translations has one option.
-    assert.deepEqual(await options(page, "native"), ["Русский"]);
+    assert.equal((await options(page, "native"))[0], "Русский");
     assert.equal(await chosen(page, "native"), "Русский");
     await choose(page, "target", "ru");
     await page.waitFor(`import('./js/decks.js').then(D => D.current().id === "ru-sr")`);
     assert.equal(await textOf(page, "h1"), "Настройки", "the interface is not the deck's");
     assert.equal(await chosen(page, "target"), "Русский");
-    assert.deepEqual(await options(page, "native"), ["Сербский"]);
+    assert.equal((await options(page, "native"))[0], "Сербский");
     assert.equal(await has(page, '[data-act="bothscripts"]'), false);
     assert.equal(await has(page, '.setting[data-act="schools"]'), false);
     assert.equal(await page.eval(`document.querySelectorAll('[data-act="stressplace"]').length`), 2);
@@ -129,8 +128,9 @@ test("the interface language chosen in the settings changes the interface at onc
 });
 
 test("with a second deck for a language learned, the translations follow the language learned", async t => {
-    const decks = JSON.parse(readFileSync(new URL("../../../app/app/src/main/assets/decks.json", import.meta.url), "utf-8"));
-    decks.push({ id: "sr-en", target: "sr", native: "en", words: "words.json", grammar: "" });
+    const decks = JSON.parse(readFileSync(new URL("../../../app/app/src/main/assets/decks.json", import.meta.url), "utf-8"))
+        .filter(d => d.native !== "en").concat({ id: "sr-en", target: "sr", native: "en", words: "words.json", grammar: "" });
+    // English translations over the Serbian cards the app carries in any case.
     const three = await serve({ files: { "/app/app/src/main/assets/decks.json": JSON.stringify(decks) } });
     t.after(() => three.close());
     const page = await launch();
@@ -145,6 +145,14 @@ test("with a second deck for a language learned, the translations follow the lan
     await choose(page, "native", "en");
     await waitDeck("sr-en");
     assert.equal(await chosen(page, "native"), "Английский");
+
+    // A deck without a reference opens it on the comparisons, with no grammar tab.
+    await page.tap('[data-act="back"]');
+    await page.tap('[data-act="ref"]');
+    assert.equal(await has(page, '[data-act="tab"][data-arg="0"]'), false);
+    assert.equal(await has(page, '[data-act="tab"][data-arg="1"].on'), true);
+    await page.tap('[data-act="back"]');
+    await page.tap('[data-act="settings"]');
 
     // No deck teaches Russian with English translations: the Serbian one is taken.
     await choose(page, "target", "ru");
