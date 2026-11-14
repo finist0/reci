@@ -2,6 +2,7 @@
 // Kept apart from the settings, so that a progress file never carries the install id.
 
 import { prefs } from "./store.js";
+import { current } from "./decks.js";
 
 const KEY = "reci.telemetry";
 const SERVER = "https://reci.finist.workers.dev";
@@ -135,6 +136,7 @@ export function environment() {
         installed: media("(display-mode: standalone)") || navigator.standalone === true,
         dark: media("(prefers-color-scheme: dark)"),
         locale: String(navigator.language).slice(0, 120),
+        deck: current().id,
         mode: prefs.cardMode, theme: prefs.theme, latin: prefs.latinFirst, both: prefs.showBothScripts,
         stress: prefs.accentMode, size: prefs.wordSize, marks: prefs.useMarks, review: prefs.reviewKnown,
         speak: prefs.autoSpeak, active: prefs.activeSize, order: prefs.order,
@@ -184,7 +186,7 @@ export async function ping(app, learned, day = localDay(), c = state.counts) {
         id: state.id, day, platform: platform(), app, os: await osName(),
         locale: /^[\w-]{1,40}$/.test(navigator.language) ? navigator.language : "other",
         cats: prefs.categories.filter(c => /^[\w:.-]{1,32}$/.test(c)).slice(0, 100),
-        mode: prefs.cardMode, theme: prefs.theme, latin: prefs.latinFirst, learned,
+        mode: prefs.cardMode, theme: prefs.theme, latin: prefs.latinFirst, learned, deck: current().id,
     };
     if (c.cards) p.cards = c.cards;
     if (c.answers) p.answers = c.answers;

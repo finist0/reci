@@ -128,7 +128,8 @@ test("a card is reported from the card itself, and the email is remembered", asy
     await page.tap('[data-act="sendreport"]');
     await waitPosts(page, "feedback");
     const m = posts("feedback")[0];
-    assert.deepEqual([m.kind, m.card.key, m.card.problem, m.text, m.email], ["card", key, "stress", "ударение на втором слоге", "me@example.org"]);
+    assert.deepEqual([m.kind, m.card.key, m.card.problem, m.card.deck, m.text, m.email],
+                     ["card", key, "stress", "sr-ru", "ударение на втором слоге", "me@example.org"]);
     assert.equal(m.env.browser.split(" ")[0], "Chrome");
     assert.notEqual(m.id, (await telemetry(page)).id);
     await page.waitFor("document.querySelector('.toast')?.textContent.includes('Спасибо')");

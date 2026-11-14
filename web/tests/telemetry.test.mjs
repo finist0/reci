@@ -72,6 +72,7 @@ test("the ping carries only the fields the server accepts", async () => {
     assert.deepEqual([p.cards, p.answers, p.opened, p.learned], [1, { know: 1 }, { search: 1 }, 7]);
     assert.deepEqual(p.cats, S.prefs.categories);
     assert.equal(p.lock, undefined);
+    assert.equal(p.deck, "sr-ru");
 });
 
 test("one ping a day, and the sums start again after it", async () => {

@@ -1129,7 +1129,7 @@ const actions = {
             return schedule();
         }
         if (!checkEmail(r)) return;
-        const card = { key: w.key.slice(0, 120), word: w.cyr.slice(0, 120), problem: r.problem, latin: prefs.latinFirst, stress: prefs.accentMode };
+        const card = { key: w.key.slice(0, 120), word: w.cyr.slice(0, 120), problem: r.problem, latin: prefs.latinFirst, stress: prefs.accentMode, deck: Decks.current().id };
         top().report = null;
         send({ kind: "card", text: r.text.trim(), card }, r.email.trim());
     },
