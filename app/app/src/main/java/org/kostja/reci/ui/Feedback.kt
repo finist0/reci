@@ -198,7 +198,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
                 if (error.isNotEmpty()) return@TextButton
                 val card = JSONObject()
                     .put("key", w.key.take(120)).put("word", w.cyr.take(120)).put("problem", problem)
-                    .put("latin", Prefs.latinFirst).put("stress", Prefs.accentMode)
+                    .put("latin", Prefs.latinFirst).put("stress", Prefs.accentMode).put("deck", Decks.current.id)
                 Telemetry.sendFeedback("card", text.trim(), card, mail, Env.of(ctx), toast)
                 onDismiss()
             }) { Text(t("Отправить")) }

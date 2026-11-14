@@ -26,6 +26,7 @@ object Env {
             .put("dark", c.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES)
             .put("locale", Locale.getDefault().toLanguageTag().take(120))
             .put("dict", DictUpdate.describe())
+            .put("deck", Decks.current.id)
             .put("mode", Prefs.cardMode)
             .put("theme", Prefs.theme)
             .put("latin", Prefs.latinFirst)

@@ -164,6 +164,7 @@ class FeedbackTest {
         assertEquals("card", m.getString("kind"))
         assertEquals(key, m.getJSONObject("card").getString("key"))
         assertEquals("stress", m.getJSONObject("card").getString("problem"))
+        assertEquals("sr-ru", m.getJSONObject("card").getString("deck"))
         assertEquals("ударение на втором слоге", m.getString("text"))
         assertEquals("me@example.org", m.getString("email"))
         assertNotEquals(Telemetry.id, m.getString("id"))

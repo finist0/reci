@@ -142,6 +142,7 @@ class TelemetryTest {
         assertEquals("2026-11-02", p.getString("day"))
         assertEquals("android", p.getString("platform"))
         assertEquals("overlay", p.getString("lock"))
+        assertEquals("sr-ru", p.getString("deck"))
         assertTrue(p.getString("lock") in names("lock"))
         assertEquals(listOf(1, 1, 1, 7), listOf(p.getInt("cards"), p.getJSONObject("answers").getInt("know"),
             p.getJSONObject("opened").getInt("search"), p.getInt("learned")))
