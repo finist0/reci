@@ -33,7 +33,7 @@ fun WhatsNewDialog() {
                     for (item in e.items) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("•", color = p.accent)
-                            Text(item, color = p.text)
+                            Text(t(item), color = p.text)
                         }
                     }
                 }

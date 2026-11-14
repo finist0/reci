@@ -51,6 +51,10 @@ def keys():
                 for m in LABEL.finditer(text):
                     if CYR.search(m.group(1)):
                         found.setdefault(unescape(m.group(1)), rel)
+    # The newest "what's new" entry is shown through t() as well.
+    news = json.loads((TABLE.parent / "whatsnew.json").read_text(encoding="utf-8"))[0]
+    for item in news["items"]:
+        found.setdefault(item["text"], TABLE.parent.relative_to(ROOT) / "whatsnew.json")
     # Sample words with stress marks are shown as they are.
     return {k: v for k, v in found.items() if CYR.search(k) and "\u0301" not in k}
 

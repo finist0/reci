@@ -76,7 +76,7 @@ extension ReciApp {
 
     private var newsText: String {
         model.news.map { e in
-            (model.news.count == 1 ? [] : [t("Версия %s", e.version)]) + e.items.map { "• \($0)" }
+            (model.news.count == 1 ? [] : [t("Версия %s", e.version)]) + e.items.map { "• \(t($0))" }
         }.map { $0.joined(separator: "\n") }.joined(separator: "\n\n")
     }
 }

@@ -1466,5 +1466,29 @@
  "Как у колоды": {
   "en": "Same as deck",
   "sr": "Као у шпилу"
+ },
+ "Новый выбор языков в настройках: какой язык учите и на какой язык перевод.": {
+  "en": "New language choice in the settings: the language you learn and the language of the translations.",
+  "sr": "Нови избор језика у подешавањима: који језик учите и на који језик је превод."
+ },
+ "Русский для тех, кто говорит по-сербски: 4 200 слов с ударениями и переводом на сербский, разборы похожих слов и заметки.": {
+  "en": "Russian for Serbian speakers: 4,200 words with stress marks and Serbian translations, comparisons of similar words and notes.",
+  "sr": "Руски за оне који говоре српски: 4.200 речи с нагласцима и преводом на српски, поређења сличних речи и белешке."
+ },
+ "Язык интерфейса можно выбрать отдельно: русский, сербский или английский.": {
+  "en": "The interface language can be chosen on its own: Russian, Serbian or English.",
+  "sr": "Језик интерфејса може да се изабере посебно: руски, српски или енглески."
+ },
+ "Ударения стоят везде: у слова, в примерах и в разделе «Ещё по теме».": {
+  "en": "Stress marks everywhere: on the word, in the examples and under \"More on this topic\".",
+  "sr": "Нагласци стоје свуда: на речи, у примерима и у одељку „Још на ову тему“."
+ },
+ "В словаре почти 5 000 новых, более редких сербских слов.": {
+  "en": "Almost 5,000 new, rarer Serbian words in the dictionary.",
+  "sr": "У речнику је скоро 5.000 нових, ређих српских речи."
+ },
+ "Лицензии и источники собраны на отдельной странице, в настройках осталась одна ссылка.": {
+  "en": "Licences and sources are on a page of their own, linked from the settings.",
+  "sr": "Лиценце и извори су на посебној страници, у подешавањима је остала једна веза."
  }
 }

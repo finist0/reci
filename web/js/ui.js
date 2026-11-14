@@ -488,7 +488,7 @@ function newsDialog() {
     return `<div class="modal"><div class="dialog form news">
         <div class="dialog-title">${esc(one ? t("Что нового в версии %s", news[0].version) : t("Что нового"))}</div>
         ${news.map(e => `${one ? "" : `<div class="news-version">${esc(t("Версия %s", e.version))}</div>`}
-            <ul class="news-items">${e.items.map(i => `<li>${esc(i)}</li>`).join("")}</ul>`).join("")}
+            <ul class="news-items">${e.items.map(i => `<li>${esc(t(i))}</li>`).join("")}</ul>`).join("")}
         <div class="dialog-buttons"><button ${act("closenews")}>${t("Понятно")}</button></div>
     </div></div>`;
 }
