@@ -19,7 +19,7 @@ Manage translations → Add your own translations. Кто читает на яз
 ### Название (до 30 символов)
 
 ```
-НЕРодная речь: сербский язык
+НЕРодная речь
 ```
 
 ### Краткое описание (до 80 символов)
@@ -87,7 +87,7 @@ Manage translations → Add your own translations. Кто читает на яз
 ### Назив (до 30 знакова)
 
 ```
-НЕРодная речь: руски језик
+НЕРодная речь
 ```
 
 ### Кратак опис (до 80 знакова)
@@ -158,7 +158,7 @@ Manage translations → Add your own translations. Кто читает на яз
 ### Title (up to 30 characters)
 
 ```
-Nerodnaya Rech: Serbian words
+НЕРодная речь
 ```
 
 ### Short description (up to 80 characters)
@@ -228,7 +228,7 @@ HONEST
 
 | Текст | Предел | ru-RU | sr | en-US |
 |---|---|---|---|---|
-| Название | 30 | 28 | 26 | 29 |
+| Название | 30 | 13 | 13 | 13 |
 | Краткое описание | 80 | 71 | 76 | 78 |
 | Полное описание | 4000 | 2059 | 2066 | 2051 |
 
