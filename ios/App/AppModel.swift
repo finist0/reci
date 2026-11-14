@@ -231,7 +231,7 @@ final class AppModel: ObservableObject {
 
     // Dates and system texts in the language of the interface.
     var locale: Locale {
-        switch deck.native {
+        switch I18n.lang {
         case "sr": return Locale(identifier: prefs.latinFirst ? "sr_Latn_RS" : "sr_RS")
         case "en": return Locale(identifier: "en_US")
         default: return Locale(identifier: "ru_RU")
@@ -242,8 +242,8 @@ final class AppModel: ObservableObject {
     private(set) var switching = false
 
     // Another deck: its cards, its progress and its place in the cards, the interface in its
-    // native language and the voice of the language it teaches. The cards load off the main
-    // actor; the old ones stay until the new ones are in.
+    // native language unless another one is chosen, and the voice of the language it teaches.
+    // The cards load off the main actor; the old ones stay until the new ones are in.
     func switchDeck(_ id: String) {
         guard id != deck.id, !switching else { return }
         let d = Decks.deck(id)

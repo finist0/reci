@@ -142,6 +142,35 @@ final class DeckTests: XCTestCase {
         XCTAssertEqual(p.secondary("кућа"), "кућа")
     }
 
+    func testTheInterfaceLanguageIsChosenApartFromTheDeck() throws {
+        let store = Fixtures.tempStore()
+        XCTAssertEqual(store.prefs.uiLang, "")
+        store.prefs.uiLang = "en"
+        store.savePrefs()
+        XCTAssertEqual(t("Настройки"), "Settings")
+        XCTAssertEqual(plural(5, "карточку", "карточки", "карточек"), "cards")
+        // The cards stay in the language of the deck: the search of translations asks for Russian.
+        XCTAssertEqual(store.prefs.deck.meaningHint, "word in Russian")
+
+        store.switchDeck("ru-sr")
+        XCTAssertEqual(store.prefs.uiLang, "en")
+        XCTAssertEqual(t("Настройки"), "Settings")
+        XCTAssertEqual(store.prefs.deck.meaningHint, "word in Serbian")
+        XCTAssertEqual(Store(dir: store.dir).prefs.uiLang, "en", "the choice is kept")
+        let prefs = try XCTUnwrap(JSONSerialization.jsonObject(with: Data(contentsOf: store.dir.appendingPathComponent("prefs.json"))) as? [String: Any])
+        XCTAssertEqual(prefs["uiLang"] as? String, "en")
+        XCTAssertNil(prefs["ru-sr.uiLang"], "one choice for all decks")
+
+        store.prefs.uiLang = ""
+        XCTAssertEqual(t("Настройки"), "Подешавања")
+        store.switchDeck("sr-ru")
+        XCTAssertEqual(t("Настройки"), "Настройки")
+
+        store.prefs.uiLang = "sr"
+        XCTAssertEqual(t("Настройки"), "Подешавања")
+        XCTAssertTrue(store.prefs.deck.hasSerbian)
+    }
+
     func testSerbianAndEnglishInterface() {
         I18n.lang = "sr"
         XCTAssertEqual(t("Настройки"), "Подешавања")

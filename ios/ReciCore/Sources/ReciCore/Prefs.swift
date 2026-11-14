@@ -13,6 +13,8 @@ public struct PendingAnswer: Codable, Equatable {
 public struct Prefs: Codable, Equatable {
     // The deck in use (Decks); the store picks one on a first start and switches it.
     public var deckId = Decks.first
+    // The interface language: "ru", "sr" or "en"; "" speaks the native language of the deck.
+    public var uiLang = ""
     public var latinFirst = false
     public var showBothScripts = true
     public var autoSpeak = false
@@ -48,7 +50,7 @@ public struct Prefs: Codable, Equatable {
 
     enum CodingKeys: String, CodingKey, CaseIterable {
         case deckId = "deck"
-        case latinFirst, showBothScripts, autoSpeak, cardMode, activeSize, cardCount, useMarks, reviewKnown, accentMode
+        case uiLang, latinFirst, showBothScripts, autoSpeak, cardMode, activeSize, cardCount, useMarks, reviewKnown, accentMode
         case theme, wordSize, order, shuffleSeed, currentKey, categories, todayDate, todayCount, hintDone, newKnownCount
         case lockMode, lastShown, pendingAnswer
     }
@@ -57,6 +59,7 @@ public struct Prefs: Codable, Equatable {
         let d = Prefs()
         let c = try decoder.container(keyedBy: CodingKeys.self)
         deckId = try c.decodeIfPresent(String.self, forKey: .deckId) ?? d.deckId
+        uiLang = try c.decodeIfPresent(String.self, forKey: .uiLang) ?? d.uiLang
         latinFirst = try c.decodeIfPresent(Bool.self, forKey: .latinFirst) ?? d.latinFirst
         showBothScripts = try c.decodeIfPresent(Bool.self, forKey: .showBothScripts) ?? d.showBothScripts
         autoSpeak = try c.decodeIfPresent(Bool.self, forKey: .autoSpeak) ?? d.autoSpeak

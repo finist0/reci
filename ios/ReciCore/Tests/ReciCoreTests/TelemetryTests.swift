@@ -129,6 +129,7 @@ final class TelemetryTests: XCTestCase {
         t.count("opened", "search")
         var prefs = Prefs()
         prefs.lockMode = 1
+        prefs.uiLang = "en"
         let sent = await ping(learned: 7, prefs: prefs)
         XCTAssertTrue(sent)
         let p = posts[0].body
@@ -143,6 +144,7 @@ final class TelemetryTests: XCTestCase {
         XCTAssertEqual(p["platform"] as? String, "ios")
         XCTAssertEqual(p["lock"] as? String, "wallpaper")
         XCTAssertEqual(p["deck"] as? String, "sr-ru")
+        XCTAssertEqual(p["ui"] as? String, "en")
         XCTAssertEqual(p["cards"] as? Int, 1)
         XCTAssertEqual(p["learned"] as? Int, 7)
         XCTAssertEqual(p["answers"] as? [String: Int], ["know": 1])
@@ -296,6 +298,7 @@ final class TelemetryTests: XCTestCase {
         XCTAssertEqual(sent["latin"], "true")
         XCTAssertEqual(sent["lock"], "widget")
         XCTAssertEqual(sent["device"], "iPhone15,2")
+        XCTAssertEqual(sent["ui"], "")
     }
 
     func testACrashReportGoesOutWithoutTheRememberedEmail() async {

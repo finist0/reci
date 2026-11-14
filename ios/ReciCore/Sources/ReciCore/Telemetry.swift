@@ -36,6 +36,7 @@ public struct Ping: Codable, Equatable {
     public var answers: [String: Int]?
     public var opened: [String: Int]?
     public var deck: String?
+    public var ui: String?
 }
 
 public struct CardInfo: Codable, Equatable {
@@ -75,6 +76,7 @@ public enum Env {
             "stress": "\(p.accentMode)", "size": "\(p.wordSize)", "marks": "\(p.useMarks)", "review": "\(p.reviewKnown)",
             "speak": "\(p.autoSpeak)", "active": "\(p.activeSize)", "order": "\(p.order)",
             "lock": p.lockMode == 1 ? "wallpaper" : "widget", "deck": p.deckId,
+            "ui": p.uiLang,
         ]
     }
 }
@@ -218,7 +220,7 @@ public final class Telemetry {
             mode: prefs.cardMode, theme: prefs.theme, latin: prefs.latinFirst,
             lock: prefs.lockMode == 1 ? "wallpaper" : "widget", learned: learned,
             cards: c.cards > 0 ? c.cards : nil, answers: c.answers.isEmpty ? nil : c.answers,
-            opened: c.opened.isEmpty ? nil : c.opened, deck: prefs.deckId
+            opened: c.opened.isEmpty ? nil : c.opened, deck: prefs.deckId, ui: prefs.uiLang
         )
     }
 

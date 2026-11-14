@@ -1,7 +1,7 @@
 import Foundation
 
 // A pair of languages: the one learned (target) and the user's own (native), which the
-// interface speaks. Decks are listed in decks.json, so a new pair needs data only. The
+// interface speaks unless the user picked another one (Prefs.uiLang). Decks are listed in decks.json, so a new pair needs data only. The
 // counterpart of data/Deck.kt.
 public struct Deck: Codable, Hashable, Sendable {
     public var id: String
@@ -163,7 +163,7 @@ public extension Deck {
     }
 
     // The script setting matters wherever Serbian is shown.
-    var hasSerbian: Bool { target == "sr" || native == "sr" }
+    var hasSerbian: Bool { target == "sr" || native == "sr" || I18n.lang == "sr" }
 }
 
 // The interface in the user's language. Russian text is the key, so code reads as before:
@@ -171,7 +171,8 @@ public extension Deck {
 public enum I18n {
     // Russian text -> language -> translation.
     public static var table: [String: [String: String]] = [:]
-    // The native language of the current deck and the script setting; the store keeps them.
+    // The language chosen for the interface or else the native language of the current deck,
+    // and the script setting; the store keeps them.
     public static var lang = "ru"
     public static var latin = false
 
@@ -180,7 +181,7 @@ public enum I18n {
     }
 
     public static func follow(_ p: Prefs) {
-        lang = p.deck.native
+        lang = p.uiLang.isEmpty ? p.deck.native : p.uiLang
         latin = p.latinFirst
     }
 

@@ -29,6 +29,8 @@ struct SettingsScreen: View {
     @State private var helping = false
 
     private let sizes = [10, 15, 20, 30]
+    // The values of Prefs.uiLang in the order of the interface language choice.
+    private let uiLangs = ["", "ru", "sr", "en"]
 
     var body: some View {
         let p = model.palette
@@ -39,15 +41,19 @@ struct SettingsScreen: View {
             ScrollView {
                 VStack(spacing: 0) {
                     progressCard
-                    if Decks.all.count > 1 {
-                        Group {
-                            GroupTitle(text: t("Язык"))
-                            Panel {
-                                ForEach(Array(Decks.all.enumerated()), id: \.offset) { i, d in
-                                    if i > 0 { Line() }
+                    Group {
+                        GroupTitle(text: t("Язык"))
+                        Panel {
+                            if Decks.all.count > 1 {
+                                ForEach(Decks.all, id: \.id) { d in
                                     deckRow(d, on: d.id == deck.id)
+                                    Line()
                                 }
                             }
+                            // Each language is named in itself, so that a user who cannot read
+                            // the interface finds their own.
+                            menuChoice(t("Язык интерфейса"), [t("Как у колоды"), "Русский", "Српски", "English"],
+                                       uiLangs.firstIndex(of: prefs.uiLang) ?? 0) { i in model.set { $0.uiLang = uiLangs[i] } }
                         }
                     }
                     Group {
@@ -356,6 +362,22 @@ struct SettingsScreen: View {
         .tint(p.accent)
         .padding(.horizontal, 18).padding(.vertical, 10)
         .accessibilityIdentifier(title)
+    }
+
+    // A menu rather than segments: the four options do not fit across a phone.
+    private func menuChoice(_ title: String, _ options: [String], _ selected: Int, _ onSelect: @escaping (Int) -> Void) -> some View {
+        let p = model.palette
+        return HStack {
+            Text(title).font(.ui(16)).foregroundStyle(p.text)
+            Spacer()
+            Picker(title, selection: Binding(get: { selected }, set: onSelect)) {
+                ForEach(options.indices, id: \.self) { i in Text(options[i]).tag(i) }
+            }
+            .pickerStyle(.menu)
+            .tint(p.accent)
+            .accessibilityIdentifier(title)
+        }
+        .padding(.leading, 18).padding(.trailing, 8).padding(.vertical, 6)
     }
 
     private func choice(_ title: String, _ options: [String], _ selected: Int, _ onSelect: @escaping (Int) -> Void) -> some View {

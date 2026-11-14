@@ -35,7 +35,7 @@ final class Speech {
     var voiceName: String? {
         pick()
         guard let v = voice else { return nil }
-        let lang = deck.native == "sr" && I18n.latin ? "sr_Latn" : deck.native
+        let lang = I18n.lang == "sr" && I18n.latin ? "sr_Latn" : I18n.lang
         return Locale(identifier: lang).localizedString(forIdentifier: v.language) ?? v.language
     }
 
