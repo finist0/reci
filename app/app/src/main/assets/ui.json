@@ -363,10 +363,6 @@
   "en": "Favourites",
   "sr": "Омиљено"
  },
- "Иконки: Material Icons, Apache 2.0.": {
-  "en": "Icons: Material Icons, Apache 2.0.",
-  "sr": "Иконе: Material Icons, Apache 2.0."
- },
  "Иначе слово меняется по кнопке «Готово»": {
   "en": "Otherwise the word changes with the “Done” button",
   "sr": "Иначе се реч мења дугметом „Готово”"
@@ -446,10 +442,6 @@
  "Культура": {
   "en": "Culture",
   "sr": "Култура"
- },
- "Лицензия: GNU GPL v3 или новее": {
-  "en": "License: GNU GPL v3 or later",
-  "sr": "Лиценца: GNU GPL v3 или новија"
  },
  "Люди": {
   "en": "People",
@@ -1107,10 +1099,6 @@
   "en": "Stress marks",
   "sr": "Акценти"
  },
- "Ударения: Викисловарь (kaikki.org), CC BY-SA.\n": {
-  "en": "Stress: Wiktionary (kaikki.org), CC BY-SA.\n",
-  "sr": "Акценти: Викиречник (kaikki.org), CC BY-SA.\n"
- },
  "Уровни": {
   "en": "Levels",
   "sr": "Нивои"
@@ -1134,14 +1122,6 @@
  "Цвета и формы": {
   "en": "Colours and shapes",
   "sr": "Боје и облици"
- },
- "Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n": {
-  "en": "Word frequency: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n",
-  "sr": "Учесталост речи: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n"
- },
- "Часть карточек и подсказок составлена по материалам из открытых источников.\n": {
-  "en": "Some cards and tips are based on material from open sources.\n",
-  "sr": "Део картица и савета састављен је према материјалима из отворених извора.\n"
  },
  "Чего приложение не просит": {
   "en": "What the app does not ask for",
@@ -1198,10 +1178,6 @@
  "Школы сербского языка": {
   "en": "Serbian language schools",
   "sr": "Школе српског језика"
- },
- "Шрифты Literata и Ruslan Display: SIL Open Font License.\n": {
-  "en": "Fonts Literata and Ruslan Display: SIL Open Font License.\n",
-  "sr": "Фонтови Literata и Ruslan Display: SIL Open Font License.\n"
  },
  "Экран блокировки": {
   "en": "Lock screen",
@@ -1474,5 +1450,9 @@
  "⋮ справа вверху → Allow restricted settings.": {
   "en": "⋮ at the top right → Allow restricted settings.",
   "sr": "⋮ горе десно → Allow restricted settings."
+ },
+ "Лицензии и источники": {
+  "en": "Licences and sources",
+  "sr": "Лиценце и извори"
  }
 }

@@ -395,19 +395,13 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                     )
                     Text(t("Версия %s", version), fontSize = 14.sp, color = p.secondary)
                     Text(t("Автор: Константин Хоренко"), fontSize = 14.sp, color = p.secondary)
-                    Text(t("Лицензия: GNU GPL v3 или новее"), fontSize = 14.sp, color = p.secondary)
+                    Text(
+                        t("Лицензии и источники"),
+                        fontSize = 14.sp,
+                        color = p.accent,
+                        modifier = Modifier.padding(top = 8.dp, bottom = 18.dp).clickable { openLink(ctx, Telemetry.LICENSES) },
+                    )
                 }
-                Text(
-                    t("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n") +
-                        t("Ударения: Викисловарь (kaikki.org), CC BY-SA.\n") +
-                        t("Часть карточек и подсказок составлена по материалам из открытых источников.\n") +
-                        t("Шрифты Literata и Ruslan Display: SIL Open Font License.\n") +
-                        t("Иконки: Material Icons, Apache 2.0."),
-                    fontSize = 13.sp,
-                    color = p.secondary,
-                    lineHeight = 19.sp,
-                    modifier = Modifier.padding(18.dp),
-                )
             }
             Spacer(Modifier.height(28.dp))
         }

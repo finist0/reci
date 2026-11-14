@@ -22,6 +22,7 @@ import java.util.concurrent.Executors
 object Telemetry {
     const val SERVER = "https://reci.finist.workers.dev"
     const val PRIVACY = "https://finist0.github.io/reci/web/privacy.html"
+    const val LICENSES = "https://finist0.github.io/reci/web/licenses.html"
     private const val RETRY = 60 * 60 * 1000L
     // The spaces \s matches in JavaScript, where the server checks the address.
     private const val SPACE = "\\s\\u00a0\\u1680\\u2000-\\u200a\\u2028\\u2029\\u202f\\u205f\\u3000\\ufeff"
