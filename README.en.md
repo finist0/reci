@@ -8,7 +8,7 @@ You turn your screen on dozens of times a day. Now each of those moments brings 
 word to the lock screen: with its stress, gender, examples and translation. Ten seconds,
 and you go on with your day, but the word stays with you.
 
-The app's interface and translations are in Russian.
+The interface and the translations are in Russian, Serbian or English.
 
 <p align="center">
   <img src="screenshots/1-card.png" width="250" alt="A new word card">
@@ -49,6 +49,8 @@ The app's interface and translations are in Russian.
 - **For Serbs learning Russian:** 4,200 Russian words with Serbian translations, 400
   comparisons of similar words and notes on language and customs, a Serbian interface.
   The language pair is chosen in the settings, and so is the interface language.
+- **For English speakers:** Serbian and Russian with English translations. A learned word
+  stays learned with any translation.
 - **Grammar reference:** 26 topics with tables.
 - **Cyrillic or Latin script**, three ways to show stress, pronunciation.
 - **Eight colour themes**, light and dark.
