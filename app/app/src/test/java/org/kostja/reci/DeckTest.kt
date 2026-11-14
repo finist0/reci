@@ -43,6 +43,26 @@ class DeckTest {
     }
 
     @Test
+    fun aSerbianPhoneStartsWithRussianAndKeepsTheChoice() {
+        val ctx = org.robolectric.RuntimeEnvironment.getApplication()
+        val sp = ctx.getSharedPreferences("prefs", android.content.Context.MODE_PRIVATE)
+        val was = java.util.Locale.getDefault()
+        try {
+            sp.edit().remove("deck").remove("current_key").commit()
+            java.util.Locale.setDefault(java.util.Locale.forLanguageTag("sr-RS"))
+            assertEquals("ru-sr", Prefs.deck)
+            java.util.Locale.setDefault(java.util.Locale.forLanguageTag("ru-RU"))
+            assertEquals("ru-sr", Prefs.deck)
+
+            sp.edit().remove("deck").putString("current_key", "кућа").commit()
+            java.util.Locale.setDefault(java.util.Locale.forLanguageTag("sr-RS"))
+            assertEquals("an earlier user stays", "sr-ru", Prefs.deck)
+        } finally {
+            java.util.Locale.setDefault(was)
+        }
+    }
+
+    @Test
     fun theRussianDeckSpeaksSerbianAndKeepsItsOwnProgress() {
         waitIo()
         val sr = Repo.words.first { it.key == "кућа" }
