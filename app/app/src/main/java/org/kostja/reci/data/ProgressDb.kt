@@ -5,7 +5,7 @@ import android.content.Context
 import android.database.sqlite.SQLiteDatabase
 import android.database.sqlite.SQLiteOpenHelper
 
-class ProgressDb(ctx: Context) : SQLiteOpenHelper(ctx, "progress.db", null, 4) {
+class ProgressDb(ctx: Context, name: String = "progress.db") : SQLiteOpenHelper(ctx, name, null, 4) {
     override fun onCreate(db: SQLiteDatabase) {
         db.execSQL(
             "CREATE TABLE progress (key TEXT PRIMARY KEY, state INTEGER NOT NULL, " +

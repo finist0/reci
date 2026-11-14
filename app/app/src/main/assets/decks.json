@@ -1,0 +1,4 @@
+[
+  {"id": "sr-ru", "target": "sr", "native": "ru", "words": "words.json", "grammar": "grammar.json"},
+  {"id": "ru-sr", "target": "ru", "native": "sr", "words": "words-ru-sr.json", "grammar": ""}
+]

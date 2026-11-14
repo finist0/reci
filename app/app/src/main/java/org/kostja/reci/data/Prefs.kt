@@ -51,6 +51,19 @@ object Prefs {
         changed()
     }
 
+    // The deck in use (Decks); a first start picks one by the phone's language. Earlier users
+    // learned the first deck before there was a choice.
+    var deck: String
+        get() {
+            version.intValue
+            return sp.getString("deck", null) ?: (if (sp.contains("current_key")) Decks.FIRST else Decks.guess())
+                .also { d -> sp.edit { putString("deck", d) } }
+        }
+        set(v) {
+            sp.edit { putString("deck", v) }
+            changed()
+        }
+
     var latinFirst: Boolean
         get() = bool("latin_first", false)
         set(v) = setBool("latin_first", v)
@@ -92,9 +105,9 @@ object Prefs {
 
     // Cards shown so far; decides when an article or a check comes up.
     val cardCount: Int
-        get() = sp.getInt("card_count", 0)
+        get() = sp.getInt(Decks.scoped("card_count"), 0)
 
-    fun bumpCardCount() = sp.edit { putInt("card_count", cardCount + 1) }
+    fun bumpCardCount() = sp.edit { putInt(Decks.scoped("card_count"), cardCount + 1) }
 
     var useMarks: Boolean
         get() = bool("use_marks", true)
@@ -124,7 +137,7 @@ object Prefs {
 
     // The current card, drawn at once on a cold start while the dictionary loads.
     val snapshot: String?
-        get() = sp.getString("snapshot", null)
+        get() = sp.getString(Decks.scoped("snapshot"), null)
 
     // 0: full accentuation (ку̏ћа), 1: stressed syllable only (ку́ћа), 2: none.
     var accentMode: Int
@@ -144,24 +157,24 @@ object Prefs {
         set(v) = setInt("order", v.ordinal)
 
     val shuffleSeed: Long
-        get() = long("shuffle_seed", 1)
+        get() = long(Decks.scoped("shuffle_seed"), 1)
 
     val position: Int
-        get() = int("position", 0)
+        get() = int(Decks.scoped("position"), 0)
 
     val currentKey: String?
         get() {
             version.intValue
-            return sp.getString("current_key", null)
+            return sp.getString(Decks.scoped("current_key"), null)
         }
 
     // One write and one recomposition per step; the snapshot always matches the key.
     fun setCurrent(position: Int, key: String?, snapshot: String?, seed: Long? = null) {
         sp.edit {
-            putInt("position", position)
-            putString("current_key", key)
-            putString("snapshot", snapshot)
-            if (seed != null) putLong("shuffle_seed", seed)
+            putInt(Decks.scoped("position"), position)
+            putString(Decks.scoped("current_key"), key)
+            putString(Decks.scoped("snapshot"), snapshot)
+            if (seed != null) putLong(Decks.scoped("shuffle_seed"), seed)
         }
         changed()
     }
@@ -170,18 +183,18 @@ object Prefs {
     var categories: Set<String>
         get() {
             version.intValue
-            val stored = sp.getStringSet("categories", null)
+            val stored = sp.getStringSet(Decks.scoped("categories"), null)
             // The phrase, comparison and note sections arrived later; switch them on once.
-            if (stored != null && !sp.getBoolean("sections_added", false)) {
+            if (stored != null && !sp.getBoolean(Decks.scoped("sections_added"), false)) {
                 val withSections = stored + Labels.sections.keys
-                sp.edit { putStringSet("categories", withSections).putBoolean("sections_added", true) }
+                sp.edit { putStringSet(Decks.scoped("categories"), withSections).putBoolean(Decks.scoped("sections_added"), true) }
                 return withSections
             }
             return stored?.toSet() ?: (setOf("L3", "L4") + Labels.sections.keys)
         }
         set(v) {
             // A choice made in this version already knows about the sections.
-            sp.edit { putStringSet("categories", v).putBoolean("sections_added", true) }
+            sp.edit { putStringSet(Decks.scoped("categories"), v).putBoolean(Decks.scoped("sections_added"), true) }
             changed()
         }
 
@@ -190,8 +203,8 @@ object Prefs {
 
     // The answer to the card on screen with the progress it was given on, as JSON; "" when none.
     var pendingAnswer: String
-        get() = sp.getString("pending_answer", "") ?: ""
-        set(v) = sp.edit { putString("pending_answer", v) }
+        get() = sp.getString(Decks.scoped("pending_answer"), "") ?: ""
+        set(v) = sp.edit { putString(Decks.scoped("pending_answer"), v) }
 
     // The app version whose news the user was last shown (WhatsNew).
     var whatsNewSeen: String?
@@ -201,26 +214,26 @@ object Prefs {
     // The showing counted last, "<key>#<card number>": the lock card and the app show the same
     // card, and a showing must count once.
     val lastShown: String
-        get() = sp.getString("last_shown", "") ?: ""
+        get() = sp.getString(Decks.scoped("last_shown"), "") ?: ""
 
     fun countShown(today: Int, showing: String) {
         val n = if (sp.getInt("today_date", 0) == today) sp.getInt("today_count", 0) + 1 else 1
         sp.edit {
             putInt("today_date", today)
             putInt("today_count", n)
-            putString("last_shown", showing)
+            putString(Decks.scoped("last_shown"), showing)
         }
         changed()
     }
 
     // Settings that mean the same in the web version, under its names. Lock screen settings
     // stay on the device: they depend on permissions granted there.
-    private val portable = listOf(
+    private val portable get() = listOf(
         "latinFirst" to "latin_first", "showBothScripts" to "show_both", "autoSpeak" to "auto_speak",
         "useMarks" to "use_marks", "reviewKnown" to "review_known", "hintDone" to "hint_done",
-        "cardMode" to "card_mode", "activeSize" to "active_size", "cardCount" to "card_count",
+        "cardMode" to "card_mode", "activeSize" to "active_size", "cardCount" to Decks.scoped("card_count"),
         "accentMode" to "accent_mode", "theme" to "theme", "wordSize" to "word_size", "order" to "order",
-        "newKnownCount" to "new_known_count", "shuffleSeed" to "shuffle_seed",
+        "newKnownCount" to "new_known_count", "shuffleSeed" to Decks.scoped("shuffle_seed"),
     )
 
     fun exportJson(): JSONObject {
@@ -239,33 +252,38 @@ object Prefs {
             for ((name, key) in portable) {
                 when (val v = o.opt(name)) {
                     is Boolean -> putBoolean(key, v)
-                    is Number -> if (key == "shuffle_seed") putLong(key, v.toLong()) else putInt(key, v.toInt())
+                    is Number -> if (key == Decks.scoped("shuffle_seed")) putLong(key, v.toLong()) else putInt(key, v.toInt())
                 }
             }
             o.optJSONArray("categories")?.let { a ->
-                putStringSet("categories", (0 until a.length()).map { a.getString(it) }.toSet())
-                putBoolean("sections_added", true)
+                putStringSet(Decks.scoped("categories"), (0 until a.length()).map { a.getString(it) }.toSet())
+                putBoolean(Decks.scoped("sections_added"), true)
             }
         }
         changed()
     }
 
-    fun primary(cyr: String) = if (latinFirst) Translit.toLatin(cyr) else cyr
+    // Text in the language learned: Serbian in the script the user reads first.
+    fun primary(cyr: String) = if (latinFirst && Decks.current.target == "sr") Translit.toLatin(cyr) else cyr
+
+    // Text in the user's own language: a translation, a note, a grammar label.
+    fun native(text: String) = if (latinFirst && Decks.current.native == "sr") Translit.toLatin(text) else text
 
     // Serbian text that may carry stress marks: an example, a note.
     fun marked(text: String) = Accents.show(text, accentMode)
 
-    // A word a card refers to, with the stress of its own card when there is one.
-    fun linked(sr: String) = primary(Repo.wordByCyr(sr)?.acc?.ifEmpty { null }?.let { marked(it) } ?: sr)
+    // A word a card refers to, stressed as given or as on its own card.
+    fun linked(word: String, acc: String = "") =
+        primary(acc.ifEmpty { null }?.let { marked(it) } ?: Repo.wordByCyr(word)?.acc?.ifEmpty { null }?.let { marked(it) } ?: word)
 
     fun headword(w: Word): String {
-        // A note's title is Russian; transliterating it would garble it.
-        if (w.pos == "note") return w.cyr
+        // A note's title is in the user's language.
+        if (w.pos == "note") return native(w.cyr)
         return primary(if (w.acc.isEmpty()) w.cyr else Accents.show(w.acc, accentMode))
     }
 
     fun secondary(cyr: String): String? {
-        if (!showBothScripts) return null
+        if (!showBothScripts || Decks.current.target != "sr") return null
         return if (latinFirst) cyr else Translit.toLatin(cyr)
     }
 }

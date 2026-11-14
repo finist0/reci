@@ -1,8 +1,10 @@
 package org.kostja.reci.data
 
-data class Example(val sr: String, val ru: String)
+// text is in the language learned, with the headword in brackets; tr is its translation.
+data class Example(val text: String, val tr: String)
 
-data class Related(val sr: String, val ru: String)
+// word is bare, as cards are looked up by; acc is the same word with stress marks, or empty.
+data class Related(val word: String, val tr: String, val acc: String = "")
 
 data class Word(
     val key: String,
@@ -27,6 +29,9 @@ data class Word(
     val note: String,
     // Shown as «Полезно знать».
     val tips: List<String> = emptyList(),
+    // The synonyms and antonyms with stress marks, when the dictionary has them.
+    val synAcc: List<String> = emptyList(),
+    val antAcc: List<String> = emptyList(),
 )
 
 enum class State { NEW, DONT_KNOW, UNSURE, KNOWN }
@@ -46,14 +51,24 @@ data class Progress(
     val showAt: Int = 0,
 )
 
-enum class Order(val label: String) {
+enum class Order(private val ru: String) {
     SEQ("По частоте"),
     RANDOM("Вперемешку"),
-    ALPHA("По алфавиту"),
+    ALPHA("По алфавиту");
+
+    val label: String get() = t(ru)
 }
 
+// Russian names, which t() turns into the user's language when they are read.
 object Labels {
-    val levels = linkedMapOf(
+    private fun <K> translated(m: Map<K, String>): Map<K, String> = m.mapValuesTo(LinkedHashMap()) { t(it.value) }
+
+    val levels: Map<Int, String> get() = translated(levelsRu)
+    val topics: Map<String, String> get() = translated(topicsRu)
+    val sections: Map<String, String> get() = translated(sectionsRu)
+    val lists: Map<String, String> get() = translated(listsRu)
+
+    private val levelsRu = linkedMapOf(
         1 to "A1 · Начальный",
         2 to "A2 · Элементарный",
         3 to "B1 · Средний",
@@ -61,7 +76,7 @@ object Labels {
         5 to "C1 · Продвинутый",
     )
 
-    val topics = linkedMapOf(
+    private val topicsRu = linkedMapOf(
         "basic" to "Базовые слова",
         "people" to "Люди",
         "family" to "Семья",
@@ -94,9 +109,9 @@ object Labels {
         "abstract" to "Абстрактные понятия",
     )
 
-    val sections = linkedMapOf("X:phrase" to "Выражения", "X:compare" to "Похожие слова", "X:note" to "Заметки")
+    private val sectionsRu = linkedMapOf("X:phrase" to "Выражения", "X:compare" to "Похожие слова", "X:note" to "Заметки")
 
-    val lists = linkedMapOf(
+    private val listsRu = linkedMapOf(
         "M:dontknow" to "Не знаю",
         "M:known" to "Знаю",
         "M:fav" to "Избранное",
@@ -125,7 +140,7 @@ object Labels {
         "note" to "заметка",
     )
 
-    fun pos(code: String) = pos[code] ?: code
+    fun pos(code: String) = pos[code]?.let { t(it) } ?: code
 
     private val circled = "①②③④⑤⑥⑦⑧⑨"
 

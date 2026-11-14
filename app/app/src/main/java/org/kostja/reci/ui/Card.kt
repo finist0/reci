@@ -75,6 +75,7 @@ import org.kostja.reci.data.Word
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+import org.kostja.reci.data.t
 
 @Composable
 fun CardScreen(
@@ -254,13 +255,13 @@ fun CardText(
 private fun stageLabel(w: Word): String? {
     if (Repo.isArticle(w)) return null
     val pr = Repo.shownProgress(w)
-    val what = if (Prefs.cardMode == 2) "перевод" else "слово"
+    val what = if (Prefs.cardMode == 2) t("перевод") else t("слово")
     return when {
-        Repo.isDue(pr) -> "Проверка: вспомните $what"
-        pr.phase == Repo.RECALL -> "Вспомните $what · «Знаю» ${pr.streak} из 3"
-        pr.phase == Repo.LEARNED -> "Выучено"
-        pr.state == State.DONT_KNOW || pr.state == State.UNSURE -> "Ещё раз: запомните слово"
-        else -> "Новое слово"
+        Repo.isDue(pr) -> t("Проверка: вспомните %s", what)
+        pr.phase == Repo.RECALL -> t("Вспомните %s · «Знаю» %d из 3", what, pr.streak)
+        pr.phase == Repo.LEARNED -> t("Выучено")
+        pr.state == State.DONT_KNOW || pr.state == State.UNSURE -> t("Ещё раз: запомните слово")
+        else -> t("Новое слово")
     }
 }
 
@@ -272,15 +273,15 @@ private fun Empty(onCategories: () -> Unit) {
         verticalArrangement = Arrangement.Center,
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
-        Text("Здесь пока пусто", fontFamily = Serif, fontSize = 24.sp, color = p.word)
+        Text(t("Здесь пока пусто"), fontFamily = Serif, fontSize = 24.sp, color = p.word)
         Spacer(Modifier.height(8.dp))
-        Text("В выбранных разделах не осталось слов", fontSize = 15.sp, color = p.secondary)
+        Text(t("В выбранных разделах не осталось слов"), fontSize = 15.sp, color = p.secondary)
         Spacer(Modifier.height(20.dp))
         Button(
             onClick = onCategories,
             shape = RoundedCornerShape(16.dp),
             colors = ButtonDefaults.buttonColors(containerColor = p.accent, contentColor = Color.White),
-        ) { Text("Выбрать слова") }
+        ) { Text(t("Выбрать слова")) }
     }
 }
 
@@ -350,9 +351,9 @@ private fun TopBar(onSearch: () -> Unit, onGrammar: () -> Unit, onSettings: () -
                     .padding(horizontal = 2.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                BarIcon(R.drawable.ic_search, "Поиск", onSearch)
-                BarIcon(R.drawable.ic_book, "Грамматика", onGrammar)
-                BarIcon(R.drawable.ic_settings, "Настройки", onSettings)
+                BarIcon(R.drawable.ic_search, t("Поиск"), onSearch)
+                BarIcon(R.drawable.ic_book, t("Грамматика"), onGrammar)
+                BarIcon(R.drawable.ic_settings, t("Настройки"), onSettings)
             }
         }
     }
@@ -448,7 +449,7 @@ private fun Star(w: Word, modifier: Modifier) {
     ) {
         Icon(
             painterResource(if (fav) R.drawable.ic_star else R.drawable.ic_star_border),
-            "Избранное",
+            t("Избранное"),
             tint = if (fav) MarkUnsure else p.faint,
             modifier = Modifier.size(24.dp),
         )
@@ -467,7 +468,7 @@ fun LearnedToast(modifier: Modifier = Modifier) {
     ) {
         Icon(painterResource(R.drawable.ic_check), null, tint = Color.White, modifier = Modifier.size(18.dp))
         Spacer(Modifier.width(8.dp))
-        Text("Слово отмечено выученным", color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+        Text(t("Слово отмечено выученным"), color = Color.White, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
     }
 }
 
@@ -484,7 +485,7 @@ private fun LongPressHint(onClose: () -> Unit) {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.",
+            t("Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным."),
             fontSize = 13.sp,
             color = p.text,
             lineHeight = 18.sp,
@@ -529,16 +530,16 @@ fun MarksRow(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
         ) {
             Mark(
-                if (article) "Перечитать позже" else "Не знаю",
-                if (article) fit("Перечитать позже", "Позже") else "Не знаю",
+                if (article) t("Перечитать позже") else t("Не знаю"),
+                if (article) fit(t("Перечитать позже"), t("Позже")) else t("Не знаю"),
                 answered == State.DONT_KNOW,
                 if (article) p.secondary else MarkDontKnow,
                 Modifier.weight(1f),
                 style,
             ) { onAnswer(State.DONT_KNOW, false) }
             Mark(
-                if (article) "Не показывать" else "Знаю",
-                if (article) fit("Не показывать", "Скрыть") else "Знаю",
+                if (article) t("Не показывать") else t("Знаю"),
+                if (article) fit(t("Не показывать"), t("Скрыть")) else t("Знаю"),
                 answered == State.KNOWN,
                 p.known,
                 Modifier.weight(1f),
@@ -596,7 +597,7 @@ private fun BottomNav(onPrev: () -> Unit, onNext: () -> Unit, onDone: (() -> Uni
         horizontalArrangement = Arrangement.spacedBy(10.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NavCircle(R.drawable.ic_chevron_left, "Предыдущее слово", height, onPrev)
+        NavCircle(R.drawable.ic_chevron_left, t("Предыдущее слово"), height, onPrev)
         Row(
             Modifier
                 .weight(1f)
@@ -610,14 +611,14 @@ private fun BottomNav(onPrev: () -> Unit, onNext: () -> Unit, onDone: (() -> Uni
             if (onDone != null) {
                 Icon(painterResource(R.drawable.ic_check), null, tint = Color.White, modifier = Modifier.size(20.dp))
                 Spacer(Modifier.width(8.dp))
-                Text("Готово", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Text(t("Готово"), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
             } else {
-                Text("Дальше", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+                Text(t("Дальше"), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
                 Spacer(Modifier.width(8.dp))
                 Icon(painterResource(R.drawable.ic_arrow_forward), null, tint = Color.White, modifier = Modifier.size(20.dp))
             }
         }
-        if (onDone != null) NavCircle(R.drawable.ic_chevron_right, "Следующее слово", height, onNext)
+        if (onDone != null) NavCircle(R.drawable.ic_chevron_right, t("Следующее слово"), height, onNext)
     }
 }
 
@@ -636,7 +637,7 @@ private fun OneRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        NavCircle(R.drawable.ic_chevron_left, "Предыдущее слово", 46.dp, onPrev)
+        NavCircle(R.drawable.ic_chevron_left, t("Предыдущее слово"), 46.dp, onPrev)
         MarksRow(answered, article, Modifier.weight(1f), fixedText = true, onAnswer = onAnswer)
         Box(
             Modifier.size(46.dp).clip(CircleShape).background(p.accent).clickable(onClick = onNext),
@@ -644,7 +645,7 @@ private fun OneRow(
         ) {
             Icon(
                 painterResource(if (done) R.drawable.ic_check else R.drawable.ic_arrow_forward),
-                if (done) "Готово" else "Дальше",
+                if (done) t("Готово") else t("Дальше"),
                 tint = Color.White,
                 modifier = Modifier.size(22.dp),
             )

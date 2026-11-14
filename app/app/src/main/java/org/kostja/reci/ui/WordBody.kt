@@ -42,12 +42,14 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.kostja.reci.R
 import org.kostja.reci.data.Accents
+import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Grammar
 import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
 import org.kostja.reci.data.Word
+import org.kostja.reci.data.t
 
 // "[x]" marks the headword inside an example sentence.
 fun highlighted(text: String, color: Color): AnnotatedString = buildAnnotatedString {
@@ -112,7 +114,7 @@ fun WordBody(
                     .clickable { Speaker.speak(w.cyr) },
                 contentAlignment = Alignment.Center,
             ) {
-                Icon(painterResource(R.drawable.ic_volume), "Произнести", tint = p.accent, modifier = Modifier.size(20.dp))
+                Icon(painterResource(R.drawable.ic_volume), t("Произнести"), tint = p.accent, modifier = Modifier.size(20.dp))
             }
             Spacer(Modifier.width(12.dp))
             Column {
@@ -127,7 +129,7 @@ fun WordBody(
         Spacer(Modifier.height(18.dp))
         Box(Modifier.fillMaxWidth()) {
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                w.meanings.forEachIndexed { i, m -> Meaning(i + 1, m) }
+                w.meanings.forEachIndexed { i, m -> Meaning(i + 1, Prefs.native(m)) }
             }
             if (covered) {
                 Box(
@@ -138,7 +140,7 @@ fun WordBody(
                         .clickable { covered = false },
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("Показать перевод", fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = p.accent)
+                    Text(t("Показать перевод"), fontSize = 15.sp, fontWeight = FontWeight.SemiBold, color = p.accent)
                 }
             }
         }
@@ -178,7 +180,7 @@ private fun Grammar(w: Word) {
         Spacer(Modifier.width(8.dp))
         if (w.ruGram.isBlank()) {
             Text(
-                w.gram,
+                Prefs.native(w.gram),
                 fontSize = 14.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = if (w.pos == "noun") p.word else p.secondary,
@@ -188,7 +190,7 @@ private fun Grammar(w: Word) {
             Text(
                 buildAnnotatedString {
                     withStyle(SpanStyle(fontWeight = FontWeight.Bold)) { append(w.gram) }
-                    if (strong) append("  ≠ рус. «${w.ruNoun}» ${w.ruGram}") else append("  · в рус. ${w.ruGram}")
+                    if (strong) append(t("  ≠ рус. «%s» %s", w.ruNoun, w.ruGram)) else append(t("  · в рус. %s", w.ruGram))
                 },
                 fontSize = 13.sp,
                 color = if (strong) Color.White else MarkDontKnow,
@@ -264,20 +266,20 @@ private fun Details(w: Word, onGrammar: ((String) -> Unit)?) {
     val p = LocalPalette.current
     if (w.examples.isNotEmpty()) {
         HorizontalDivider(Modifier.padding(vertical = 20.dp), color = p.divider)
-        SectionLabel("Примеры")
+        SectionLabel(t("Примеры"))
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             for (e in w.examples) {
                 Row(
                     Modifier
                         .height(IntrinsicSize.Min)
                         .clip(RoundedCornerShape(8.dp))
-                        .clickable { Speaker.speak(plain(e.sr)) }
+                        .clickable { Speaker.speak(plain(e.text)) }
                 ) {
                     Box(Modifier.width(3.dp).fillMaxHeight().clip(RoundedCornerShape(2.dp)).background(p.highlight))
                     Spacer(Modifier.width(12.dp))
                     Column(Modifier.weight(1f)) {
-                        Text(highlighted(Prefs.primary(Prefs.marked(e.sr)), p.accent), fontFamily = Serif, fontSize = 17.sp, color = p.text, lineHeight = 24.sp)
-                        Text(e.ru, fontSize = 14.sp, color = p.secondary, lineHeight = 19.sp)
+                        Text(highlighted(Prefs.primary(Prefs.marked(e.text)), p.accent), fontFamily = Serif, fontSize = 17.sp, color = p.text, lineHeight = 24.sp)
+                        Text(Prefs.native(e.tr), fontSize = 14.sp, color = p.secondary, lineHeight = 19.sp)
                     }
                 }
             }
@@ -287,31 +289,31 @@ private fun Details(w: Word, onGrammar: ((String) -> Unit)?) {
     if (w.syn.isNotEmpty() || w.ant.isNotEmpty()) {
         HorizontalDivider(Modifier.padding(vertical = 20.dp), color = p.divider)
         if (w.syn.isNotEmpty()) {
-            SectionLabel("Синонимы")
-            Chips(w.syn, p.word, p.panel, open)
+            SectionLabel(t("Синонимы"))
+            Chips(w.syn, w.synAcc, p.word, p.panel, open)
         }
         if (w.syn.isNotEmpty() && w.ant.isNotEmpty()) Spacer(Modifier.height(14.dp))
         if (w.ant.isNotEmpty()) {
-            SectionLabel("Антонимы")
-            Chips(w.ant, p.accent, p.highlight, open)
+            SectionLabel(t("Антонимы"))
+            Chips(w.ant, w.antAcc, p.accent, p.highlight, open)
         }
     }
 
     if (w.related.isNotEmpty()) {
         HorizontalDivider(Modifier.padding(vertical = 20.dp), color = p.divider)
-        SectionLabel("Связанные слова")
+        SectionLabel(t("Связанные слова"))
         Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
             for (r in w.related) {
                 Text(
                     buildAnnotatedString {
-                        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = p.word)) { append(Prefs.linked(r.sr)) }
-                        if (Repo.wordByCyr(r.sr) != null) withStyle(SpanStyle(color = p.accent)) { append(" ›") }
+                        withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = p.word)) { append(Prefs.linked(r.word, r.acc)) }
+                        if (Repo.wordByCyr(r.word) != null) withStyle(SpanStyle(color = p.accent)) { append(" ›") }
                         withStyle(SpanStyle(color = p.faint)) { append("  —  ") }
-                        append(r.ru)
+                        append(Prefs.native(r.tr))
                     },
                     fontSize = 15.sp,
                     color = p.text,
-                    modifier = Modifier.clickable { open(r.sr) },
+                    modifier = Modifier.clickable { open(r.word) },
                 )
             }
         }
@@ -327,11 +329,11 @@ private fun Details(w: Word, onGrammar: ((String) -> Unit)?) {
                 .padding(14.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            Text("Полезно знать", fontSize = 12.sp, fontWeight = FontWeight.Bold, color = p.secondary)
+            Text(t("Полезно знать"), fontSize = 12.sp, fontWeight = FontWeight.Bold, color = p.secondary)
             for (t in listOfNotNull(w.note.takeIf { it.isNotBlank() }) + w.tips) {
                 Row {
                     Text("•", fontSize = 15.sp, color = p.accent, modifier = Modifier.width(14.dp))
-                    Text(Prefs.marked(t), fontSize = 15.sp, color = p.text, lineHeight = 21.sp)
+                    Text(Prefs.native(Prefs.marked(t)), fontSize = 15.sp, color = p.text, lineHeight = 21.sp)
                 }
             }
         }
@@ -340,11 +342,11 @@ private fun Details(w: Word, onGrammar: ((String) -> Unit)?) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Chips(items: List<String>, color: Color, bg: Color, open: (String) -> Unit) {
+private fun Chips(items: List<String>, accs: List<String>, color: Color, bg: Color, open: (String) -> Unit) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-        for (s in items) {
+        for ((i, s) in items.withIndex()) {
             Text(
-                Prefs.linked(s) + if (Repo.wordByCyr(s) != null) " ›" else "",
+                Prefs.linked(s, accs.getOrElse(i) { "" }) + if (Repo.wordByCyr(s) != null) " ›" else "",
                 fontSize = 15.sp,
                 fontWeight = FontWeight.SemiBold,
                 color = color,
@@ -368,9 +370,9 @@ private fun ArticleBody(w: Word, onGrammar: ((String) -> Unit)?) {
     }
     val compare = w.pos == "compare"
     Column(Modifier.fillMaxWidth()) {
-        SectionLabel(if (compare) "Похожие слова" else "Заметка")
+        SectionLabel(if (compare) t("Похожие слова") else t("Заметка"))
         Text(
-            if (compare) w.meanings.firstOrNull().orEmpty().ifBlank { Prefs.primary(w.cyr) } else w.cyr,
+            if (compare) Prefs.native(w.meanings.firstOrNull().orEmpty()).ifBlank { Prefs.primary(w.cyr) } else Prefs.native(w.cyr),
             fontFamily = Serif,
             fontSize = 26.sp,
             lineHeight = 32.sp,
@@ -387,42 +389,42 @@ private fun ArticleBody(w: Word, onGrammar: ((String) -> Unit)?) {
                             .fillMaxWidth()
                             .clip(RoundedCornerShape(14.dp))
                             .background(p.panel)
-                            .clickable { open(r.sr) }
+                            .clickable { open(r.word) }
                             .padding(horizontal = 14.dp, vertical = 10.dp)
                     ) {
                         Column {
                             Text(
-                                Prefs.linked(r.sr) + if (Repo.wordByCyr(r.sr) != null) " ›" else "",
+                                Prefs.linked(r.word, r.acc) + if (Repo.wordByCyr(r.word) != null) " ›" else "",
                                 fontFamily = Serif,
                                 fontSize = 19.sp,
                                 fontWeight = FontWeight.SemiBold,
                                 color = p.word,
                             )
-                            Text(r.ru, fontSize = 14.sp, color = p.text, lineHeight = 19.sp)
+                            Text(Prefs.native(r.tr), fontSize = 14.sp, color = p.text, lineHeight = 19.sp)
                         }
                     }
                 }
             }
             if (w.note.isNotBlank()) {
                 Spacer(Modifier.height(14.dp))
-                Text(Prefs.marked(w.note), fontSize = 16.sp, color = p.text, lineHeight = 23.sp)
+                Text(Prefs.native(Prefs.marked(w.note)), fontSize = 16.sp, color = p.text, lineHeight = 23.sp)
             }
         } else {
-            Text(Prefs.marked(w.note), fontSize = 16.sp, color = p.text, lineHeight = 23.sp)
+            Text(Prefs.native(Prefs.marked(w.note)), fontSize = 16.sp, color = p.text, lineHeight = 23.sp)
             if (w.related.isNotEmpty()) {
                 Spacer(Modifier.height(16.dp))
-                SectionLabel("Слова")
+                SectionLabel(t("Слова"))
                 Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
                     for (r in w.related) {
                         Text(
                             buildAnnotatedString {
-                                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = p.word)) { append(Prefs.linked(r.sr)) }
+                                withStyle(SpanStyle(fontWeight = FontWeight.SemiBold, color = p.word)) { append(Prefs.linked(r.word, r.acc)) }
                                 withStyle(SpanStyle(color = p.faint)) { append("  —  ") }
-                                append(r.ru)
+                                append(Prefs.native(r.tr))
                             },
                             fontSize = 15.sp,
                             color = p.text,
-                            modifier = Modifier.clickable { open(r.sr) },
+                            modifier = Modifier.clickable { open(r.word) },
                         )
                     }
                 }
@@ -430,12 +432,12 @@ private fun ArticleBody(w: Word, onGrammar: ((String) -> Unit)?) {
         }
         if (w.examples.isNotEmpty()) {
             HorizontalDivider(Modifier.padding(vertical = 20.dp), color = p.divider)
-            SectionLabel("Примеры")
+            SectionLabel(t("Примеры"))
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 for (e in w.examples) {
-                    Column(Modifier.clickable { Speaker.speak(plain(e.sr)) }) {
-                        Text(highlighted(Prefs.primary(Prefs.marked(e.sr)), p.accent), fontFamily = Serif, fontSize = 17.sp, color = p.text)
-                        Text(e.ru, fontSize = 14.sp, color = p.secondary)
+                    Column(Modifier.clickable { Speaker.speak(plain(e.text)) }) {
+                        Text(highlighted(Prefs.primary(Prefs.marked(e.text)), p.accent), fontFamily = Serif, fontSize = 17.sp, color = p.text)
+                        Text(Prefs.native(e.tr), fontSize = 14.sp, color = p.secondary)
                     }
                 }
             }
@@ -460,19 +462,19 @@ private fun RecallBody(w: Word, onReveal: () -> Unit) {
         Grammar(w)
         Spacer(Modifier.height(18.dp))
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            w.meanings.forEachIndexed { i, m -> Meaning(i + 1, m) }
+            w.meanings.forEachIndexed { i, m -> Meaning(i + 1, Prefs.native(m)) }
         }
         // The Russian side of the examples as a hint; the Serbian sentences would give the word away.
         if (w.examples.isNotEmpty()) {
             HorizontalDivider(Modifier.padding(vertical = 20.dp), color = p.divider)
-            SectionLabel("Как сказать по-сербски")
+            SectionLabel(Decks.howToSay())
             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                for (e in w.examples) Text("«${e.ru}»", fontSize = 16.sp, color = p.text, lineHeight = 22.sp)
+                for (e in w.examples) Text("«${Prefs.native(e.tr)}»", fontSize = 16.sp, color = p.text, lineHeight = 22.sp)
             }
         }
         Spacer(Modifier.height(24.dp))
         Text(
-            "Показать слово",
+            t("Показать слово"),
             fontSize = 16.sp,
             fontWeight = FontWeight.SemiBold,
             color = p.accent,

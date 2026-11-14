@@ -120,6 +120,7 @@ object DictUpdate {
     // earliest. Returns at once. `done` gets true when a new patch was applied.
     fun check(done: (Boolean) -> Unit = {}) {
         val t = now()
+        if (!Decks.current.isFirst) return
         if (checking || sp.getInt("checked_day", 0) == localDay(t) || t - sp.getLong("tried_at", 0) < RETRY) return
         checking = true
         sp.edit { putLong("tried_at", t) }
@@ -130,7 +131,7 @@ object DictUpdate {
             main.post {
                 checking = false
                 if (result != null) sp.edit { putInt("checked_day", localDay(t)) }
-                fresh?.let { (words, topics) ->
+                fresh?.takeIf { Decks.current.isFirst }?.let { (words, topics) ->
                     Repo.swap(words)
                     Grammar.swap(topics)
                 }

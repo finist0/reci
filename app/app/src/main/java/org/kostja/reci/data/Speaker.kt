@@ -32,14 +32,18 @@ object Speaker : TextToSpeech.OnInitListener {
             return
         }
         // Croatian and Bosnian voices read Serbian Latin text well enough.
-        val candidates = listOf("sr-RS" to false, "sr" to false, "hr-HR" to true, "bs-BA" to true)
+        val candidates = when (Decks.current.target) {
+            "ru" -> listOf("ru-RU" to false, "ru" to false)
+            "en" -> listOf("en-US" to false, "en-GB" to false, "en" to false)
+            else -> listOf("sr-RS" to false, "sr" to false, "hr-HR" to true, "bs-BA" to true)
+        }
         for ((tag, latin) in candidates) {
             val loc = Locale.forLanguageTag(tag)
             if (t.isLanguageAvailable(loc) >= TextToSpeech.LANG_AVAILABLE) {
                 t.language = loc
                 latinOnly = latin
                 ready = true
-                voice.value = loc.getDisplayName(Locale.forLanguageTag("ru"))
+                voice.value = loc.getDisplayName(Locale.forLanguageTag(Decks.current.native))
                 pending?.let { speak(it) }
                 pending = null
                 return
@@ -52,6 +56,14 @@ object Speaker : TextToSpeech.OnInitListener {
     // article title is not a word to read out.
     fun autoSpeak(w: Word) {
         if (Prefs.autoSpeak && !Repo.isArticle(w) && !Repo.asksRecall(w)) say(w.cyr)
+    }
+
+    // Another deck speaks another language.
+    fun reset() {
+        ready = false
+        failed.value = false
+        voice.value = null
+        if (tts != null) onInit(TextToSpeech.SUCCESS)
     }
 
     // Tests replace it to hear what would be said.

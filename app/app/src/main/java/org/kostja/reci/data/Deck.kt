@@ -1,0 +1,171 @@
+package org.kostja.reci.data
+
+import android.content.Context
+import java.util.Locale
+import org.json.JSONArray
+import org.json.JSONObject
+
+// A pair of languages: the one learned (target) and the user's own (native), which the
+// interface speaks. Decks are listed in assets/decks.json, so a new pair needs data only.
+data class Deck(val id: String, val target: String, val native: String, val words: String, val grammar: String) {
+    // The first deck keeps the storage names it had before there were others.
+    val isFirst: Boolean get() = id == Decks.FIRST
+}
+
+object Decks {
+    const val FIRST = "sr-ru"
+    private lateinit var ctx: Context
+
+    fun init(c: Context) {
+        ctx = c.applicationContext
+    }
+
+    val all: List<Deck> by lazy {
+        val a = JSONArray(ctx.assets.open("decks.json").bufferedReader().use { it.readText() })
+        (0 until a.length()).map { a.getJSONObject(it) }.map {
+            Deck(it.getString("id"), it.getString("target"), it.getString("native"), it.getString("words"), it.optString("grammar"))
+        }
+    }
+
+    val current: Deck
+        get() = all.firstOrNull { it.id == Prefs.deck } ?: all.first()
+
+    // A first start on a phone set to Serbian or a close language opens Russian for Serbs.
+    fun guess(): String {
+        val lang = Locale.getDefault().language
+        return if (lang in setOf("sr", "hr", "bs", "sh", "cnr", "mk", "sl") && all.any { it.id == "ru-sr" }) "ru-sr" else FIRST
+    }
+
+    // Storage names of what belongs to one deck: the first deck keeps the old names.
+    fun scoped(name: String, deck: Deck = current) = if (deck.isFirst) name else "${deck.id}.$name"
+
+    fun howToSay() = t(
+        when (current.target) {
+            "ru" -> "Как сказать по-русски"
+            "en" -> "Как сказать по-английски"
+            else -> "Как сказать по-сербски"
+        }
+    )
+
+    private fun langName(code: String, l: String) = I18n.tIn(
+        l,
+        when (code) {
+            "sr" -> "сербский"
+            "ru" -> "русский"
+            "en" -> "английский"
+            else -> code
+        },
+    )
+
+    // "Учу сербский · родной русский", in the deck's own native language, so that a user
+    // finds the line in their language among the others.
+    fun title(d: Deck) = I18n.tIn(d.native, "Учу %s · родной %s").format(langName(d.target, d.native), langName(d.native, d.native))
+
+    // A word to show the font size and the stress marks on.
+    val sample: String
+        get() = when (current.target) {
+            "ru" -> "сло́во"
+            "en" -> "word"
+            else -> "реч"
+        }
+
+    // How the stress setting looks: Serbian marks four accents, Russian only the place.
+    val accentSamples: List<String>
+        get() = if (current.target == "sr") listOf("ку̏ћа", "ку́ћа", "кућа") else listOf("доро́га", "дорога")
+
+    // Search: a word in the user's language, or in the language learned.
+    val meaningHint: String
+        get() = t(
+            when (current.native) {
+                "sr" -> "слово по-сербски"
+                "en" -> "слово по-английски"
+                else -> "слово по-русски"
+            }
+        )
+    val wordHint: String
+        get() = when (current.target) {
+            "ru" -> "слово"
+            "en" -> "word"
+            else -> "реч, reč"
+        }
+    val wordChip: String
+        get() = t(
+            when (current.target) {
+                "ru" -> "Русское слово"
+                "en" -> "Английское слово"
+                else -> "Сербское слово"
+            }
+        )
+
+    val noVoice: String
+        get() = t(
+            when (current.target) {
+                "ru" -> "Нет русского голоса"
+                "en" -> "Нет английского голоса"
+                else -> "Нет сербского, хорватского или боснийского голоса"
+            }
+        )
+
+    val shareText: String
+        get() = t(
+            when (current.target) {
+                "ru" -> "НЕРодная речь — русские слова для тех, кто говорит по-сербски: карточки с ударениями и примерами. Бесплатно."
+                else -> "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно."
+            }
+        )
+
+    // The script setting matters wherever Serbian is shown.
+    val hasSerbian: Boolean
+        get() = current.target == "sr" || current.native == "sr"
+}
+
+object I18n {
+    private lateinit var ctx: Context
+
+    fun init(c: Context) {
+        ctx = c.applicationContext
+    }
+
+    // Russian text -> language -> translation. Russian is the key, so code reads as before.
+    private val table: Map<String, Map<String, String>> by lazy {
+        val o = JSONObject(ctx.assets.open("ui.json").bufferedReader().use { it.readText() })
+        o.keys().asSequence().associateWith { k ->
+            val tr = o.getJSONObject(k)
+            tr.keys().asSequence().associateWith { tr.getString(it) }
+        }
+    }
+
+    // Tests set it to see a language without switching decks.
+    internal var langOverride: String? = null
+
+    val lang: String
+        get() = langOverride ?: Decks.current.native
+
+    fun t(ru: String): String = tIn(lang, ru)
+
+    fun tIn(l: String, ru: String): String {
+        if (l == "ru") return ru
+        val s = table[ru]?.get(l) ?: ru
+        return if (l == "sr" && Prefs.latinFirst) Translit.toLatin(s) else s
+    }
+
+    fun has(ru: String, l: String) = table[ru]?.containsKey(l) == true
+}
+
+fun t(ru: String): String = I18n.t(ru)
+
+fun t(ru: String, vararg args: Any?): String = I18n.t(ru).format(*args)
+
+// Russian and Serbian have three plural forms, English two: the forms are given in Russian.
+fun plural(n: Int, one: String, few: String, many: String): String {
+    if (I18n.lang == "en") return t(if (n == 1) one else many)
+    val m10 = n % 10
+    val m100 = n % 100
+    return t(
+        when {
+            m10 == 1 && m100 != 11 -> one
+            m10 in 2..4 && m100 !in 12..14 -> few
+            else -> many
+        }
+    )
+}

@@ -18,6 +18,7 @@ import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.ui.MainActivity
+import org.kostja.reci.data.t
 
 class LockService : Service() {
     // The card is started when the screen goes off, so it is already in place
@@ -74,7 +75,7 @@ class LockService : Service() {
             .setShowWhen(false)
         val w = if (Prefs.reviewNotification) Repo.reviewWord() else null
         if (w == null) {
-            b.setContentTitle("Слова на экране блокировки")
+            b.setContentTitle(t("Слова на экране блокировки"))
         } else {
             b.setContentTitle(Prefs.primary(w.cyr))
             b.setContentText(w.meanings.mapIndexed { i, m -> "${Labels.circled(i)} $m" }.joinToString("  "))

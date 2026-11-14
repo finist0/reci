@@ -6,7 +6,7 @@ object Accents {
     private const val ACUTE = '́'
     private val stress = setOf('̏', '̑', '̀', '́')
     private const val LENGTH = '̄'
-    private const val VOWELS = "аеиоурАЕИОУР"
+    private const val VOWELS = "аеиоурАЕИОУРяюыэёЯЮЫЭЁ"
 
     // Keeps where the stress falls and drops its type and the length marks.
     fun placeOnly(acc: String): String {

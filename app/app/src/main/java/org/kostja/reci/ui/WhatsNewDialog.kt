@@ -14,6 +14,7 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import org.kostja.reci.data.WhatsNew
+import org.kostja.reci.data.t
 
 @Composable
 fun WhatsNewDialog() {
@@ -24,11 +25,11 @@ fun WhatsNewDialog() {
     AlertDialog(
         onDismissRequest = WhatsNew::close,
         modifier = Modifier.testTag("whatsNew"),
-        title = { Text(if (one) "Что нового в версии ${entries[0].version}" else "Что нового") },
+        title = { Text(if (one) t("Что нового в версии %s", entries[0].version) else t("Что нового")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 for (e in entries) {
-                    if (!one) Text("Версия ${e.version}", color = p.text, fontWeight = FontWeight.SemiBold)
+                    if (!one) Text(t("Версия %s", e.version), color = p.text, fontWeight = FontWeight.SemiBold)
                     for (item in e.items) {
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             Text("•", color = p.accent)
@@ -38,6 +39,6 @@ fun WhatsNewDialog() {
                 }
             }
         },
-        confirmButton = { TextButton(onClick = WhatsNew::close) { Text("Понятно") } },
+        confirmButton = { TextButton(onClick = WhatsNew::close) { Text(t("Понятно")) } },
     )
 }

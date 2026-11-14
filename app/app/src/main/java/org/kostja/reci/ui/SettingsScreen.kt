@@ -72,6 +72,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import org.kostja.reci.R
 import org.kostja.reci.data.Backup
+import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
@@ -85,6 +86,8 @@ import java.time.LocalDate
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
+import org.kostja.reci.data.t
+import org.kostja.reci.data.plural
 
 private fun canNotify(ctx: Context) = Build.VERSION.SDK_INT < 33 ||
     ContextCompat.checkSelfPermission(ctx, Manifest.permission.POST_NOTIFICATIONS) ==
@@ -131,7 +134,7 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                     ctx.contentResolver.openOutputStream(uri, "wt")!!.use { it.write(text.toByteArray()) }
                 }.isSuccess
             }
-            toast(if (ok) "Прогресс сохранён." else "Не удалось сохранить файл.")
+            toast(if (ok) t("Прогресс сохранён.") else t("Не удалось сохранить файл."))
         }
     }
     val importLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -142,8 +145,8 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 }.getOrNull()
             }
             toast(
-                if (n == null) "Это не файл с прогрессом."
-                else "Загружен прогресс по $n ${plural(n, "слову", "словам", "словам")}."
+                if (n == null) t("Это не файл с прогрессом.")
+                else t("Загружен прогресс по %d %s.", n, plural(n, "слову", "словам", "словам"))
             )
         }
     }
@@ -156,27 +159,37 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
     LaunchedEffect(Unit) { Speaker.connect() }
 
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
-        Header("Настройки", back)
+        Header(t("Настройки"), back)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
             ProgressCard()
 
-            GroupTitle("Учёба")
+            if (Decks.all.size > 1) {
+                GroupTitle(t("Язык"))
+                Panel {
+                    Decks.all.forEachIndexed { i, d ->
+                        if (i > 0) Line()
+                        DeckRow(Decks.title(d), d.id == Decks.current.id) { Repo.switchDeck(d.id) }
+                    }
+                }
+            }
+
+            GroupTitle(t("Учёба"))
             Panel {
                 val cats = Prefs.categories
                 NavRow(
-                    "Что учим",
-                    (if (cats.size == 1) Labels.category(cats.first()) else "Разделов: ${cats.size}") + " · " + Prefs.order.label,
+                    t("Что учим"),
+                    (if (cats.size == 1) Labels.category(cats.first()) else t("Разделов: %d", cats.size)) + " · " + Prefs.order.label,
                     openCategories,
                 )
                 Line()
-                Choice("Карточки", listOf("Обучение", "Перевод", "Слово"), Prefs.cardMode) { Prefs.cardMode = it }
+                Choice(t("Карточки"), listOf(t("Обучение"), t("Перевод"), t("Слово")), Prefs.cardMode) { Prefs.cardMode = it }
                 Text(
                     when (Prefs.cardMode) {
-                        1 -> "Видно только перевод: вспомните слово и откройте его кнопкой или ответом."
-                        2 -> "Видно только слово: перевод открывается по нажатию."
-                        else -> "Слово учится по шагам: сначала показано целиком, после «Знаю» " +
-                            "надо вспомнить его по переводу, после трёх «Знаю» подряд оно выучено. " +
-                            "«Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо."
+                        1 -> t("Видно только перевод: вспомните слово и откройте его кнопкой или ответом.")
+                        2 -> t("Видно только слово: перевод открывается по нажатию.")
+                        else -> t("Слово учится по шагам: сначала показано целиком, после «Знаю» ") +
+                            t("надо вспомнить его по переводу, после трёх «Знаю» подряд оно выучено. ") +
+                            t("«Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо.")
                     },
                     fontSize = 13.sp,
                     color = p.secondary,
@@ -184,25 +197,27 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                     modifier = Modifier.padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
                 )
                 Line()
-                Choice("Слов в работе одновременно", listOf("10", "15", "20", "30"), listOf(10, 15, 20, 30).indexOf(Prefs.activeSize).coerceAtLeast(0)) {
+                Choice(t("Слов в работе одновременно"), listOf("10", "15", "20", "30"), listOf(10, 15, 20, 30).indexOf(Prefs.activeSize).coerceAtLeast(0)) {
                     Prefs.activeSize = listOf(10, 15, 20, 30)[it]
                 }
                 Line()
-                Toggle("Кнопки «Не знаю / Знаю»", null, Prefs.useMarks) { Prefs.useMarks = it }
+                Toggle(t("Кнопки «Не знаю / Знаю»"), null, Prefs.useMarks) { Prefs.useMarks = it }
 
                 Line()
                 Toggle(
-                    "Проверять выученные слова",
-                    "Через неделю, потом через 3\u00A0недели, 2\u00A0месяца, полгода и год",
+                    t("Проверять выученные слова"),
+                    t("Через неделю, потом через 3\u00A0недели, 2\u00A0месяца, полгода и год"),
                     Prefs.reviewKnown,
                 ) { Prefs.reviewKnown = it }
-                Line()
-                NavRow("Куда пойти учиться?", "Школы сербского языка", openSchools)
+                if (Decks.current.target == "sr") {
+                    Line()
+                    NavRow(t("Куда пойти учиться?"), t("Школы сербского языка"), openSchools)
+                }
             }
 
-            GroupTitle("Экран блокировки")
+            GroupTitle(t("Экран блокировки"))
             Panel {
-                Toggle("Карточка при включении экрана", null, Prefs.lockEnabled) {
+                Toggle(t("Карточка при включении экрана"), null, Prefs.lockEnabled) {
                     Prefs.lockEnabled = it
                     if (it && !notify && Build.VERSION.SDK_INT >= 33) {
                         notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -211,18 +226,18 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 }
                 if (Prefs.lockEnabled) {
                     Line()
-                    Permission("Поверх других окон", "Без этого Android не покажет карточку", overlay) {
+                    Permission(t("Поверх других окон"), t("Без этого Android не покажет карточку"), overlay) {
                         ctx.startActivity(
                             Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${ctx.packageName}"))
                         )
                     }
                     if (!overlay) RestrictedHint()
                     Line()
-                    Permission("Уведомления", "Для слов на повторение в шторке", notify) {
+                    Permission(t("Уведомления"), t("Для слов на повторение в шторке"), notify) {
                         if (Build.VERSION.SDK_INT >= 33) notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
                     }
                     Line()
-                    Permission("Без ограничений батареи", "Нужно, только если карточки пропадают", battery) {
+                    Permission(t("Без ограничений батареи"), t("Нужно, только если карточки пропадают"), battery) {
                         ctx.startActivity(
                             Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))
                         )
@@ -230,7 +245,7 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                     if (!battery) BatteryHint()
                     if (Prefs.skipDuringCalls) {
                         Line()
-                        Permission("Звонки", "Надёжнее понять, идёт ли звонок", calls) {
+                        Permission(t("Звонки"), t("Надёжнее понять, идёт ли звонок"), calls) {
                             callsLauncher.launch(Manifest.permission.READ_PHONE_STATE)
                         }
                         if (!calls) CallsHint()
@@ -239,40 +254,47 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 Line()
                 Pause()
                 Line()
-                Toggle("Не показывать во время звонков", null, Prefs.skipDuringCalls) { Prefs.skipDuringCalls = it }
+                Toggle(t("Не показывать во время звонков"), null, Prefs.skipDuringCalls) { Prefs.skipDuringCalls = it }
                 Line()
-                Toggle("Новое слово при каждом включении", "Иначе слово меняется по кнопке «Готово»", Prefs.newWordEachTime) {
+                Toggle(t("Новое слово при каждом включении"), t("Иначе слово меняется по кнопке «Готово»"), Prefs.newWordEachTime) {
                     Prefs.newWordEachTime = it
                 }
                 Line()
-                Toggle("Слова на повторение в шторке", "Показывает слова с «Не знаю»", Prefs.reviewNotification) {
+                Toggle(t("Слова на повторение в шторке"), t("Показывает слова с «Не знаю»"), Prefs.reviewNotification) {
                     Prefs.reviewNotification = it
                     LockService.refresh(ctx)
                 }
                 Line()
-                NavRow("Зачем эти разрешения", null) { showPermissions = true }
+                NavRow(t("Зачем эти разрешения"), null) { showPermissions = true }
             }
 
-            GroupTitle("Оформление")
+            GroupTitle(t("Оформление"))
             Panel {
                 Themes()
                 Line()
-                Choice("Алфавит", listOf("Кириллица", "Latinica"), if (Prefs.latinFirst) 1 else 0) { Prefs.latinFirst = it == 1 }
-                Line()
-                Toggle("Подпись другим алфавитом", null, Prefs.showBothScripts) { Prefs.showBothScripts = it }
-                Line()
-                Choice("Ударения", listOf("ку̏ћа", "ку́ћа", "кућа"), Prefs.accentMode) { Prefs.accentMode = it }
+                if (Decks.hasSerbian) {
+                    Choice(t("Алфавит"), listOf(t("Кириллица"), "Latinica"), if (Prefs.latinFirst) 1 else 0) { Prefs.latinFirst = it == 1 }
+                    Line()
+                }
+                if (Decks.current.target == "sr") {
+                    Toggle(t("Подпись другим алфавитом"), null, Prefs.showBothScripts) { Prefs.showBothScripts = it }
+                    Line()
+                    Choice(t("Ударения"), Decks.accentSamples, Prefs.accentMode) { Prefs.accentMode = it }
+                } else {
+                    // One kind of mark only: "with" is mode 1, "without" is mode 2.
+                    Choice(t("Ударения"), Decks.accentSamples, if (Prefs.accentMode == 2) 1 else 0) { Prefs.accentMode = it + 1 }
+                }
                 Line()
                 Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
                     Row {
                         Text(
-                            "Размер шрифта: ${Prefs.wordSize}",
+                            t("Размер шрифта: %d", Prefs.wordSize),
                             fontSize = 16.sp,
                             color = p.text,
                             modifier = Modifier.weight(1f).alignByBaseline(),
                         )
                         Text(
-                            "реч",
+                            Decks.sample,
                             fontFamily = Serif,
                             fontSize = (Prefs.wordSize * 0.6f).sp,
                             color = p.word,
@@ -288,41 +310,41 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 }
             }
 
-            GroupTitle("Звук")
+            GroupTitle(t("Звук"))
             Panel {
-                Toggle("Произносить слово сразу", null, Prefs.autoSpeak) { Prefs.autoSpeak = it }
+                Toggle(t("Произносить слово сразу"), null, Prefs.autoSpeak) { Prefs.autoSpeak = it }
                 Line()
                 val voice = Speaker.voice.value
                 NavRow(
-                    "Голос",
+                    t("Голос"),
                     when {
                         voice != null -> voice.replaceFirstChar { it.uppercase() }
-                        Speaker.failed.value -> "Нет сербского, хорватского или боснийского голоса"
-                        else -> "Проверяю…"
+                        Speaker.failed.value -> Decks.noVoice
+                        else -> t("Проверяю…")
                     },
                 ) { ctx.startActivity(Intent("com.android.settings.TTS_SETTINGS")) }
             }
 
-            GroupTitle("Данные")
+            GroupTitle(t("Данные"))
             Panel {
-                NavRow("Сохранить прогресс в файл", "Чтобы перенести его на другое устройство") {
+                NavRow(t("Сохранить прогресс в файл"), t("Чтобы перенести его на другое устройство")) {
                     exportLauncher.launch("reci-progress-${LocalDate.now()}.json")
                 }
                 Line()
-                NavRow("Загрузить прогресс из файла", "Заменит прогресс на этом устройстве") {
+                NavRow(t("Загрузить прогресс из файла"), t("Заменит прогресс на этом устройстве")) {
                     importLauncher.launch(arrayOf("application/json", "application/octet-stream", "text/plain"))
                 }
                 Line()
-                for ((pos, title) in listOf("compare" to "Снова показывать разборы", "note" to "Снова показывать заметки")) {
+                for ((pos, title) in listOf("compare" to t("Снова показывать разборы"), "note" to t("Снова показывать заметки"))) {
                     val hidden = Repo.hiddenArticles(pos)
                     NavRow(
                         title,
-                        if (hidden == 0) "Скрытых нет" else "Скрыто: $hidden",
+                        if (hidden == 0) t("Скрытых нет") else t("Скрыто: %d", hidden),
                     ) { if (hidden > 0) confirmArticles = pos }
                     Line()
                 }
                 Text(
-                    "Сбросить прогресс",
+                    t("Сбросить прогресс"),
                     fontSize = 16.sp,
                     color = MarkDontKnow,
                     modifier = Modifier
@@ -332,30 +354,30 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 )
             }
 
-            GroupTitle("Обратная связь")
+            GroupTitle(t("Обратная связь"))
             Panel {
                 Column {
                     val waiting = Telemetry.waiting
-                    NavRow("Написать разработчику", if (waiting > 0) "Ждут отправки: $waiting" else "Идея, ошибка или вопрос") {
+                    NavRow(t("Написать разработчику"), if (waiting > 0) t("Ждут отправки: %d", waiting) else t("Идея, ошибка или вопрос")) {
                         writing = true
                     }
                     Line()
                     Toggle(
-                        "Анонимная статистика",
-                        "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки",
+                        t("Анонимная статистика"),
+                        t("Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки"),
                         Telemetry.enabled,
                     ) { Telemetry.enabled = it }
                     Line()
                     val last = Telemetry.last
-                    NavRow("Что отправляется", if (last != null) "Последний раз: ${last.optString("day")}" else "Ещё ничего не отправлялось") {
+                    NavRow(t("Что отправляется"), if (last != null) t("Последний раз: %s", last.optString("day")) else t("Ещё ничего не отправлялось")) {
                         whatSent = true
                     }
                     Line()
-                    NavRow("Помочь автору", "Поделиться, оценить, поставить звезду") { helping = true }
+                    NavRow(t("Помочь автору"), t("Поделиться, оценить, поставить звезду")) { helping = true }
                 }
             }
 
-            GroupTitle("О приложении")
+            GroupTitle(t("О приложении"))
             Panel {
                 val version = remember {
                     ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName.orEmpty()
@@ -363,24 +385,24 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 Column(Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp)) {
                     Text(
                         buildAnnotatedString {
-                            withStyle(SpanStyle(color = p.titleRed)) { append("НЕ") }
-                            append("РОДНАЯ РЕЧЬ")
+                            withStyle(SpanStyle(color = p.titleRed)) { append(t("НЕ")) }
+                            append(t("РОДНАЯ РЕЧЬ"))
                         },
                         fontFamily = Display,
                         fontSize = 26.sp,
                         color = p.word,
                         modifier = Modifier.padding(bottom = 6.dp),
                     )
-                    Text("Версия $version", fontSize = 14.sp, color = p.secondary)
-                    Text("Автор: Константин Хоренко", fontSize = 14.sp, color = p.secondary)
-                    Text("Лицензия: GNU GPL v3 или новее", fontSize = 14.sp, color = p.secondary)
+                    Text(t("Версия %s", version), fontSize = 14.sp, color = p.secondary)
+                    Text(t("Автор: Константин Хоренко"), fontSize = 14.sp, color = p.secondary)
+                    Text(t("Лицензия: GNU GPL v3 или новее"), fontSize = 14.sp, color = p.secondary)
                 }
                 Text(
-                    "Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n" +
-                        "Ударения: Викисловарь (kaikki.org), CC BY-SA.\n" +
-                        "Часть карточек и подсказок составлена по материалам из открытых источников.\n" +
-                        "Шрифты Literata и Ruslan Display: SIL Open Font License.\n" +
-                        "Иконки: Material Icons, Apache 2.0.",
+                    t("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n") +
+                        t("Ударения: Викисловарь (kaikki.org), CC BY-SA.\n") +
+                        t("Часть карточек и подсказок составлена по материалам из открытых источников.\n") +
+                        t("Шрифты Literata и Ruslan Display: SIL Open Font License.\n") +
+                        t("Иконки: Material Icons, Apache 2.0."),
                     fontSize = 13.sp,
                     color = p.secondary,
                     lineHeight = 19.sp,
@@ -392,13 +414,13 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
     }
 
     confirmArticles?.let { pos ->
-        val what = if (pos == "compare") "разборы похожих слов" else "заметки"
+        val what = if (pos == "compare") t("разборы похожих слов") else t("заметки")
         AlertDialog(
             onDismissRequest = { confirmArticles = null },
-            title = { Text("Снова показывать $what?") },
-            text = { Text("Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.") },
-            confirmButton = { TextButton(onClick = { Repo.showArticlesAgain(pos); confirmArticles = null }) { Text("Показывать") } },
-            dismissButton = { TextButton(onClick = { confirmArticles = null }) { Text("Отмена") } },
+            title = { Text(t("Снова показывать %s?", what)) },
+            text = { Text(t("Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.")) },
+            confirmButton = { TextButton(onClick = { Repo.showArticlesAgain(pos); confirmArticles = null }) { Text(t("Показывать")) } },
+            dismissButton = { TextButton(onClick = { confirmArticles = null }) { Text(t("Отмена")) } },
         )
     }
 
@@ -409,49 +431,49 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
     if (confirmReset) {
         AlertDialog(
             onDismissRequest = { confirmReset = false },
-            title = { Text("Сбросить прогресс?") },
-            text = { Text("Все слова снова станут новыми, избранное очистится.") },
-            confirmButton = { TextButton(onClick = { Repo.resetAll(); confirmReset = false }) { Text("Сбросить") } },
-            dismissButton = { TextButton(onClick = { confirmReset = false }) { Text("Отмена") } },
+            title = { Text(t("Сбросить прогресс?")) },
+            text = { Text(t("Все слова снова станут новыми, избранное очистится.")) },
+            confirmButton = { TextButton(onClick = { Repo.resetAll(); confirmReset = false }) { Text(t("Сбросить")) } },
+            dismissButton = { TextButton(onClick = { confirmReset = false }) { Text(t("Отмена")) } },
         )
     }
 
     if (showPermissions) {
         AlertDialog(
             onDismissRequest = { showPermissions = false },
-            title = { Text("Зачем эти разрешения") },
+            title = { Text(t("Зачем эти разрешения")) },
             text = {
                 Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     PermissionNote(
-                        "Поверх других окон",
-                        "Чтобы показать карточку на экране блокировки, когда включается экран. " +
-                            "Без него карточка не появится.",
+                        t("Поверх других окон"),
+                        t("Чтобы показать карточку на экране блокировки, когда включается экран. ") +
+                            t("Без него карточка не появится."),
                     )
                     PermissionNote(
-                        "Уведомления",
-                        "Android требует, чтобы у службы, которая ждёт включения экрана, было уведомление. " +
-                            "В нём же показываются слова на повторение. Если запретить, карточки всё равно " +
-                            "будут, но слов в шторке не будет.",
+                        t("Уведомления"),
+                        t("Android требует, чтобы у службы, которая ждёт включения экрана, было уведомление. ") +
+                            t("В нём же показываются слова на повторение. Если запретить, карточки всё равно ") +
+                            t("будут, но слов в шторке не будет."),
                     )
                     PermissionNote(
-                        "Без ограничений батареи",
-                        "Некоторые телефоны останавливают фоновые службы, и карточки перестают появляться. " +
-                            "Тогда это поможет. Пока экран выключен, приложение ничего не делает и батарею не тратит.",
+                        t("Без ограничений батареи"),
+                        t("Некоторые телефоны останавливают фоновые службы, и карточки перестают появляться. ") +
+                            t("Тогда это поможет. Пока экран выключен, приложение ничего не делает и батарею не тратит."),
                     )
                     PermissionNote(
-                        "Звонки",
-                        "Необязательно. Без него звонок определяется по режиму звука, и мессенджер, который " +
-                            "после своего звонка забыл вернуть режим «звонит», выключает карточки. С ним о " +
-                            "телефонных звонках сообщает Android, а забытый режим «звонит» не мешает. Звонить " +
-                            "приложение не будет, номеров не видит.",
+                        t("Звонки"),
+                        t("Необязательно. Без него звонок определяется по режиму звука, и мессенджер, который ") +
+                            t("после своего звонка забыл вернуть режим «звонит», выключает карточки. С ним о ") +
+                            t("телефонных звонках сообщает Android, а забытый режим «звонит» не мешает. Звонить ") +
+                            t("приложение не будет, номеров не видит."),
                     )
                     PermissionNote(
-                        "Чего приложение не просит",
-                        "Контакты, микрофон, местоположение.",
+                        t("Чего приложение не просит"),
+                        t("Контакты, микрофон, местоположение."),
                     )
                 }
             },
-            confirmButton = { TextButton(onClick = { showPermissions = false }) { Text("Понятно") } },
+            confirmButton = { TextButton(onClick = { showPermissions = false }) { Text(t("Понятно")) } },
         )
     }
 }
@@ -460,11 +482,11 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
 private fun CallsHint() {
     val p = LocalPalette.current
     Text(
-        "Без этого разрешения звонок определяется по режиму звука. Некоторые мессенджеры после своего " +
-            "звонка забывают вернуть режим «звонит», и карточки перестают появляться. С разрешением о " +
-            "телефонных звонках сообщает сам Android, и забытый режим «звонит» не мешает. Разговор в " +
-            "мессенджере по-прежнему прячет карточку. Android назовёт разрешение «звонки», но звонить " +
-            "приложение не будет и номеров не видит.",
+        t("Без этого разрешения звонок определяется по режиму звука. Некоторые мессенджеры после своего ") +
+            t("звонка забывают вернуть режим «звонит», и карточки перестают появляться. С разрешением о ") +
+            t("телефонных звонках сообщает сам Android, и забытый режим «звонит» не мешает. Разговор в ") +
+            t("мессенджере по-прежнему прячет карточку. Android назовёт разрешение «звонки», но звонить ") +
+            t("приложение не будет и номеров не видит."),
         fontSize = 12.sp,
         color = p.secondary,
         lineHeight = 17.sp,
@@ -478,13 +500,13 @@ private fun BatteryHint() {
     val steps = listOf(
         "App battery usage.",
         "Allow background usage → Unrestricted.",
-        "Вернитесь сюда: вместо «выдать» будет «есть».",
+        t("Вернитесь сюда: вместо «выдать» будет «есть»."),
     )
     Column(
         Modifier.padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
-        Text("Откроется страница приложения в настройках Android. Там:", fontSize = 12.sp, color = p.secondary, lineHeight = 17.sp)
+        Text(t("Откроется страница приложения в настройках Android. Там:"), fontSize = 12.sp, color = p.secondary, lineHeight = 17.sp)
         steps.forEachIndexed { i, step ->
             Row {
                 Text("${i + 1}.", fontSize = 12.sp, color = p.accent, fontWeight = FontWeight.SemiBold, lineHeight = 17.sp, modifier = Modifier.width(18.dp))
@@ -492,8 +514,8 @@ private fun BatteryHint() {
             }
         }
         Text(
-            "На старых версиях Android и на некоторых телефонах путь другой: Battery → Battery optimization → " +
-                "All apps → НЕРодная речь → Don't optimize.",
+            t("На старых версиях Android и на некоторых телефонах путь другой: Battery → Battery optimization → ") +
+                t("All apps → НЕРодная речь → Don't optimize."),
             fontSize = 12.sp,
             color = p.secondary,
             lineHeight = 17.sp,
@@ -506,18 +528,18 @@ private fun BatteryHint() {
 private fun RestrictedHint() {
     val p = LocalPalette.current
     val steps = listOf(
-        "Settings → Apps → НЕРодная речь.",
-        "⋮ справа вверху → Allow restricted settings.",
-        "Подтвердите PIN-кодом или отпечатком.",
-        "Вернитесь сюда и снова нажмите «выдать».",
+        t("Settings → Apps → НЕРодная речь."),
+        t("⋮ справа вверху → Allow restricted settings."),
+        t("Подтвердите PIN-кодом или отпечатком."),
+        t("Вернитесь сюда и снова нажмите «выдать»."),
     )
     Column(
         Modifier.padding(start = 18.dp, end = 18.dp, bottom = 12.dp),
         verticalArrangement = Arrangement.spacedBy(4.dp),
     ) {
         Text(
-            "Если переключатель не включается, Android ограничил настройки. Так бывает у приложений, " +
-                "установленных не из Google Play. Снимите ограничение:",
+            t("Если переключатель не включается, Android ограничил настройки. Так бывает у приложений, ") +
+                t("установленных не из Google Play. Снимите ограничение:"),
             fontSize = 12.sp,
             color = p.secondary,
             lineHeight = 17.sp,
@@ -529,8 +551,8 @@ private fun RestrictedHint() {
             }
         }
         Text(
-            "Если пункта Allow restricted settings в меню нет, сначала попробуйте включить разрешение, " +
-                "а потом откройте меню ещё раз.",
+            t("Если пункта Allow restricted settings в меню нет, сначала попробуйте включить разрешение, ") +
+                t("а потом откройте меню ещё раз."),
             fontSize = 12.sp,
             color = p.secondary,
             lineHeight = 17.sp,
@@ -564,7 +586,7 @@ private fun ProgressCard() {
         Row(verticalAlignment = Alignment.Bottom) {
             Text("$known", fontFamily = Serif, fontSize = 40.sp, fontWeight = FontWeight.SemiBold, color = p.word)
             Spacer(Modifier.width(8.dp))
-            Text("из ${all.size} слов знаю", fontSize = 15.sp, color = p.secondary, modifier = Modifier.padding(bottom = 8.dp))
+            Text(t("из %d слов знаю", all.size), fontSize = 15.sp, color = p.secondary, modifier = Modifier.padding(bottom = 8.dp))
         }
         Spacer(Modifier.height(10.dp))
         Box(Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(50)).background(p.panel)) {
@@ -572,8 +594,8 @@ private fun ProgressCard() {
         }
         Spacer(Modifier.height(14.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
-            Count("не знаю", counts[State.DONT_KNOW]!! + counts[State.UNSURE]!!, MarkDontKnow)
-            Count("сегодня", Prefs.todayCount, p.accent)
+            Count(t("не знаю"), counts[State.DONT_KNOW]!! + counts[State.UNSURE]!!, MarkDontKnow)
+            Count(t("сегодня"), Prefs.todayCount, p.accent)
         }
     }
 }
@@ -632,6 +654,21 @@ private fun NavRow(title: String, summary: String?, onClick: () -> Unit) {
 }
 
 @Composable
+private fun DeckRow(title: String, on: Boolean, onClick: () -> Unit) {
+    val p = LocalPalette.current
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .padding(horizontal = 18.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text(title, fontSize = 16.sp, color = if (on) p.accent else p.text, fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal, modifier = Modifier.weight(1f))
+        if (on) Text("✓", fontSize = 16.sp, color = p.accent)
+    }
+}
+
+@Composable
 private fun Choice(title: String, options: List<String>, selected: Int, onSelect: (Int) -> Unit) {
     val p = LocalPalette.current
     Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
@@ -673,7 +710,7 @@ private fun Choice(title: String, options: List<String>, selected: Int, onSelect
 private fun Themes() {
     val p = LocalPalette.current
     Column(Modifier.padding(vertical = 12.dp)) {
-        Text("Тема", fontSize = 16.sp, color = p.text, modifier = Modifier.padding(horizontal = 18.dp))
+        Text(t("Тема"), fontSize = 16.sp, color = p.text, modifier = Modifier.padding(horizontal = 18.dp))
         Spacer(Modifier.height(10.dp))
         Row(
             Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp),
@@ -718,7 +755,7 @@ private fun Permission(title: String, hint: String, granted: Boolean, onGrant: (
             Text(hint, fontSize = 12.sp, color = p.secondary)
         }
         Text(
-            if (granted) "есть" else "выдать",
+            if (granted) t("есть") else t("выдать"),
             color = if (granted) p.known else Color.White,
             fontSize = 13.sp,
             fontWeight = FontWeight.SemiBold,
@@ -744,26 +781,26 @@ private fun Pause() {
     val until = Prefs.pausedUntil
     val paused = until > now
     Column(Modifier.padding(horizontal = 18.dp, vertical = 12.dp)) {
-        Text("Пауза", fontSize = 16.sp, color = p.text)
+        Text(t("Пауза"), fontSize = 16.sp, color = p.text)
         Text(
-            if (paused) "Карточки не показываются до " + SimpleDateFormat("HH:mm", Locale.forLanguageTag("ru")).format(Date(until))
-            else "Не показывать карточки:",
+            if (paused) t("Карточки не показываются до ") + SimpleDateFormat("HH:mm", Locale.forLanguageTag("ru")).format(Date(until))
+            else t("Не показывать карточки:"),
             fontSize = 13.sp,
             color = p.secondary,
         )
         Spacer(Modifier.height(8.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             if (paused) {
-                SelectChip("Снять паузу", true) { Prefs.pausedUntil = 0 }
+                SelectChip(t("Снять паузу"), true) { Prefs.pausedUntil = 0 }
             } else {
-                SelectChip("1 час", false) { Prefs.pausedUntil = now + 60 * 60_000L }
-                SelectChip("3 часа", false) { Prefs.pausedUntil = now + 3 * 60 * 60_000L }
-                SelectChip("До конца дня", false) { Prefs.pausedUntil = endOfDay }
+                SelectChip(t("1 час"), false) { Prefs.pausedUntil = now + 60 * 60_000L }
+                SelectChip(t("3 часа"), false) { Prefs.pausedUntil = now + 3 * 60 * 60_000L }
+                SelectChip(t("До конца дня"), false) { Prefs.pausedUntil = endOfDay }
             }
         }
         Spacer(Modifier.height(8.dp))
         // Switching off stops the service as well, unlike a timed pause.
-        SelectChip("Отключить совсем", false) {
+        SelectChip(t("Отключить совсем"), false) {
             Prefs.lockEnabled = false
             LockService.sync(ctx)
         }

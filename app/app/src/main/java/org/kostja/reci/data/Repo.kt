@@ -27,7 +27,40 @@ object Repo {
 
     fun init(c: Context) {
         ctx = c.applicationContext
-        db = ProgressDb(ctx)
+        db = dbFor(Decks.current)
+    }
+
+    // Each deck keeps its own progress: Russian вода and Serbian вода are different cards.
+    private fun dbFor(d: Deck) = ProgressDb(ctx, if (d.isFirst) "progress.db" else "progress-${d.id}.db")
+
+    // Switches to another deck: its cards, its progress and its place in the cards.
+    fun switchDeck(id: String) {
+        if (id == Prefs.deck) return
+        io.execute {
+            synchronized(this) {
+                db.close()
+                Prefs.deck = id
+                db = dbFor(Decks.current)
+                loaded = null
+                byKey = emptyMap()
+                byCyr = null
+                compareIndex = null
+                shuffled = emptyList()
+                queueKey = emptyList()
+                history.clear()
+                forward.clear()
+                answers.clear()
+                progress.clear()
+                revisit = false
+            }
+            Grammar.reset()
+            load()
+            Grammar.preload()
+            main.post {
+                Speaker.reset()
+                version.intValue++
+            }
+        }
     }
 
     // Empty until loaded; never blocks the caller.
@@ -70,7 +103,7 @@ object Repo {
     // The dictionary built into the app, as it was shipped.
     fun builtIn(): List<Word> {
         val list = ArrayList<Word>(4096)
-        JsonReader(ctx.assets.open("words.json").bufferedReader()).use { r ->
+        JsonReader(ctx.assets.open(Decks.current.words).bufferedReader()).use { r ->
             r.beginArray()
             while (r.hasNext()) list += WordJson.read(r)
             r.endArray()
@@ -81,7 +114,8 @@ object Repo {
     @Synchronized
     private fun load(): List<Word> {
         loaded?.let { return it }
-        val list = builtIn().let { b -> DictUpdate.stored()?.let { DictUpdate.apply(b, it) } ?: b }
+        // Patches from the server are made for the first deck only.
+        val list = builtIn().let { b -> DictUpdate.stored()?.takeIf { Decks.current.isFirst }?.let { DictUpdate.apply(b, it) } ?: b }
         progress.putAll(db.loadAll())
         restorePending()
         byKey = list.associateBy { it.key }
@@ -504,7 +538,7 @@ object Repo {
     fun comparesFor(w: Word): List<Word> {
         if (!isLoaded || w.pos == "compare") return emptyList()
         val index = compareIndex ?: HashMap<String, MutableList<Word>>().also { m ->
-            for (c in words) if (c.pos == "compare") for (r in c.related) m.getOrPut(r.sr) { mutableListOf() } += c
+            for (c in words) if (c.pos == "compare") for (r in c.related) m.getOrPut(r.word) { mutableListOf() } += c
         }.also { compareIndex = it }
         return index[w.cyr].orEmpty().take(2)
     }

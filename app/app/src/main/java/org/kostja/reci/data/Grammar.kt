@@ -51,9 +51,19 @@ object Grammar {
         load()
     }
 
+    // Another deck brings its own reference, or none.
+    fun reset() {
+        synchronized(this) { loaded = null }
+        version.intValue++
+    }
+
     private fun load(): List<GrammarTopic> {
         loaded?.let { return it }
-        val list = DictUpdate.stored()?.grammar ?: parseAll(null)
+        val list = when {
+            Decks.current.grammar.isEmpty() -> emptyList()
+            Decks.current.isFirst -> DictUpdate.stored()?.grammar ?: parseAll(null)
+            else -> parseAll(null)
+        }
         // A patched reference swapped in during the parse is newer than this one.
         synchronized(this) {
             loaded?.let { return it }
@@ -64,7 +74,7 @@ object Grammar {
     }
 
     private fun builtInText() = try {
-        ctx.assets.open("grammar.json").bufferedReader().use { it.readText() }
+        ctx.assets.open(Decks.current.grammar.ifEmpty { "grammar.json" }).bufferedReader().use { it.readText() }
     } catch (_: FileNotFoundException) {
         "[]"
     }

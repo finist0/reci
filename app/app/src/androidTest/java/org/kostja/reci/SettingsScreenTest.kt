@@ -30,6 +30,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.kostja.reci.data.Accents
+import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Order
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
@@ -118,6 +119,29 @@ class SettingsScreenTest {
         compose.waitForIdle()
         for (t in taps) click(t)
         back()
+    }
+
+    @Test
+    fun aSerbLearningRussianGetsASerbianInterfaceAndRussianCards() {
+        compose.onNodeWithContentDescription("Настройки").performClick()
+        compose.waitForIdle()
+        click("Учим руски · матерњи српски")
+        try {
+            compose.waitUntil(10_000) { Decks.current.id == "ru-sr" && Repo.isLoaded }
+            compose.onNodeWithText("Подешавања").assertExists()
+            compose.onNodeWithText("Писмо").assertExists()
+            click("Latinica")
+            compose.onNodeWithText("Podešavanja").assertExists()
+            compose.onNodeWithContentDescription("Nazad").performClick()
+            compose.waitForIdle()
+            compose.waitUntil(10_000) { Repo.current() != null }
+            val w = Repo.current()!!
+            assertFalse("a Russian card has no Serbian-only letters", Regex("[ђјљњћџ]").containsMatchIn(w.cyr))
+        } finally {
+            Prefs.latinFirst = false
+            Repo.switchDeck("sr-ru")
+            compose.waitUntil(10_000) { Decks.current.id == "sr-ru" && Repo.isLoaded }
+        }
     }
 
     @Test
@@ -237,7 +261,7 @@ class SettingsScreenTest {
 
     @Test
     fun examplesFollowTheStressSetting() {
-        val marked = { word().examples.map { it.sr }.firstOrNull { Accents.strip(it) != it } }
+        val marked = { word().examples.map { it.text }.firstOrNull { Accents.strip(it) != it } }
         repeat(20) { if (marked() == null) next() }
         val sr = marked()
         assertTrue("no example with stress marks in the first cards", sr != null)

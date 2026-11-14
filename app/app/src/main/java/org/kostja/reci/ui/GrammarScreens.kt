@@ -59,6 +59,7 @@ import androidx.compose.ui.unit.sp
 import org.kostja.reci.data.Grammar
 import org.kostja.reci.data.GrammarBlock
 import org.kostja.reci.data.Prefs
+import org.kostja.reci.data.t
 
 // {сербский текст} is shown in the chosen script and in the word color, the part after
 // "|" inside braces is an ending and gets the accent color; **x** is bold.
@@ -111,17 +112,17 @@ fun GrammarIndexScreen(open: (String) -> Unit, openCard: (String) -> Unit, back:
     }
     val cards = articles[if (tab == 1) "compare" else "note"].orEmpty().filter { w ->
         q.isEmpty() || w.cyr.lowercase().contains(q) || Translit.toLatin(w.cyr).lowercase().contains(q) ||
-            w.meanings.any { it.lowercase().contains(q) } || w.related.any { it.sr.contains(q) }
+            w.meanings.any { it.lowercase().contains(q) } || w.related.any { it.word.contains(q) }
     }
     val counts = intArrayOf(all.size, articles["compare"].orEmpty().size, articles["note"].orEmpty().size)
 
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
-        Header("Справочник", back)
+        Header(t("Справочник"), back)
         Row(
             Modifier.horizontalScroll(rememberScrollState()).padding(horizontal = 14.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            listOf("Грамматика", "Похожие", "Заметки").forEachIndexed { i, name ->
+            listOf(t("Грамматика"), t("Похожие"), t("Заметки")).forEachIndexed { i, name ->
                 SelectChip(if (i == 0) name else "$name · ${counts[i]}", tab == i) { tab = i; query = "" }
             }
         }
@@ -137,7 +138,7 @@ fun GrammarIndexScreen(open: (String) -> Unit, openCard: (String) -> Unit, back:
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Box(Modifier.weight(1f)) {
-                    if (query.isEmpty()) Text("найти по слову или названию", color = p.faint, fontSize = 15.sp)
+                    if (query.isEmpty()) Text(t("найти по слову или названию"), color = p.faint, fontSize = 15.sp)
                     BasicTextField(
                         value = query,
                         onValueChange = { query = it },
@@ -229,7 +230,7 @@ fun GrammarTopicScreen(id: String, open: (String) -> Unit, back: () -> Unit) {
             val i = Grammar.topics.indexOfFirst { it.id == id }
             Grammar.topics.getOrNull(i + 1)?.let { next ->
                 Text(
-                    "Дальше: ${next.title} ›",
+                    t("Дальше: %s ›", next.title),
                     fontSize = 15.sp,
                     color = p.accent,
                     fontWeight = FontWeight.SemiBold,

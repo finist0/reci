@@ -57,11 +57,14 @@ import androidx.compose.ui.unit.sp
 import org.kostja.reci.R
 import org.kostja.reci.data.Labels
 import org.kostja.reci.data.Order
+import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.State
 import org.kostja.reci.data.Translit
 import org.kostja.reci.data.Word
+import org.kostja.reci.data.t
+import org.kostja.reci.data.plural
 
 @Composable
 fun Header(title: String, onBack: () -> Unit) {
@@ -72,7 +75,7 @@ fun Header(title: String, onBack: () -> Unit) {
             .padding(start = 12.dp, end = 16.dp, top = 8.dp, bottom = 8.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        RoundIcon(R.drawable.ic_back, "Назад", onBack)
+        RoundIcon(R.drawable.ic_back, t("Назад"), onBack)
         Spacer(Modifier.width(12.dp))
         Text(
             title,
@@ -171,9 +174,9 @@ fun CategoriesScreen(openList: (String) -> Unit, back: () -> Unit) {
     val dots = mapOf("M:dontknow" to MarkDontKnow, "M:known" to p.known, "M:fav" to MarkUnsure)
 
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
-        Header("Что учим", back)
+        Header(t("Что учим"), back)
         Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-            GroupTitle("Уровни")
+            GroupTitle(t("Уровни"))
             Panel {
                 Labels.levels.entries.forEachIndexed { i, (level, name) ->
                     if (i > 0) HorizontalDivider(color = p.divider)
@@ -181,9 +184,9 @@ fun CategoriesScreen(openList: (String) -> Unit, back: () -> Unit) {
                     LevelRow(name, known(id), count(id), id in sel, onList = { openList(id) }) { toggle(id) }
                 }
             }
-            GroupTitle("Разделы")
+            GroupTitle(t("Разделы"))
             Text(
-                "Долгое нажатие на раздел, тему или отметку открывает список слов",
+                t("Долгое нажатие на раздел, тему или отметку открывает список слов"),
                 fontSize = 12.sp,
                 color = p.secondary,
                 modifier = Modifier.padding(start = 26.dp, end = 26.dp, bottom = 8.dp),
@@ -193,18 +196,18 @@ fun CategoriesScreen(openList: (String) -> Unit, back: () -> Unit) {
                     if (count(id) > 0) SelectChip("$name · ${count(id)}", id in sel, onLongClick = { openList(id) }) { toggle(id) }
                 }
             }
-            GroupTitle("Мои отметки")
+            GroupTitle(t("Мои отметки"))
             ChipFlow {
                 for ((id, name) in Labels.lists) SelectChip("$name · ${count(id)}", id in sel, dots[id], onLongClick = { openList(id) }) { toggle(id) }
             }
-            GroupTitle("Темы")
+            GroupTitle(t("Темы"))
             ChipFlow {
                 for ((code, name) in Labels.topics) {
                     val id = "T:$code"
                     if (count(id) > 0) SelectChip("$name · ${count(id)}", id in sel, onLongClick = { openList(id) }) { toggle(id) }
                 }
             }
-            GroupTitle("Порядок")
+            GroupTitle(t("Порядок"))
             ChipFlow {
                 for (o in Order.entries) SelectChip(o.label, order == o) { order = o }
             }
@@ -225,18 +228,8 @@ fun CategoriesScreen(openList: (String) -> Unit, back: () -> Unit) {
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text("Учить $total ${plural(total, "карточку", "карточки", "карточек")}", color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
+            Text(t("Учить %d %s", total, plural(total, "карточку", "карточки", "карточек")), color = Color.White, fontSize = 17.sp, fontWeight = FontWeight.SemiBold)
         }
-    }
-}
-
-fun plural(n: Int, one: String, few: String, many: String): String {
-    val m10 = n % 10
-    val m100 = n % 100
-    return when {
-        m10 == 1 && m100 != 11 -> one
-        m10 in 2..4 && m100 !in 12..14 -> few
-        else -> many
     }
 }
 
@@ -274,7 +267,7 @@ private fun LevelRow(name: String, known: Int, total: Int, selected: Boolean, on
                     Box(Modifier.fillMaxWidth(known.toFloat() / total).fillMaxHeight().background(p.known))
                 }
             }
-            Text("знаю $known из $total", fontSize = 12.sp, color = p.secondary, modifier = Modifier.padding(top = 4.dp))
+            Text(t("знаю %d из %d", known, total), fontSize = 12.sp, color = p.secondary, modifier = Modifier.padding(top = 4.dp))
         }
         Spacer(Modifier.width(8.dp))
         Box(
@@ -285,7 +278,7 @@ private fun LevelRow(name: String, known: Int, total: Int, selected: Boolean, on
                 .clickable(onClick = onList),
             contentAlignment = Alignment.Center,
         ) {
-            Icon(painterResource(R.drawable.ic_chevron_right), "Список слов", tint = p.text, modifier = Modifier.size(22.dp))
+            Icon(painterResource(R.drawable.ic_chevron_right), t("Список слов"), tint = p.text, modifier = Modifier.size(22.dp))
         }
         Spacer(Modifier.width(10.dp))
         Box(
@@ -301,9 +294,12 @@ private fun LevelRow(name: String, known: Int, total: Int, selected: Boolean, on
     }
 }
 
-private fun searchMatch(w: Word, q: String, byMeaning: Boolean): Boolean {
-    if (byMeaning) return w.meanings.any { it.lowercase().contains(q) }
-    return w.cyr.lowercase().startsWith(q) || Translit.toLatin(w.cyr).lowercase().startsWith(q)
+// Serbian may be typed in either script, Russian without ё.
+private fun searchMatch(w: Word, q0: String, byMeaning: Boolean): Boolean {
+    val q = q0.replace('ё', 'е')
+    fun norm(s: String) = s.lowercase().replace('ё', 'е')
+    if (byMeaning) return w.meanings.any { norm(it).contains(q) || Translit.toLatin(norm(it)).contains(q) }
+    return norm(w.cyr).startsWith(q) || Translit.toLatin(norm(w.cyr)).startsWith(q)
 }
 
 // A place for Serbian language schools to tell about themselves; empty for now.
@@ -311,10 +307,10 @@ private fun searchMatch(w: Word, q: String, byMeaning: Boolean): Boolean {
 fun SchoolsScreen(back: () -> Unit) {
     val p = LocalPalette.current
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
-        Header("Куда пойти учиться?", back)
+        Header(t("Куда пойти учиться?"), back)
         Box(Modifier.weight(1f).fillMaxWidth().padding(32.dp), contentAlignment = Alignment.Center) {
             Text(
-                "Здесь могла быть реклама вашей школы сербского языка",
+                t("Здесь могла быть реклама вашей школы сербского языка"),
                 fontSize = 17.sp,
                 lineHeight = 24.sp,
                 color = p.secondary,
@@ -339,7 +335,7 @@ fun SearchScreen(open: (String) -> Unit, back: () -> Unit) {
             Modifier.fillMaxWidth().padding(start = 12.dp, end = 14.dp, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RoundIcon(R.drawable.ic_back, "Назад", back)
+            RoundIcon(R.drawable.ic_back, t("Назад"), back)
             Spacer(Modifier.width(10.dp))
             Row(
                 Modifier
@@ -354,7 +350,7 @@ fun SearchScreen(open: (String) -> Unit, back: () -> Unit) {
                 Spacer(Modifier.width(10.dp))
                 Box(Modifier.weight(1f)) {
                     if (query.isEmpty()) {
-                        Text(if (byMeaning) "слово по-русски" else "реч, reč", color = p.faint, fontSize = 16.sp)
+                        Text(if (byMeaning) Decks.meaningHint else Decks.wordHint, color = p.faint, fontSize = 16.sp)
                     }
                     BasicTextField(
                         value = query,
@@ -368,8 +364,8 @@ fun SearchScreen(open: (String) -> Unit, back: () -> Unit) {
             }
         }
         Row(Modifier.padding(start = 14.dp, top = 12.dp, bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            SelectChip("Сербское слово", !byMeaning) { byMeaning = false }
-            SelectChip("Перевод", byMeaning) { byMeaning = true }
+            SelectChip(Decks.wordChip, !byMeaning) { byMeaning = false }
+            SelectChip(t("Перевод"), byMeaning) { byMeaning = true }
         }
         LazyColumn(Modifier.weight(1f), state = rememberLazyListState()) {
             items(results, key = { it.key }) { w ->
@@ -476,7 +472,7 @@ fun WordListScreen(category: String, open: (String) -> Unit, back: () -> Unit) {
             Icon(painterResource(R.drawable.ic_search), null, tint = p.faint, modifier = Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
             Box(Modifier.weight(1f)) {
-                if (query.isEmpty()) Text("найти в списке", color = p.faint, fontSize = 15.sp)
+                if (query.isEmpty()) Text(t("найти в списке"), color = p.faint, fontSize = 15.sp)
                 BasicTextField(
                     value = query,
                     onValueChange = { query = it },

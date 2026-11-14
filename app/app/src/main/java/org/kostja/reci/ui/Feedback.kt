@@ -46,11 +46,13 @@ import org.json.JSONObject
 import org.kostja.reci.R
 import org.kostja.reci.data.Crash
 import org.kostja.reci.data.Env
+import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.State
 import org.kostja.reci.data.Telemetry
 import org.kostja.reci.data.Word
+import org.kostja.reci.data.t
 
 // Sends the ping and the waiting messages when it is time; cheap to call on every start.
 fun sendStats() {
@@ -63,7 +65,7 @@ fun openLink(ctx: Context, url: String) {
     try {
         ctx.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url)))
     } catch (e: ActivityNotFoundException) {
-        Toast.makeText(ctx, "Нет приложения, чтобы открыть ссылку", Toast.LENGTH_LONG).show()
+        Toast.makeText(ctx, t("Нет приложения, чтобы открыть ссылку"), Toast.LENGTH_LONG).show()
     }
 }
 
@@ -95,8 +97,8 @@ fun StatsNotice() {
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Text(
-            "Приложение раз в день отправляет анонимную статистику: сколько карточек показано, какие " +
-                "разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика».",
+            t("Приложение раз в день отправляет анонимную статистику: сколько карточек показано, какие ") +
+                t("разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика»."),
             fontSize = 13.sp,
             color = p.text,
             lineHeight = 18.sp,
@@ -118,7 +120,7 @@ fun SchoolsButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
         modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(painterResource(R.drawable.ic_school), "Куда пойти учиться", tint = LocalPalette.current.faint, modifier = Modifier.size(22.dp))
+        Icon(painterResource(R.drawable.ic_school), t("Куда пойти учиться"), tint = LocalPalette.current.faint, modifier = Modifier.size(22.dp))
     }
 }
 
@@ -128,18 +130,18 @@ fun ReportFlag(modifier: Modifier = Modifier, onClick: () -> Unit) {
         modifier.size(44.dp).clip(CircleShape).clickable(onClick = onClick),
         contentAlignment = Alignment.Center,
     ) {
-        Icon(painterResource(R.drawable.ic_flag), "Сообщить об ошибке", tint = LocalPalette.current.faint, modifier = Modifier.size(22.dp))
+        Icon(painterResource(R.drawable.ic_flag), t("Сообщить об ошибке"), tint = LocalPalette.current.faint, modifier = Modifier.size(22.dp))
     }
 }
 
-private val WORD_PROBLEMS = listOf("translation" to "Перевод", "stress" to "Ударение", "example" to "Пример", "forms" to "Род или формы", "other" to "Другое")
-private val ARTICLE_PROBLEMS = listOf("text" to "Ошибка в тексте", "other" to "Другое")
+private val WORD_PROBLEMS get() = listOf("translation" to t("Перевод"), "stress" to t("Ударение"), "example" to t("Пример"), "forms" to t("Род или формы"), "other" to t("Другое"))
+private val ARTICLE_PROBLEMS get() = listOf("text" to t("Ошибка в тексте"), "other" to t("Другое"))
 
 @Composable
 private fun sentToast(): (Boolean) -> Unit {
     val ctx = LocalContext.current
     return { sent ->
-        Toast.makeText(ctx, if (sent) "Спасибо! Сообщение отправлено" else "Сообщение уйдёт, когда появится интернет", Toast.LENGTH_LONG).show()
+        Toast.makeText(ctx, if (sent) t("Спасибо! Сообщение отправлено") else t("Сообщение уйдёт, когда появится интернет"), Toast.LENGTH_LONG).show()
     }
 }
 
@@ -147,7 +149,7 @@ private fun sentToast(): (Boolean) -> Unit {
 private fun EmailField(value: String, onChange: (String) -> Unit) {
     OutlinedTextField(
         value, onChange,
-        placeholder = { Text("Почта для ответа, если нужен ответ") },
+        placeholder = { Text(t("Почта для ответа, если нужен ответ")) },
         singleLine = true,
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
         modifier = Modifier.fillMaxWidth().testTag("email"),
@@ -165,7 +167,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
     var error by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Что не так с карточкой?") },
+        title = { Text(t("Что не так с карточкой?")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(Prefs.primary(w.cyr), color = p.secondary)
@@ -176,7 +178,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
                 }
                 OutlinedTextField(
                     text, { if (it.length <= 2000) text = it },
-                    placeholder = { Text("Что именно не так") },
+                    placeholder = { Text(t("Что именно не так")) },
                     minLines = 4,
                     maxLines = 10,
                     modifier = Modifier.fillMaxWidth().testTag("comment"),
@@ -189,8 +191,8 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
             TextButton(enabled = problem != null, onClick = {
                 val mail = email.trim()
                 error = when {
-                    text.isBlank() -> "Напишите, что не так"
-                    mail.isNotEmpty() && !Telemetry.isEmail(mail) -> "Проверьте адрес почты"
+                    text.isBlank() -> t("Напишите, что не так")
+                    mail.isNotEmpty() && !Telemetry.isEmail(mail) -> t("Проверьте адрес почты")
                     else -> ""
                 }
                 if (error.isNotEmpty()) return@TextButton
@@ -199,9 +201,9 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
                     .put("latin", Prefs.latinFirst).put("stress", Prefs.accentMode)
                 Telemetry.sendFeedback("card", text.trim(), card, mail, Env.of(ctx), toast)
                 onDismiss()
-            }) { Text("Отправить") }
+            }) { Text(t("Отправить")) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("Отмена")) } },
     )
 }
 
@@ -214,13 +216,13 @@ fun WriteDialog(onDismiss: () -> Unit) {
     var error by remember { mutableStateOf("") }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Написать разработчику") },
+        title = { Text(t("Написать разработчику")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text("Идея, ошибка, вопрос — что угодно.", color = LocalPalette.current.secondary)
+                Text(t("Идея, ошибка, вопрос — что угодно."), color = LocalPalette.current.secondary)
                 OutlinedTextField(
                     text, { if (it.length <= 4000) text = it },
-                    placeholder = { Text("Сообщение") },
+                    placeholder = { Text(t("Сообщение")) },
                     minLines = 6,
                     maxLines = 12,
                     modifier = Modifier.fillMaxWidth().testTag("message"),
@@ -233,16 +235,16 @@ fun WriteDialog(onDismiss: () -> Unit) {
             TextButton(onClick = {
                 val mail = email.trim()
                 error = when {
-                    text.isBlank() -> "Напишите сообщение"
-                    mail.isNotEmpty() && !Telemetry.isEmail(mail) -> "Проверьте адрес почты"
+                    text.isBlank() -> t("Напишите сообщение")
+                    mail.isNotEmpty() && !Telemetry.isEmail(mail) -> t("Проверьте адрес почты")
                     else -> ""
                 }
                 if (error.isNotEmpty()) return@TextButton
                 Telemetry.sendFeedback("app", text.trim(), null, mail, Env.of(ctx), toast)
                 onDismiss()
-            }) { Text("Отправить") }
+            }) { Text(t("Отправить")) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("Отмена")) } },
     )
 }
 
@@ -259,21 +261,21 @@ fun CrashDialog() {
     }
     AlertDialog(
         onDismissRequest = {},
-        title = { Text("Приложение закрылось с ошибкой") },
+        title = { Text(t("Приложение закрылось с ошибкой")) },
         text = {
             Text(
-                "В прошлый раз приложение неожиданно закрылось. Отправить разработчику отчёт, чтобы он мог " +
-                    "это исправить? В отчёте место в коде, где случилась ошибка, модель телефона, версия Android " +
-                    "и настройки приложения. Слова и прогресс не отправляются."
+                t("В прошлый раз приложение неожиданно закрылось. Отправить разработчику отчёт, чтобы он мог ") +
+                    t("это исправить? В отчёте место в коде, где случилась ошибка, модель телефона, версия Android ") +
+                    t("и настройки приложения. Слова и прогресс не отправляются.")
             )
         },
         confirmButton = {
             TextButton(onClick = {
                 Telemetry.sendFeedback("crash", r, null, "", Env.of(ctx), toast)
                 close()
-            }) { Text("Отправить") }
+            }) { Text(t("Отправить")) }
         },
-        dismissButton = { TextButton(onClick = close) { Text("Не отправлять") } },
+        dismissButton = { TextButton(onClick = close) { Text(t("Не отправлять")) } },
     )
 }
 
@@ -285,17 +287,17 @@ fun WhatSentDialog(onDismiss: () -> Unit) {
     var forgetting by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Анонимная статистика") },
+        title = { Text(t("Анонимная статистика")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    "Раз в день уходит: случайный номер этой установки, платформа, версии приложения и системы, " +
-                        "язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы " +
-                        "и настройки, включена ли карточка на экране блокировки, какие экраны открывали.\n\n" +
-                        "Не уходит: слова и ответы по отдельным словам, имя, почта, точное местоположение. Адрес IP сервер не сохраняет.",
+                    t("Раз в день уходит: случайный номер этой установки, платформа, версии приложения и системы, ") +
+                        t("язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы ") +
+                        t("и настройки, включена ли карточка на экране блокировки, какие экраны открывали.\n\n") +
+                        t("Не уходит: слова и ответы по отдельным словам, имя, почта, точное местоположение. Адрес IP сервер не сохраняет."),
                     color = p.secondary,
                 )
-                Text(if (last != null) "Последний пакет, ${last.optString("day")}" else "Пока ничего не отправлялось", color = p.text)
+                Text(if (last != null) t("Последний пакет, %s", last.optString("day")) else t("Пока ничего не отправлялось"), color = p.text)
                 if (last != null) {
                     Text(
                         last.toString(1),
@@ -308,29 +310,29 @@ fun WhatSentDialog(onDismiss: () -> Unit) {
                 // Quoted when asking about a message or the deletion of the data.
                 SelectionContainer {
                     Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                        Text("Номер этой установки, для статистики", fontSize = 13.sp, color = p.secondary)
+                        Text(t("Номер этой установки, для статистики"), fontSize = 13.sp, color = p.secondary)
                         Text(Telemetry.id, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = p.text,
                              modifier = Modifier.testTag("installId"))
-                        Text("Номер для сообщений разработчику", fontSize = 13.sp, color = p.secondary,
+                        Text(t("Номер для сообщений разработчику"), fontSize = 13.sp, color = p.secondary,
                              modifier = Modifier.padding(top = 6.dp))
                         Text(Telemetry.feedbackId, fontFamily = FontFamily.Monospace, fontSize = 12.sp, color = p.text,
                              modifier = Modifier.testTag("feedbackId"))
                     }
                 }
                 Text(
-                    "Политика конфиденциальности",
+                    t("Политика конфиденциальности"),
                     color = p.accent,
                     modifier = Modifier.clickable { openLink(ctx, Telemetry.PRIVACY) },
                 )
                 Text(
-                    "Удалить мои данные с сервера",
+                    t("Удалить мои данные с сервера"),
                     fontSize = 13.sp,
                     color = p.secondary,
                     modifier = Modifier.clickable { forgetting = true },
                 )
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(t("Закрыть")) } },
     )
     if (forgetting) ForgetDialog { forgetting = false }
 }
@@ -340,12 +342,12 @@ private fun ForgetDialog(onDismiss: () -> Unit) {
     val ctx = LocalContext.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Удалить данные с сервера?") },
+        title = { Text(t("Удалить данные с сервера?")) },
         text = {
             Text(
-                "С сервера разработчика удалятся статистика и сообщения, отправленные с этого телефона. Прогресс и " +
-                    "настройки на телефоне останутся. Приложение получит новые номера и дальше будет отправлять " +
-                    "статистику уже с ними, если она включена."
+                t("С сервера разработчика удалятся статистика и сообщения, отправленные с этого телефона. Прогресс и ") +
+                    t("настройки на телефоне останутся. Приложение получит новые номера и дальше будет отправлять ") +
+                    t("статистику уже с ними, если она включена.")
             )
         },
         confirmButton = {
@@ -353,21 +355,22 @@ private fun ForgetDialog(onDismiss: () -> Unit) {
                 Telemetry.forget { ok ->
                     Toast.makeText(
                         ctx,
-                        if (ok) "Данные удалены с сервера" else "Не удалось связаться с сервером. Попробуйте позже",
+                        if (ok) t("Данные удалены с сервера") else t("Не удалось связаться с сервером. Попробуйте позже"),
                         Toast.LENGTH_LONG,
                     ).show()
                 }
                 onDismiss()
-            }) { Text("Удалить") }
+            }) { Text(t("Удалить")) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Отмена") } },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(t("Отмена")) } },
     )
 }
 
 private const val PLAY = "https://play.google.com/store/apps/details?id=org.kostja.reci"
 private const val GITHUB = "https://github.com/finist0/reci"
-const val SHARE_TEXT = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, " +
-    "примерами и грамматикой. Бесплатно.\nAndroid: $PLAY\niPhone и компьютер: https://finist0.github.io/reci/web/"
+val SHARE_TEXT: String
+    get() = Decks.shareText +
+        "\nAndroid: $PLAY\n" + t("iPhone и компьютер:") + " https://finist0.github.io/reci/web/"
 
 @Composable
 fun HelpDialog(onDismiss: () -> Unit) {
@@ -382,16 +385,16 @@ fun HelpDialog(onDismiss: () -> Unit) {
     }
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Помочь автору") },
+        title = { Text(t("Помочь автору")) },
         text = {
             Column {
-                Text("Приложение бесплатное. Вот чем можно помочь:", color = p.secondary)
-                HelpRow("Поделиться с другом", "Ссылки на Android, iPhone и компьютер") {
+                Text(t("Приложение бесплатное. Вот чем можно помочь:"), color = p.secondary)
+                HelpRow(t("Поделиться с другом"), t("Ссылки на Android, iPhone и компьютер")) {
                     Telemetry.count("opened", "share")
                     val send = Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT, SHARE_TEXT)
-                    ctx.startActivity(Intent.createChooser(send, "Поделиться"))
+                    ctx.startActivity(Intent.createChooser(send, t("Поделиться")))
                 }
-                HelpRow("Оценить приложение", "В Google Play") {
+                HelpRow(t("Оценить приложение"), t("В Google Play")) {
                     Telemetry.count("opened", "rate")
                     // The Play Store app where it is installed, the web page elsewhere.
                     try {
@@ -400,12 +403,12 @@ fun HelpDialog(onDismiss: () -> Unit) {
                         openLink(ctx, PLAY)
                     }
                 }
-                HelpRow("Поставить звезду на GitHub", "Там лежит код приложения") {
+                HelpRow(t("Поставить звезду на GitHub"), t("Там лежит код приложения")) {
                     Telemetry.count("opened", "star")
                     openLink(ctx, GITHUB)
                 }
             }
         },
-        confirmButton = { TextButton(onClick = onDismiss) { Text("Закрыть") } },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(t("Закрыть")) } },
     )
 }
