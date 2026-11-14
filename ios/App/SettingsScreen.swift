@@ -303,12 +303,8 @@ struct SettingsScreen: View {
             (Text("НЕ").foregroundColor(p.titleRed) + Text("РОДНАЯ РЕЧЬ").foregroundColor(p.word)).font(.display(26)).padding(.bottom, 6)
             Text(t("Версия %s", version) + " · iPhone")
             Text(t("Автор: Константин Хоренко"))
-            Text(t("Лицензия: GNU GPL v3 или новее"))
-            Text(t("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n") +
-                 t("Ударения: Викисловарь (kaikki.org), CC BY-SA.\n") +
-                 t("Часть карточек и подсказок составлена по материалам из открытых источников.\n") +
-                 t("Шрифты Literata и Ruslan Display: SIL Open Font License.\n").trimmingCharacters(in: .newlines))
-                .font(.ui(13)).padding(.top, 10)
+            Link(t("Лицензии и источники"), destination: URL(string: Telemetry.licenses)!)
+                .foregroundStyle(p.accent).padding(.top, 8)
         }
         .font(.ui(14)).foregroundStyle(p.secondary)
         .padding(18).frame(maxWidth: .infinity, alignment: .leading)

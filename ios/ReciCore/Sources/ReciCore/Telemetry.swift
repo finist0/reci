@@ -149,6 +149,7 @@ public struct TelemetryState: Codable {
 public final class Telemetry {
     public static let server = "https://reci.finist.workers.dev"
     public static let privacy = "https://finist0.github.io/reci/web/privacy.html"
+    public static let licenses = "https://finist0.github.io/reci/web/licenses.html"
     static let retry: TimeInterval = 60 * 60
 
     public private(set) var state: TelemetryState
