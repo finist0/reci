@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Merge data/words/*.jsonl into the app's assets/words.json, validating entries.
 
+With --deck ru-sr it builds the deck for Serbian speakers learning Russian instead, from
+data/ru-sr/words/ into assets/words-ru-sr.json.
+
 Levels are assigned here from the frequency order of the accepted words, so the
 generated entries only carry the frequency rank of their source candidate.
 """
@@ -14,8 +17,15 @@ from pathlib import Path
 import build_patches
 
 ROOT = Path(__file__).resolve().parents[2]
-SRC = ROOT / "data" / "words"
-OUT = ROOT / "app" / "app" / "src" / "main" / "assets" / "words.json"
+ASSETS = ROOT / "app" / "app" / "src" / "main" / "assets"
+# What one learns -> from which native language: sources and the asset the apps load.
+DECKS = {
+    "sr-ru": {"src": ROOT / "data" / "words", "out": ASSETS / "words.json", "target": "sr", "native": "ru"},
+    "ru-sr": {"src": ROOT / "data" / "ru-sr" / "words", "out": ASSETS / "words-ru-sr.json", "target": "ru", "native": "sr"},
+}
+DECK = DECKS[sys.argv[sys.argv.index("--deck") + 1] if "--deck" in sys.argv else "sr-ru"]
+SRC = DECK["src"]
+OUT = DECK["out"]
 
 TOPICS = {
     "basic", "people", "family", "body", "health", "home", "food", "clothes", "city",
@@ -84,7 +94,7 @@ def unstressed(text):
         if ch not in STRESS_SET or not vowel:
             out.append(ch)
         if unicodedata.category(ch) != "Mn":
-            vowel = ch in "аеиоурАЕИОУР"
+            vowel = ch in "аеиоуряюыэёАЕИОУРЯЮЫЭЁ"
     out = "".join(out)
     return text if out == d else unicodedata.normalize("NFC", out)
 
@@ -159,18 +169,89 @@ def check(e):
     return errs
 
 
+SR_ONLY = re.compile(r"[ђјљњћџЂЈЉЊЋЏ]")
+RU_VOWELS = set("аеёиоуыэюя")
+RU_GRAM = {"noun": ("м. р.", "ж. р.", "с. р.", "мн."), "verb": ("несвр.", "свр.", "двовид.")}
+
+
+def ru_stress_ok(text):
+    """Every Russian word of two or more syllables carries one acute after a vowel; ё is
+    stressed itself and takes none. In a hyphenated word (когда-нибудь, давным-давно) each
+    part takes at most one mark, and the word at least one."""
+    for w in re.findall(r"[а-яё\u0301-]+", unicodedata.normalize("NFC", text).lower()):
+        for part in w.split("-"):
+            marks = part.count("\u0301")
+            if marks > 1 or ("ё" in part and marks):
+                return False
+            if any(part[i - 1] not in RU_VOWELS for i, c in enumerate(part) if c == "\u0301"):
+                return False
+        # из-за, из-под: parts of one syllable each are read as one unstressed word.
+        if "\u0301" not in w and "ё" not in w and max(sum(c in RU_VOWELS for c in p) for p in w.split("-")) > 1:
+            return False
+    return True
+
+
+def check_ru(e):
+    """A card of the deck for Serbian speakers learning Russian."""
+    errs = [f"missing {f}" for f in ("key", "cyr", "acc", "pos", "meanings", "topic", "rank") if not e.get(f)]
+    if e.get("pos") not in POS:
+        errs.append(f"bad pos {e.get('pos')!r}")
+    if e.get("topic") not in TOPICS:
+        errs.append(f"bad topic {e.get('topic')!r}")
+    if e.get("pos") in RU_GRAM and e.get("gram") not in RU_GRAM[e["pos"]]:
+        errs.append(f"bad gram {e.get('gram')!r}")
+    if unstressed(e.get("acc", "")) != e.get("cyr"):
+        errs.append(f"acc {e.get('acc')!r} does not match cyr {e.get('cyr')!r}")
+    ru = [e.get("acc", ""), e.get("forms", "")] + e.get("syn", []) + e.get("ant", [])
+    ru += [r.get("ru", "") for r in e.get("related", [])]
+    # A note may quote Russian words, so only Latin letters are wrong in it.
+    sr = list(e.get("meanings", [])) + [r.get("sr", "") for r in e.get("related", [])] + [e.get("gram", "")]
+    if LATIN.search(e.get("note", "")):
+        errs.append(f"latin letters in note {e['note']!r}")
+    for x in e.get("examples", []):
+        if not x.get("ru") or not x.get("sr"):
+            errs.append("example without ru or sr")
+            continue
+        b = re.search(r"\[([^\]]+)\]", x["ru"])
+        if not b:
+            errs.append(f"headword not marked in {x['ru']!r}")
+        elif not ru_stress_ok(b.group(1)):
+            errs.append(f"stress missing or misplaced in [{b.group(1)}]")
+        outside = re.sub(r"\[[^\]]*\]", "", x["ru"])
+        if unstressed(outside) != outside:
+            errs.append(f"stress mark outside the brackets in {x['ru']!r}")
+        ru.append(x["ru"])
+        sr.append(x["sr"])
+    for t in [e.get("acc", "")] + e.get("syn", []) + e.get("ant", []) + [r.get("ru", "") for r in e.get("related", [])]:
+        if not ru_stress_ok(t):
+            errs.append(f"stress missing or misplaced in {t!r}")
+    for t in ru:
+        if LATIN.search(t) or SR_ONLY.search(t):
+            errs.append(f"non-Russian letters in {t!r}")
+    for t in sr:
+        if LATIN.search(t) or CYR_RU_ONLY.search(t):
+            errs.append(f"non-Serbian letters in {t!r}")
+    if not e.get("examples"):
+        errs.append("no examples")
+    for r in e.get("related", []):
+        if not r.get("ru") or not r.get("sr"):
+            errs.append("related without ru or sr")
+    return errs
+
+
 def split_stress(e):
     """Related words, synonyms and antonyms carry stress marks in the sources. The app gets them
     bare, which it looks cards up by, and the stressed form beside: acc, synAcc, antAcc."""
+    t = DECK["target"]
     for f in ("syn", "ant"):
         bare = [unstressed(w) for w in e.get(f, [])]
         if bare != e.get(f, []):
             e[f + "Acc"] = [unicodedata.normalize("NFC", w) for w in e[f]]
             e[f] = bare
     for r in e.get("related", []):
-        bare = unstressed(r["sr"])
-        if bare != r["sr"]:
-            r["sr"], r["acc"] = bare, unicodedata.normalize("NFC", r["sr"])
+        bare = unstressed(r[t])
+        if bare != r[t]:
+            r[t], r["acc"] = bare, unicodedata.normalize("NFC", r[t])
 
 
 def main():
@@ -187,7 +268,7 @@ def main():
                 print(f"{path.name}:{n}: bad json: {err}", file=sys.stderr)
                 bad += 1
                 continue
-            errs = check(e)
+            errs = check(e) if DECK["target"] == "sr" else check_ru(e)
             for err in errs:
                 print(f"{path.name}:{n}: {e.get('key')}: {err}", file=sys.stderr)
             if errs:
@@ -199,7 +280,7 @@ def main():
             split_stress(e)
             words[e["key"]] = e
     accents = ROOT / "data" / "accents.tsv"
-    if accents.exists():
+    if accents.exists() and DECK["target"] == "sr":
         for n, line in enumerate(accents.read_text(encoding="utf-8").splitlines(), 1):
             key, acc, _src = line.split("\t")
             e = words.get(key)
@@ -212,7 +293,7 @@ def main():
             elif acc != e["cyr"]:
                 e["acc"] = unicodedata.normalize("NFC", acc)
     tips = ROOT / "data" / "tips.jsonl"
-    if tips.exists():
+    if tips.exists() and DECK["target"] == "sr":
         for line in tips.read_text(encoding="utf-8").splitlines():
             t = json.loads(line)
             if t["key"] in words:
@@ -229,7 +310,7 @@ def main():
         i += 1
     for e in out:
         # Flag nouns whose gender differs from the gender of the main Russian translation.
-        if MORPH and e["pos"] == "noun":
+        if MORPH and e["pos"] == "noun" and DECK["native"] == "ru":
             noun, rg = ru_noun(e["meanings"][0])
             sg = sr_gender(e["gram"])
             if sg and rg and sg != rg:
@@ -244,7 +325,7 @@ def main():
         OUT.parent.mkdir(parents=True, exist_ok=True)
         OUT.write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print(f"{len(out)} words ok, {bad} rejected, {mismatches} nouns differ in gender from Russian")
-    if "--check" not in sys.argv:
+    if "--check" not in sys.argv and DECK["target"] == "sr":
         build_patches.write()
 
 
