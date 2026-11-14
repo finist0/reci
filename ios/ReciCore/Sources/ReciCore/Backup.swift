@@ -26,6 +26,8 @@ public enum Backup {
             prefs.pendingAnswer = nil
             // How the card reaches the lock screen belongs to this phone, not to the file.
             prefs.lockMode = repo.prefs.lockMode
+            // The progress goes to the deck in use.
+            prefs.deckId = repo.prefs.deckId
             repo.prefs = prefs
         }
         repo.store.replaceProgress(progress)

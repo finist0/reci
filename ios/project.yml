@@ -24,6 +24,12 @@ targets:
       - Shared
       - path: ../app/app/src/main/assets/words.json
         buildPhase: resources
+      - path: ../app/app/src/main/assets/words-ru-sr.json
+        buildPhase: resources
+      - path: ../app/app/src/main/assets/decks.json
+        buildPhase: resources
+      - path: ../app/app/src/main/assets/ui.json
+        buildPhase: resources
       - path: ../app/app/src/main/assets/grammar.json
         buildPhase: resources
       - path: ../app/app/src/main/assets/whatsnew.json
@@ -66,6 +72,11 @@ targets:
     sources:
       - Widget
       - Shared
+      # The widgets speak the language of the deck in use.
+      - path: ../app/app/src/main/assets/decks.json
+        buildPhase: resources
+      - path: ../app/app/src/main/assets/ui.json
+        buildPhase: resources
     dependencies:
       - package: ReciCore
     entitlements:

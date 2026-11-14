@@ -44,15 +44,15 @@ struct GrammarScreen: View {
         let p = model.palette
         let n = { (pos: String) in model.repo.words.filter { $0.pos == pos }.count }
         VStack(spacing: 0) {
-            Header(title: "Справочник")
+            Header(title: t("Справочник"))
             Picker("", selection: $tab) {
-                Text("Грамматика").tag(0)
-                Text("Похожие · \(n("compare"))").tag(1)
-                Text("Заметки · \(n("note"))").tag(2)
+                Text(t("Грамматика")).tag(0)
+                Text(t("Похожие") + " · \(n("compare"))").tag(1)
+                Text(t("Заметки") + " · \(n("note"))").tag(2)
             }
             .pickerStyle(.segmented).padding(.horizontal, 14).padding(.bottom, 10)
             if tab > 0 {
-                TextField("найти по слову или названию", text: $q).textInputAutocapitalization(.never).autocorrectionDisabled()
+                TextField(t("найти по слову или названию"), text: $q).textInputAutocapitalization(.never).autocorrectionDisabled()
                     .padding(12).background(RoundedRectangle(cornerRadius: 14).fill(p.card)).padding(.horizontal, 14)
             }
             ScrollView {
@@ -60,11 +60,13 @@ struct GrammarScreen: View {
                     if tab == 0 {
                         ForEach(groups(), id: \.0) { group, topics in
                             GroupTitle(text: group)
-                            ForEach(topics) { t in tile(t.title) { router.go(.topic(t.id)) } }
+                            ForEach(topics) { topic in tile(topic.title) { router.go(.topic(topic.id)) } }
                         }
                     } else {
                         ForEach(articles()) { w in
-                            tile(w.pos == "compare" ? (w.meanings.first ?? w.cyr) : w.cyr) { router.go(.detail(w.key)) }
+                            tile(w.pos == "compare" ? (w.meanings.first.map { model.prefs.native($0) } ?? w.cyr) : model.prefs.native(w.cyr)) {
+                                router.go(.detail(w.key))
+                            }
                         }
                     }
                 }
@@ -89,7 +91,7 @@ struct GrammarScreen: View {
         let q = q.trimmingCharacters(in: .whitespaces).lowercased()
         return model.repo.words.filter { $0.pos == (tab == 1 ? "compare" : "note") }.filter { w in
             q.isEmpty || w.cyr.lowercased().contains(q) || Translit.toLatin(w.cyr).lowercased().contains(q)
-                || w.meanings.contains { $0.lowercased().contains(q) } || w.related.contains { $0.sr.contains(q) }
+                || w.meanings.contains { $0.lowercased().contains(q) } || w.related.contains { $0.word.contains(q) }
         }
     }
 
@@ -113,15 +115,15 @@ struct TopicScreen: View {
         let p = model.palette
         let topics = model.repo.topics
         VStack(spacing: 0) {
-            if let t = model.repo.topic(id) {
-                Header(title: t.title)
+            if let topic = model.repo.topic(id) {
+                Header(title: topic.title)
                 ScrollView {
                     VStack(alignment: .leading, spacing: 12) {
-                        ForEach(Array(t.blocks.enumerated()), id: \.offset) { _, b in block(b) }
+                        ForEach(Array(topic.blocks.enumerated()), id: \.offset) { _, b in block(b) }
                         if let i = topics.firstIndex(where: { $0.id == id }), i + 1 < topics.count {
                             let next = topics[i + 1]
                             Button { router.go(.topic(next.id)) } label: {
-                                Text("Дальше: \(next.title) ›").font(.ui(16, .semibold)).foregroundStyle(p.accent)
+                                Text(t("Дальше: %s ›", next.title)).font(.ui(16, .semibold)).foregroundStyle(p.accent)
                                     .multilineTextAlignment(.leading)
                             }
                             .padding(.top, 12)

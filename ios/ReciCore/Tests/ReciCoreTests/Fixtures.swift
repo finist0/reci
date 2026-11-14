@@ -12,7 +12,20 @@ enum Fixtures {
         return try! JSONDecoder().decode([Word].self, from: Data(contentsOf: url))
     }()
 
-    static func tempStore() -> Store {
+    static let assets = root.appendingPathComponent("app/app/src/main/assets")
+
+    // The cards of the Russian deck, for Serbs.
+    static let ruWords: [Word] = try! Word.decode(Data(contentsOf: assets.appendingPathComponent("words-ru-sr.json")), deck: Decks.deck("ru-sr"))
+
+    // The decks and the interface strings the apps carry.
+    static func loadTables() {
+        Decks.load(try! Data(contentsOf: assets.appendingPathComponent("decks.json")))
+        I18n.load(try! Data(contentsOf: assets.appendingPathComponent("ui.json")))
+    }
+
+    // A fresh install on a phone in the given language, which picks the deck.
+    static func tempStore(language: String = "ru") -> Store {
+        Decks.systemLanguage = language
         let dir = FileManager.default.temporaryDirectory.appendingPathComponent("reci-test-\(UUID().uuidString)")
         return Store(dir: dir)
     }

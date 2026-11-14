@@ -17,7 +17,7 @@ struct ReciApp: App {
                 main
             }
         }
-        .environment(\.locale, Locale(identifier: "ru_RU"))
+        .environment(\.locale, model.locale)
         .onChange(of: phase) { _, now in
             if now == .active { model.reload() }
         }
@@ -28,7 +28,7 @@ struct ReciApp: App {
             CardScreen()
                 .toolbar(.hidden, for: .navigationBar)
                 .alert(newsTitle, isPresented: Binding(get: { !model.news.isEmpty }, set: { if !$0 { model.news = [] } })) {
-                    Button("Понятно") { model.news = [] }
+                    Button(t("Понятно")) { model.news = [] }
                 } message: {
                     Text(newsText)
                 }
@@ -58,25 +58,25 @@ struct ReciApp: App {
         .environmentObject(router)
         .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
         .preferredColorScheme(model.palette.dark ? .dark : .light)
-        .alert("Приложение закрылось с ошибкой", isPresented: .constant(model.crashOffer != nil)) {
-            Button("Не отправлять", role: .cancel) { model.answerCrash(send: false) }
-            Button("Отправить") { model.answerCrash(send: true) }
+        .alert(t("Приложение закрылось с ошибкой"), isPresented: .constant(model.crashOffer != nil)) {
+            Button(t("Не отправлять"), role: .cancel) { model.answerCrash(send: false) }
+            Button(t("Отправить")) { model.answerCrash(send: true) }
         } message: {
-            Text("В прошлый раз приложение неожиданно закрылось. Отправить разработчику отчёт, чтобы он мог это исправить? " +
-                 "В отчёте место в коде, где случилась ошибка, модель телефона, версия iOS и настройки приложения. " +
-                 "Слова и прогресс не отправляются.")
+            Text(t("В прошлый раз приложение неожиданно закрылось. Отправить разработчику отчёт, чтобы он мог ") +
+                 t("это исправить? В отчёте место в коде, где случилась ошибка, модель телефона, версия iOS ") +
+                 t("и настройки приложения. Слова и прогресс не отправляются."))
         }
     }
 }
 
 extension ReciApp {
     private var newsTitle: String {
-        model.news.count == 1 ? "Что нового в версии \(model.news[0].version)" : "Что нового"
+        model.news.count == 1 ? t("Что нового в версии %s", model.news[0].version) : t("Что нового")
     }
 
     private var newsText: String {
         model.news.map { e in
-            (model.news.count == 1 ? [] : ["Версия \(e.version)"]) + e.items.map { "• \($0)" }
+            (model.news.count == 1 ? [] : [t("Версия %s", e.version)]) + e.items.map { "• \($0)" }
         }.map { $0.joined(separator: "\n") }.joined(separator: "\n\n")
     }
 }
@@ -93,7 +93,7 @@ struct Header: View {
                 Image(systemName: "arrow.left").font(.ui(18, .semibold)).foregroundStyle(model.palette.text)
                     .frame(width: 44, height: 44).background(Circle().fill(model.palette.card))
             }
-            .accessibilityLabel("Назад")
+            .accessibilityLabel(t("Назад"))
             Text(title).font(.serif(24, .semibold)).foregroundStyle(model.palette.word).lineLimit(1)
             Spacer()
         }

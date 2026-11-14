@@ -25,11 +25,16 @@ enum Dict {
         DictPatch.baseId(words: bundled("words") ?? Data(), grammar: bundled("grammar") ?? Data())
     }
 
-    static func load(patch: DictPatch?) -> (words: [Word], topics: [GrammarTopic]) {
-        let dec = JSONDecoder()
-        let words = bundled("words").flatMap { try? dec.decode([Word].self, from: $0) } ?? []
-        let topics = bundled("grammar").flatMap { try? dec.decode([GrammarTopic].self, from: $0) } ?? []
-        guard let patch else { return (words, topics) }
+    // A deck's cards and grammar reference, by their file names in decks.json.
+    private static func resource(_ file: String) -> Data? {
+        file.isEmpty ? nil : Bundle.main.url(forResource: file, withExtension: nil).flatMap { try? Data(contentsOf: $0) }
+    }
+
+    // Patches from the server are made for the first deck only.
+    static func load(deck: Deck, patch: DictPatch?) -> (words: [Word], topics: [GrammarTopic]) {
+        let words = resource(deck.words).flatMap { try? Word.decode($0, deck: deck) } ?? []
+        let topics = resource(deck.grammar).flatMap { try? JSONDecoder().decode([GrammarTopic].self, from: $0) } ?? []
+        guard deck.isFirst, let patch else { return (words, topics) }
         return (patch.apply(to: words), patch.grammar ?? topics)
     }
 

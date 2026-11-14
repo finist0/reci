@@ -33,84 +33,102 @@ struct SettingsScreen: View {
     var body: some View {
         let p = model.palette
         let prefs = model.prefs
+        let deck = model.deck
         VStack(spacing: 0) {
-            Header(title: "Настройки")
+            Header(title: t("Настройки"))
             ScrollView {
                 VStack(spacing: 0) {
                     progressCard
-                    Group {
-                        GroupTitle(text: "Учёба")
-                        Panel {
-                            let cats = prefs.categories
-                            navRow("Что учим", (cats.count == 1 ? Labels.category(cats[0]) : "Разделов: \(cats.count)") + " · " + Labels.orders[prefs.order]) {
-                                router.go(.categories)
+                    if Decks.all.count > 1 {
+                        Group {
+                            GroupTitle(text: t("Язык"))
+                            Panel {
+                                ForEach(Array(Decks.all.enumerated()), id: \.offset) { i, d in
+                                    if i > 0 { Line() }
+                                    deckRow(d, on: d.id == deck.id)
+                                }
                             }
-                            Line()
-                            choice("Карточки", ["Обучение", "Перевод", "Слово"], prefs.cardMode) { i in model.set { $0.cardMode = i } }
-                            Text(modeText).font(.ui(13)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
-                            Line()
-                            choice("Слов в работе одновременно", sizes.map(String.init), max(0, sizes.firstIndex(of: prefs.activeSize) ?? 0)) { i in
-                                model.set { $0.activeSize = sizes[i] }
-                            }
-                            Line()
-                            toggle("Кнопки «Не знаю / Знаю»", nil, prefs.useMarks) { v in model.set { $0.useMarks = v } }
-                            Line()
-                            toggle("Проверять выученные слова", "Через неделю, потом через 3\u{00A0}недели, 2\u{00A0}месяца, полгода и год", prefs.reviewKnown) { v in
-                                model.set { $0.reviewKnown = v }
-                            }
-                            Line()
-                            navRow("Куда пойти учиться?", "Школы сербского языка") { router.go(.schools) }
                         }
                     }
                     Group {
-                        GroupTitle(text: "Экран блокировки")
+                        GroupTitle(text: t("Учёба"))
                         Panel {
-                            choice("Карточка на экране блокировки", ["Виджеты", "Обои"], prefs.lockMode) { i in model.set { $0.lockMode = i } }
+                            navRow(t("Что учим"), studySummary) { router.go(.categories) }
+                            Line()
+                            choice(t("Карточки"), [t("Обучение"), t("Перевод"), t("Слово")], prefs.cardMode) { i in model.set { $0.cardMode = i } }
+                            Text(modeText).font(.ui(13)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
+                            Line()
+                            choice(t("Слов в работе одновременно"), sizes.map(String.init), max(0, sizes.firstIndex(of: prefs.activeSize) ?? 0)) { i in
+                                model.set { $0.activeSize = sizes[i] }
+                            }
+                            Line()
+                            toggle(t("Кнопки «Не знаю / Знаю»"), nil, prefs.useMarks) { v in model.set { $0.useMarks = v } }
+                            Line()
+                            toggle(t("Проверять выученные слова"), t("Через неделю, потом через 3\u{00A0}недели, 2\u{00A0}месяца, полгода и год"), prefs.reviewKnown) { v in
+                                model.set { $0.reviewKnown = v }
+                            }
+                            if deck.target == "sr" {
+                                Line()
+                                navRow(t("Куда пойти учиться?"), t("Школы сербского языка")) { router.go(.schools) }
+                            }
+                        }
+                    }
+                    Group {
+                        GroupTitle(text: t("Экран блокировки"))
+                        Panel {
+                            choice(t("Карточка на экране блокировки"), [t("Виджеты"), t("Обои")], prefs.lockMode) { i in model.set { $0.lockMode = i } }
                             LockSetup(mode: prefs.lockMode).padding(.horizontal, 18).padding(.bottom, 14)
                         }
                     }
                     Group {
-                        GroupTitle(text: "Оформление")
+                        GroupTitle(text: t("Оформление"))
                         Panel {
                             themes
                             Line()
-                            choice("Алфавит", ["Кириллица", "Latinica"], prefs.latinFirst ? 1 : 0) { i in model.set { $0.latinFirst = i == 1 } }
-                            Line()
-                            toggle("Подпись другим алфавитом", nil, prefs.showBothScripts) { v in model.set { $0.showBothScripts = v } }
-                            Line()
-                            choice("Ударения", ["ку̏ћа", "ку́ћа", "кућа"], prefs.accentMode) { i in model.set { $0.accentMode = i } }
+                            if deck.hasSerbian {
+                                choice(t("Алфавит"), [t("Кириллица"), "Latinica"], prefs.latinFirst ? 1 : 0) { i in model.set { $0.latinFirst = i == 1 } }
+                                Line()
+                            }
+                            if deck.target == "sr" {
+                                toggle(t("Подпись другим алфавитом"), nil, prefs.showBothScripts) { v in model.set { $0.showBothScripts = v } }
+                                Line()
+                                choice(t("Ударения"), deck.accentSamples, prefs.accentMode) { i in model.set { $0.accentMode = i } }
+                            } else {
+                                // One kind of mark only: "with" is mode 1, "without" is mode 2.
+                                choice(t("Ударения"), deck.accentSamples, prefs.accentMode == 2 ? 1 : 0) { i in model.set { $0.accentMode = i + 1 } }
+                            }
                             Line()
                             fontSize
                         }
                     }
                     Group {
-                        GroupTitle(text: "Звук")
+                        GroupTitle(text: t("Звук"))
                         Panel {
-                            toggle("Произносить слово сразу", nil, prefs.autoSpeak) { v in model.set { $0.autoSpeak = v } }
+                            toggle(t("Произносить слово сразу"), nil, prefs.autoSpeak) { v in model.set { $0.autoSpeak = v } }
                             Line()
-                            navRow("Голос", model.speech.voiceName.map { $0.prefix(1).uppercased() + $0.dropFirst() + " · нажмите, чтобы послушать" }
-                                ?? "Нет сербского, хорватского или боснийского голоса") { model.speech.speak("Добар дан") }
+                            navRow(t("Голос"), model.speech.voiceName.map { t("%s · нажмите, чтобы послушать", $0.prefix(1).uppercased() + String($0.dropFirst())) }
+                                ?? deck.noVoice) { model.speech.speak(deck.voiceSample) }
                         }
                     }
                     Group {
-                        GroupTitle(text: "Данные")
+                        GroupTitle(text: t("Данные"))
                         Panel {
-                            navRow("Сохранить прогресс в файл", "Чтобы перенести его на другое устройство") {
+                            navRow(t("Сохранить прогресс в файл"), t("Чтобы перенести его на другое устройство")) {
                                 if let data = try? Backup.export(model.repo) {
                                     exportFile = ProgressFile(data: data)
                                     exporting = true
                                 }
                             }
                             Line()
-                            navRow("Загрузить прогресс из файла", "Заменит прогресс на этом устройстве") { importing = true }
+                            navRow(t("Загрузить прогресс из файла"), t("Заменит прогресс на этом устройстве")) { importing = true }
                             Line()
-                            ForEach([("compare", "Снова показывать разборы"), ("note", "Снова показывать заметки")], id: \.0) { pos, title in
+                            ForEach([("compare", t("Снова показывать разборы")), ("note", t("Снова показывать заметки"))], id: \.0) { pos, title in
                                 let hidden = model.repo.hiddenArticles(pos)
-                                navRow(title, hidden > 0 ? "Скрыто: \(hidden)" : "Скрытых нет") { if hidden > 0 { confirmArticles = pos } }
+                                navRow(title, hidden > 0 ? t("Скрыто: %d", hidden) : t("Скрытых нет")) { if hidden > 0 { confirmArticles = pos } }
                                 Line()
                             }
                             Button { confirmReset = true } label: {
-                                Text("Сбросить прогресс").font(.ui(16)).foregroundStyle(markDontKnow)
+                                Text(t("Сбросить прогресс")).font(.ui(16)).foregroundStyle(markDontKnow)
                                     .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18).padding(.vertical, 15)
                             }
                             if let message {
@@ -120,24 +138,24 @@ struct SettingsScreen: View {
                         }
                     }
                     Group {
-                        GroupTitle(text: "Обратная связь")
+                        GroupTitle(text: t("Обратная связь"))
                         Panel {
                             let waiting = model.telemetry.state.queue.count
-                            navRow("Написать разработчику", waiting > 0 ? "Ждут отправки: \(waiting)" : "Идея, ошибка или вопрос") { writing = true }
+                            navRow(t("Написать разработчику"), waiting > 0 ? t("Ждут отправки: %d", waiting) : t("Идея, ошибка или вопрос")) { writing = true }
                             Line()
-                            toggle("Анонимная статистика", "Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки",
+                            toggle(t("Анонимная статистика"), t("Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки"),
                                    model.telemetry.state.enabled) { v in model.setStatsEnabled(v) }
                             Line()
-                            navRow("Что отправляется", model.telemetry.state.last.map { "Последний раз: \($0.day)" } ?? "Ещё ничего не отправлялось") {
+                            navRow(t("Что отправляется"), model.telemetry.state.last.map { t("Последний раз: %s", $0.day) } ?? t("Ещё ничего не отправлялось")) {
                                 whatSent = true
                             }
                             Line()
-                            navRow("Помочь автору", "Поделиться, поставить звезду") { helping = true }
+                            navRow(t("Помочь автору"), t("Поделиться, поставить звезду")) { helping = true }
                         }
-                        if let t = model.sentToast { SentToast(text: t).padding(.top, 10) }
+                        if let toast = model.sentToast { SentToast(text: toast).padding(.top, 10) }
                     }
                     Group {
-                        GroupTitle(text: "О приложении")
+                        GroupTitle(text: t("О приложении"))
                         Panel { about }
                     }
                     Spacer(minLength: 28)
@@ -155,44 +173,57 @@ struct SettingsScreen: View {
             defer { if scoped { url.stopAccessingSecurityScopedResource() } }
             do {
                 let n = try Backup.import(Data(contentsOf: url), into: model.repo)
-                message = "Загружен прогресс по \(n) \(plural(n, "слову", "словам", "словам"))."
+                message = t("Загружен прогресс по %d %s.", n, plural(n, "слову", "словам", "словам"))
             } catch {
-                message = "Это не файл с прогрессом."
+                message = t("Это не файл с прогрессом.")
             }
             model.syncShowing()
             model.changed()
         }
-        .alert("Сбросить прогресс?", isPresented: $confirmReset) {
-            Button("Отмена", role: .cancel) {}
-            Button("Сбросить", role: .destructive) {
+        .alert(t("Сбросить прогресс?"), isPresented: $confirmReset) {
+            Button(t("Отмена"), role: .cancel) {}
+            Button(t("Сбросить"), role: .destructive) {
                 model.repo.resetAll()
                 model.repo.resetPosition()
                 model.syncShowing()
-                message = "Прогресс сброшен."
+                message = t("Прогресс сброшен.")
                 model.changed()
             }
         } message: {
-            Text("Все слова снова станут новыми, избранное очистится.")
+            Text(t("Все слова снова станут новыми, избранное очистится."))
         }
-        .alert(confirmArticles == "compare" ? "Снова показывать разборы похожих слов?" : "Снова показывать заметки?",
+        .alert(articlesTitle,
                isPresented: Binding(get: { confirmArticles != nil }, set: { if !$0 { confirmArticles = nil } })) {
-            Button("Отмена", role: .cancel) { confirmArticles = nil }
-            Button("Показывать") {
+            Button(t("Отмена"), role: .cancel) { confirmArticles = nil }
+            Button(t("Показывать")) {
                 if let pos = confirmArticles { model.repo.showArticlesAgain(pos) }
                 confirmArticles = nil
                 model.changed()
             }
         } message: {
-            Text("Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках.")
+            Text(t("Скрытые кнопкой «Не показывать» станут новыми и снова будут приходить на карточках."))
         }
+    }
+
+    private var studySummary: String {
+        let cats = model.prefs.categories
+        let what: String = cats.count == 1 ? Labels.category(cats[0]) : t("Разделов: %d", cats.count)
+        return what + " · " + Labels.orders[model.prefs.order]
+    }
+
+    private var articlesTitle: String {
+        let what: String = confirmArticles == "compare" ? t("разборы похожих слов") : t("заметки")
+        return t("Снова показывать %s?", what)
     }
 
     private var modeText: String {
         switch model.prefs.cardMode {
-        case 1: return "Видно только перевод: вспомните слово и откройте его кнопкой или ответом."
-        case 2: return "Видно только слово: перевод открывается по нажатию."
+        case 1: return t("Видно только перевод: вспомните слово и откройте его кнопкой или ответом.")
+        case 2: return t("Видно только слово: перевод открывается по нажатию.")
         default:
-            return "Слово учится по шагам: сначала показано целиком, после «Знаю» надо вспомнить его по переводу, после трёх «Знаю» подряд оно выучено. «Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо."
+            return t("Слово учится по шагам: сначала показано целиком, после «Знаю» ") +
+                t("надо вспомнить его по переводу, после трёх «Знаю» подряд оно выучено. ") +
+                t("«Не знаю» вернёт слово через пять карточек. Долгое нажатие на «Знаю» — слово уже знакомо.")
         }
     }
 
@@ -210,12 +241,12 @@ struct SettingsScreen: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(alignment: .lastTextBaseline) {
                 Text("\(known)").font(.serif(40, .semibold)).foregroundStyle(p.word).accessibilityIdentifier("knownCount")
-                Text("из \(all) слов знаю").font(.ui(15)).foregroundStyle(p.secondary)
+                Text(t("из %d слов знаю", all)).font(.ui(15)).foregroundStyle(p.secondary)
             }
             ProgressView(value: all > 0 ? Double(known) / Double(all) : 0).tint(p.known)
             HStack(spacing: 16) {
-                Label("\(dontKnow) не знаю", systemImage: "circle.fill").labelStyle(DotLabel(color: markDontKnow))
-                Label("\(model.repo.todayCount) сегодня", systemImage: "circle.fill").labelStyle(DotLabel(color: p.accent))
+                Label("\(dontKnow) " + t("не знаю"), systemImage: "circle.fill").labelStyle(DotLabel(color: markDontKnow))
+                Label("\(model.repo.todayCount) " + t("сегодня"), systemImage: "circle.fill").labelStyle(DotLabel(color: p.accent))
             }
             .font(.ui(13)).foregroundStyle(p.secondary)
         }
@@ -227,7 +258,7 @@ struct SettingsScreen: View {
     private var themes: some View {
         let p = model.palette
         return VStack(alignment: .leading, spacing: 10) {
-            Text("Тема").font(.ui(16)).foregroundStyle(p.text).padding(.horizontal, 18)
+            Text(t("Тема")).font(.ui(16)).foregroundStyle(p.text).padding(.horizontal, 18)
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 12) {
                     ForEach(palettes.indices, id: \.self) { i in
@@ -254,9 +285,9 @@ struct SettingsScreen: View {
         let p = model.palette
         return VStack(alignment: .leading) {
             HStack(alignment: .lastTextBaseline) {
-                Text("Размер шрифта: \(model.prefs.wordSize)").font(.ui(16)).foregroundStyle(p.text)
+                Text(t("Размер шрифта: %d", model.prefs.wordSize)).font(.ui(16)).foregroundStyle(p.text)
                 Spacer()
-                Text("реч").font(.serif(CGFloat(model.prefs.wordSize) * 0.6)).foregroundStyle(p.word)
+                Text(model.deck.sample).font(.serif(CGFloat(model.prefs.wordSize) * 0.6)).foregroundStyle(p.word)
             }
             Slider(value: Binding(get: { Double(model.prefs.wordSize) }, set: { v in model.set { $0.wordSize = Int(v) } }), in: 28...72, step: 1)
                 .tint(p.accent)
@@ -270,10 +301,13 @@ struct SettingsScreen: View {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? ""
         return VStack(alignment: .leading, spacing: 4) {
             (Text("НЕ").foregroundColor(p.titleRed) + Text("РОДНАЯ РЕЧЬ").foregroundColor(p.word)).font(.display(26)).padding(.bottom, 6)
-            Text("Версия \(version) · iPhone")
-            Text("Автор: Константин Хоренко")
-            Text("Лицензия: GNU GPL v3 или новее")
-            Text("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\nУдарения: Викисловарь (kaikki.org), CC BY-SA.\nЧасть карточек и подсказок составлена по материалам из открытых источников.\nШрифты Literata и Ruslan Display: SIL Open Font License.")
+            Text(t("Версия %s", version) + " · iPhone")
+            Text(t("Автор: Константин Хоренко"))
+            Text(t("Лицензия: GNU GPL v3 или новее"))
+            Text(t("Частотность слов: FrequencyWords (OpenSubtitles), CC BY-SA 4.0.\n") +
+                 t("Ударения: Викисловарь (kaikki.org), CC BY-SA.\n") +
+                 t("Часть карточек и подсказок составлена по материалам из открытых источников.\n") +
+                 t("Шрифты Literata и Ruslan Display: SIL Open Font License.\n").trimmingCharacters(in: .newlines))
                 .font(.ui(13)).padding(.top, 10)
         }
         .font(.ui(14)).foregroundStyle(p.secondary)
@@ -296,6 +330,23 @@ struct SettingsScreen: View {
             .contentShape(Rectangle())
         }
         .accessibilityIdentifier(title)
+    }
+
+    // A deck, titled in its own native language, so that a user finds the line in their language.
+    private func deckRow(_ d: Deck, on: Bool) -> some View {
+        let p = model.palette
+        return Button { model.switchDeck(d.id) } label: {
+            HStack {
+                Text(Decks.title(d)).font(.ui(16, on ? .semibold : .regular)).foregroundStyle(on ? p.accent : p.text)
+                    .multilineTextAlignment(.leading)
+                Spacer()
+                if on { Image(systemName: "checkmark").font(.ui(15, .semibold)).foregroundStyle(p.accent) }
+            }
+            .padding(.horizontal, 18).padding(.vertical, 14)
+            .contentShape(Rectangle())
+        }
+        .accessibilityIdentifier("deck:\(d.id)")
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func toggle(_ title: String, _ summary: String?, _ on: Bool, _ set: @escaping (Bool) -> Void) -> some View {

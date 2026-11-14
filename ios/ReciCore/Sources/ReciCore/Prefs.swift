@@ -9,7 +9,10 @@ public struct PendingAnswer: Codable, Equatable {
 }
 
 // Settings under the names of the web version, so progress files move between the versions.
+// The fields in Store.perDeck belong to the current deck: each deck keeps its own.
 public struct Prefs: Codable, Equatable {
+    // The deck in use (Decks); the store picks one on a first start and switches it.
+    public var deckId = Decks.first
     public var latinFirst = false
     public var showBothScripts = true
     public var autoSpeak = false
@@ -39,7 +42,12 @@ public struct Prefs: Codable, Equatable {
 
     public init() {}
 
-    enum CodingKeys: String, CodingKey {
+    public var deck: Deck { Decks.deck(deckId) }
+
+    static let keys = CodingKeys.allCases.map(\.stringValue)
+
+    enum CodingKeys: String, CodingKey, CaseIterable {
+        case deckId = "deck"
         case latinFirst, showBothScripts, autoSpeak, cardMode, activeSize, cardCount, useMarks, reviewKnown, accentMode
         case theme, wordSize, order, shuffleSeed, currentKey, categories, todayDate, todayCount, hintDone, newKnownCount
         case lockMode, lastShown, pendingAnswer
@@ -48,6 +56,7 @@ public struct Prefs: Codable, Equatable {
     public init(from decoder: Decoder) throws {
         let d = Prefs()
         let c = try decoder.container(keyedBy: CodingKeys.self)
+        deckId = try c.decodeIfPresent(String.self, forKey: .deckId) ?? d.deckId
         latinFirst = try c.decodeIfPresent(Bool.self, forKey: .latinFirst) ?? d.latinFirst
         showBothScripts = try c.decodeIfPresent(Bool.self, forKey: .showBothScripts) ?? d.showBothScripts
         autoSpeak = try c.decodeIfPresent(Bool.self, forKey: .autoSpeak) ?? d.autoSpeak

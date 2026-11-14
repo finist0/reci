@@ -59,11 +59,11 @@ struct CategoriesScreen: View {
             sel.contains { model.repo.inCategory(w, $0) } && (withKnown || model.repo.progress(w).state != Mark.known)
         }.count
         VStack(spacing: 0) {
-            Header(title: "Что учим")
+            Header(title: t("Что учим"))
             ScrollView {
                 VStack(spacing: 0) {
                     Group {
-                        GroupTitle(text: "Уровни")
+                        GroupTitle(text: t("Уровни"))
                         Panel {
                             ForEach(Array(Labels.levels.enumerated()), id: \.offset) { i, item in
                                 if i > 0 { Line() }
@@ -72,22 +72,22 @@ struct CategoriesScreen: View {
                         }
                     }
                     Group {
-                        GroupTitle(text: "Разделы")
-                        Text("Долгое нажатие на раздел, тему или отметку открывает список слов")
+                        GroupTitle(text: t("Разделы"))
+                        Text(t("Долгое нажатие на раздел, тему или отметку открывает список слов"))
                             .font(.ui(12)).foregroundStyle(p.secondary).padding(.horizontal, 26).padding(.bottom, 8)
                             .frame(maxWidth: .infinity, alignment: .leading)
                         chips(Labels.sections.filter { count($0.0) > 0 }.map { ($0.0, "\($0.1) · \(count($0.0))") })
                     }
                     Group {
-                        GroupTitle(text: "Мои отметки")
+                        GroupTitle(text: t("Мои отметки"))
                         chips(Labels.lists.map { ($0.0, "\($0.1) · \(count($0.0))") })
                     }
                     Group {
-                        GroupTitle(text: "Темы")
+                        GroupTitle(text: t("Темы"))
                         chips(Labels.topics.filter { count("T:" + $0.0) > 0 }.map { ("T:" + $0.0, "\($0.1) · \(count("T:" + $0.0))") })
                     }
                     Group {
-                        GroupTitle(text: "Порядок")
+                        GroupTitle(text: t("Порядок"))
                         FlowLayout(spacing: 8) {
                             ForEach(Array(Labels.orders.enumerated()), id: \.offset) { i, name in
                                 chip(name, on: order == i).onTapGesture { order = i }
@@ -105,7 +105,7 @@ struct CategoriesScreen: View {
                 model.changed()
                 dismiss()
             } label: {
-                Text("Учить \(total) \(plural(total, "карточку", "карточки", "карточек"))")
+                Text(t("Учить %d %s", total, plural(total, "карточку", "карточки", "карточек")))
                     .font(.ui(17, .semibold)).foregroundStyle(.white)
                     .frame(maxWidth: .infinity).frame(height: 54)
                     .background(Capsule().fill(sel.isEmpty ? p.faint : p.accent))
@@ -137,12 +137,12 @@ struct CategoriesScreen: View {
             VStack(alignment: .leading, spacing: 6) {
                 Text(name.components(separatedBy: "· ").last ?? name).font(.ui(16, .medium)).foregroundStyle(p.text)
                 ProgressView(value: all > 0 ? Double(known) / Double(all) : 0).tint(p.known)
-                Text("знаю \(known) из \(all)").font(.ui(12)).foregroundStyle(p.secondary)
+                Text(t("знаю %d из %d", known, all)).font(.ui(12)).foregroundStyle(p.secondary)
             }
             Button { router.go(.list(id)) } label: {
                 Image(systemName: "chevron.right").foregroundStyle(p.secondary).frame(width: 32, height: 32)
             }
-            .accessibilityLabel("Список слов")
+            .accessibilityLabel(t("Список слов"))
             Image(systemName: on ? "checkmark.circle.fill" : "circle").foregroundStyle(on ? p.accent : p.faint)
         }
         .padding(.horizontal, 16).padding(.vertical, 12)
@@ -186,16 +186,16 @@ struct SearchScreen: View {
     var body: some View {
         let p = model.palette
         VStack(spacing: 0) {
-            Header(title: "Поиск")
-            TextField(byMeaning ? "слово по-русски" : "реч, reč", text: $q)
+            Header(title: t("Поиск"))
+            TextField(byMeaning ? model.deck.meaningHint : model.deck.wordHint, text: $q)
                 .textInputAutocapitalization(.never).autocorrectionDisabled()
                 .focused($focused)
                 .padding(12).background(RoundedRectangle(cornerRadius: 14).fill(p.card))
                 .padding(.horizontal, 14)
                 .accessibilityIdentifier("searchField")
             Picker("", selection: $byMeaning) {
-                Text("Сербское слово").tag(false)
-                Text("Перевод").tag(true)
+                Text(model.deck.wordChip).tag(false)
+                Text(t("Перевод")).tag(true)
             }
             .pickerStyle(.segmented).padding(14)
             List(results(), id: \.key) { w in
@@ -206,7 +206,7 @@ struct SearchScreen: View {
                             Spacer()
                             Text(Labels.levelShort(w.level)).font(.ui(12)).foregroundStyle(p.secondary)
                         }
-                        Text(w.meanings.joined(separator: " · ")).font(.ui(14)).foregroundStyle(p.secondary)
+                        Text(model.prefs.native(w.meanings.joined(separator: " · "))).font(.ui(14)).foregroundStyle(p.secondary)
                     }
                     .multilineTextAlignment(.leading)
                 }
@@ -220,12 +220,7 @@ struct SearchScreen: View {
     }
 
     private func results() -> [Word] {
-        let q = q.trimmingCharacters(in: .whitespaces).lowercased()
-        if q.isEmpty { return [] }
-        return Array(model.repo.words.filter { w in
-            byMeaning ? w.meanings.contains { $0.lowercased().contains(q) }
-                : w.cyr.lowercased().hasPrefix(q) || Translit.toLatin(w.cyr).lowercased().hasPrefix(q)
-        }.prefix(200))
+        Array(model.repo.words.filter { Search.matches($0, q, byMeaning: byMeaning) }.prefix(200))
     }
 }
 
@@ -245,15 +240,15 @@ struct ListScreen: View {
         }
         VStack(spacing: 0) {
             Header(title: "\(Labels.category(id)) · \(all.count)")
-            TextField("найти в списке", text: $q).textInputAutocapitalization(.never).autocorrectionDisabled()
+            TextField(t("найти в списке"), text: $q).textInputAutocapitalization(.never).autocorrectionDisabled()
                 .padding(12).background(RoundedRectangle(cornerRadius: 14).fill(p.card)).padding(.horizontal, 14)
             List(shown, id: \.key) { w in
                 Button { router.go(.detail(w.key)) } label: {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(w.pos == "compare" ? (w.meanings.first ?? w.cyr) : model.prefs.headword(w))
+                        Text(w.pos == "compare" ? (w.meanings.first.map { model.prefs.native($0) } ?? w.cyr) : model.prefs.headword(w))
                             .font(.serif(18, .semibold)).foregroundStyle(p.word)
                         if !w.isArticle {
-                            Text(w.meanings.joined(separator: " · ")).font(.ui(14)).foregroundStyle(p.secondary)
+                            Text(model.prefs.native(w.meanings.joined(separator: " · "))).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                     }
                     .multilineTextAlignment(.leading)

@@ -115,7 +115,7 @@ struct WordBody: View {
                     Image(systemName: "speaker.wave.2.fill").foregroundStyle(p.accent).frame(width: 38, height: 38)
                         .background(Circle().fill(p.highlight))
                 }
-                .accessibilityLabel("Произнести")
+                .accessibilityLabel(t("Произнести"))
                 VStack(alignment: .leading, spacing: 2) {
                     GramLine(w: w)
                     if !w.forms.isEmpty { Text(prefs.primary(w.forms)).font(.ui(14)).foregroundStyle(p.secondary) }
@@ -127,7 +127,7 @@ struct WordBody: View {
                 Meanings(w: w)
                 if covered {
                     Button(action: onUncover) {
-                        Text("Показать перевод").font(.ui(15, .semibold)).foregroundStyle(p.accent)
+                        Text(t("Показать перевод")).font(.ui(15, .semibold)).foregroundStyle(p.accent)
                             .frame(maxWidth: .infinity, maxHeight: .infinity)
                             .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight))
                     }
@@ -147,9 +147,10 @@ struct GramLine: View {
     }
 
     private func line() -> AttributedString {
+        let prefs = model.prefs
         var out = AttributedString(Labels.pos(w.pos))
         guard !w.gram.isEmpty else { return out }
-        var g = AttributedString("  " + w.gram)
+        var g = AttributedString("  " + prefs.native(w.gram))
         g.font = .ui(14, .semibold)
         if w.ruGram.isEmpty {
             g.foregroundColor = w.pos == "noun" ? model.palette.accent : model.palette.text
@@ -158,7 +159,7 @@ struct GramLine: View {
         // A different gender than in Russian; the strong mark when the Russian word looks alike.
         g.foregroundColor = w.ruNoun.isEmpty ? markUnsure : markDontKnow
         out += g
-        out += AttributedString(w.ruNoun.isEmpty ? "  · в рус. \(w.ruGram)" : "  ≠ рус. «\(w.ruNoun)» \(w.ruGram)")
+        out += AttributedString(w.ruNoun.isEmpty ? t("  · в рус. %s", w.ruGram) : t("  ≠ рус. «%s» %s", w.ruNoun, w.ruGram))
         return out
     }
 }
@@ -173,7 +174,7 @@ struct Meanings: View {
                 HStack(alignment: .top, spacing: 10) {
                     Text("\(i + 1)").font(.ui(12, .bold)).foregroundStyle(p.accent)
                         .frame(width: 22, height: 22).background(Circle().fill(p.highlight))
-                    Text(m).font(.serif(19)).foregroundStyle(p.text)
+                    Text(model.prefs.native(m)).font(.serif(19)).foregroundStyle(p.text)
                 }
             }
         }
@@ -191,7 +192,7 @@ struct GrammarLinks: View {
             ScrollView(.horizontal, showsIndicators: false) {
                 HStack(spacing: 8) {
                     ForEach(compares) { c in
-                        link("≈ " + (c.meanings.first ?? c.cyr)) { router.go(.detail(c.key)) }
+                        link("≈ " + (c.meanings.first.map { model.prefs.native($0) } ?? model.prefs.primary(c.cyr))) { router.go(.detail(c.key)) }
                     }
                     ForEach(links, id: \.self) { id in
                         link("§ " + (model.repo.topic(id)?.title ?? id)) { router.go(.topic(id)) }
@@ -212,18 +213,20 @@ struct GrammarLinks: View {
     }
 }
 
-// A Serbian word mentioned on a card: its own card if the dictionary has one, else its sound.
+// A word in the language learned mentioned on a card: its own card if the dictionary has one,
+// else its sound. acc is the word with stress marks, when the card gives it.
 struct WordChip: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var router: Router
-    let sr: String
+    let word: String
+    var acc: String = ""
     var from: String = ""
     var body: some View {
-        let target = model.repo.wordByCyr(sr)
+        let target = model.repo.wordByCyr(word)
         Button {
-            if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(sr) }
+            if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(word) }
         } label: {
-            Text(model.prefs.linked(sr, target) + (target != nil ? " ›" : "")).font(.ui(15)).foregroundStyle(model.palette.text)
+            Text(model.prefs.linked(word, acc: acc, target) + (target != nil ? " ›" : "")).font(.ui(15)).foregroundStyle(model.palette.text)
                 .multilineTextAlignment(.leading)
                 .padding(.horizontal, 12).padding(.vertical, 6)
                 .background(Capsule().fill(model.palette.panel))
@@ -241,12 +244,12 @@ struct Details: View {
         VStack(alignment: .leading, spacing: 0) {
             if !w.examples.isEmpty {
                 Divider().overlay(p.divider).padding(.vertical, 16)
-                SectionLabel(text: "Примеры")
+                SectionLabel(text: t("Примеры"))
                 ForEach(Array(w.examples.enumerated()), id: \.offset) { _, e in
-                    Button { model.speech.speak(plain(e.sr)) } label: {
+                    Button { model.speech.speak(plain(e.text)) } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(highlighted(model.prefs.primary(model.prefs.marked(e.sr)), p.accent)).font(.serif(17)).foregroundStyle(p.text)
-                            Text(e.ru).font(.ui(14)).foregroundStyle(p.secondary)
+                            Text(highlighted(model.prefs.primary(model.prefs.marked(e.text)), p.accent)).font(.serif(17)).foregroundStyle(p.text)
+                            Text(model.prefs.native(e.tr)).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -257,27 +260,31 @@ struct Details: View {
             if !w.syn.isEmpty || !w.ant.isEmpty {
                 Divider().overlay(p.divider).padding(.vertical, 16)
                 if !w.syn.isEmpty {
-                    SectionLabel(text: "Синонимы")
-                    Flow(items: w.syn) { WordChip(sr: $0, from: w.key) }
+                    SectionLabel(text: t("Синонимы"))
+                    Flow(items: Array(w.syn.indices)) { i in
+                        WordChip(word: w.syn[i], acc: i < w.synAcc.count ? w.synAcc[i] : "", from: w.key)
+                    }
                 }
                 if !w.ant.isEmpty {
-                    SectionLabel(text: "Антонимы").padding(.top, 10)
-                    Flow(items: w.ant) { WordChip(sr: $0, from: w.key) }
+                    SectionLabel(text: t("Антонимы")).padding(.top, 10)
+                    Flow(items: Array(w.ant.indices)) { i in
+                        WordChip(word: w.ant[i], acc: i < w.antAcc.count ? w.antAcc[i] : "", from: w.key)
+                    }
                 }
             }
             if !w.related.isEmpty {
                 Divider().overlay(p.divider).padding(.vertical, 16)
-                SectionLabel(text: "Связанные слова")
+                SectionLabel(text: t("Связанные слова"))
                 RelatedList(items: w.related, from: w.key)
             }
             let notes = ([w.note] + w.tips).filter { !$0.isEmpty }
             if !notes.isEmpty {
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("Полезно знать").font(.ui(13, .semibold)).foregroundStyle(p.accent)
-                    ForEach(notes, id: \.self) { t in
+                    Text(t("Полезно знать")).font(.ui(13, .semibold)).foregroundStyle(p.accent)
+                    ForEach(notes, id: \.self) { tip in
                         HStack(alignment: .top, spacing: 6) {
                             Text("•")
-                            Text(model.prefs.marked(t))
+                            Text(model.prefs.native(model.prefs.marked(tip)))
                         }
                         .font(.ui(15)).foregroundStyle(p.text)
                     }
@@ -300,12 +307,12 @@ struct RelatedList: View {
         let p = model.palette
         VStack(alignment: .leading, spacing: 8) {
             ForEach(Array(items.enumerated()), id: \.offset) { _, r in
-                let target = model.repo.wordByCyr(r.sr)
+                let target = model.repo.wordByCyr(r.word)
                 Button {
-                    if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(r.sr) }
+                    if let target, target.key != from { router.go(.detail(target.key)) } else { model.speech.speak(r.word) }
                 } label: {
-                    (Text(model.prefs.linked(r.sr, target) + (target != nil ? " ›" : "")).fontWeight(.semibold).foregroundColor(p.word)
-                        + Text("  —  ").foregroundColor(p.faint) + Text(r.ru).foregroundColor(p.text))
+                    (Text(model.prefs.linked(r.word, acc: r.acc, target) + (target != nil ? " ›" : "")).fontWeight(.semibold).foregroundColor(p.word)
+                        + Text("  —  ").foregroundColor(p.faint) + Text(model.prefs.native(r.tr)).foregroundColor(p.text))
                         .font(.ui(16))
                         .frame(maxWidth: .infinity, alignment: .leading)
                         .multilineTextAlignment(.leading)
@@ -326,16 +333,16 @@ struct RecallBody: View {
             Text("· · ·").font(.serif(CGFloat(model.prefs.wordSize))).foregroundStyle(p.faint)
             GramLine(w: w)
             Meanings(w: w)
-            // The Russian side of the examples as a hint; the Serbian sentences would give the word away.
+            // The translations of the examples as a hint; the examples themselves would give the word away.
             if !w.examples.isEmpty {
                 Divider().overlay(p.divider)
-                SectionLabel(text: "Как сказать по-сербски")
+                SectionLabel(text: model.deck.howToSay)
                 ForEach(Array(w.examples.enumerated()), id: \.offset) { _, e in
-                    Text("«\(e.ru)»").font(.ui(16)).foregroundStyle(p.text)
+                    Text("«\(model.prefs.native(e.tr))»").font(.ui(16)).foregroundStyle(p.text)
                 }
             }
             Button(action: onReveal) {
-                Text("Показать слово").font(.ui(16, .semibold)).foregroundStyle(p.accent)
+                Text(t("Показать слово")).font(.ui(16, .semibold)).foregroundStyle(p.accent)
                     .frame(maxWidth: .infinity).padding(.vertical, 14)
                     .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight))
             }
@@ -353,28 +360,28 @@ struct ArticleBody: View {
         let p = model.palette
         let compare = w.pos == "compare"
         VStack(alignment: .leading, spacing: 12) {
-            SectionLabel(text: compare ? "Похожие слова" : "Заметка")
-            Text(compare ? (w.meanings.first ?? model.prefs.primary(w.cyr)) : w.cyr)
+            SectionLabel(text: compare ? t("Похожие слова") : t("Заметка"))
+            Text(compare ? (w.meanings.first.map { model.prefs.native($0) } ?? model.prefs.primary(w.cyr)) : model.prefs.native(w.cyr))
                 .font(.serif(26, .semibold)).foregroundStyle(p.word)
                 .accessibilityIdentifier("articleTitle")
             if compare {
                 RelatedList(items: w.related, from: w.key)
-                if !w.note.isEmpty { Text(model.prefs.marked(w.note)).font(.ui(16)).foregroundStyle(p.text) }
+                if !w.note.isEmpty { Text(model.prefs.native(model.prefs.marked(w.note))).font(.ui(16)).foregroundStyle(p.text) }
             } else {
-                Text(model.prefs.marked(w.note)).font(.ui(16)).foregroundStyle(p.text)
+                Text(model.prefs.native(model.prefs.marked(w.note))).font(.ui(16)).foregroundStyle(p.text)
                 if !w.related.isEmpty {
-                    SectionLabel(text: "Слова")
+                    SectionLabel(text: t("Слова"))
                     RelatedList(items: w.related, from: w.key)
                 }
             }
             if !w.examples.isEmpty {
                 Divider().overlay(p.divider)
-                SectionLabel(text: "Примеры")
+                SectionLabel(text: t("Примеры"))
                 ForEach(Array(w.examples.enumerated()), id: \.offset) { _, e in
-                    Button { model.speech.speak(plain(e.sr)) } label: {
+                    Button { model.speech.speak(plain(e.text)) } label: {
                         VStack(alignment: .leading, spacing: 2) {
-                            Text(highlighted(model.prefs.primary(model.prefs.marked(e.sr)), p.accent)).font(.serif(17)).foregroundStyle(p.text)
-                            Text(e.ru).font(.ui(14)).foregroundStyle(p.secondary)
+                            Text(highlighted(model.prefs.primary(model.prefs.marked(e.text)), p.accent)).font(.serif(17)).foregroundStyle(p.text)
+                            Text(model.prefs.native(e.tr)).font(.ui(14)).foregroundStyle(p.secondary)
                         }
                         .multilineTextAlignment(.leading)
                         .frame(maxWidth: .infinity, alignment: .leading)

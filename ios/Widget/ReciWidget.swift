@@ -28,8 +28,8 @@ struct CardWidget: Widget {
         StaticConfiguration(kind: "card", provider: CardProvider()) { entry in
             CardWidgetView(entry: entry).containerBackground(.fill.tertiary, for: .widget)
         }
-        .configurationDisplayName("Карточка")
-        .description("Слово, которое вы сейчас учите.")
+        .configurationDisplayName(t("Карточка"))
+        .description(t("Слово, которое вы сейчас учите."))
         .supportedFamilies([.accessoryRectangular, .accessoryInline, .systemSmall, .systemMedium])
     }
 }
@@ -50,8 +50,8 @@ struct KnowWidget: Widget {
         StaticConfiguration(kind: "know", provider: ButtonProvider()) { _ in
             AnswerButtonView(know: true).containerBackground(.clear, for: .widget)
         }
-        .configurationDisplayName("Знаю")
-        .description("Отмечает слово на карточке и показывает следующее.")
+        .configurationDisplayName(t("Знаю"))
+        .description(t("Отмечает слово на карточке и показывает следующее."))
         .supportedFamilies([.accessoryCircular])
     }
 }
@@ -61,14 +61,20 @@ struct DontKnowWidget: Widget {
         StaticConfiguration(kind: "dontknow", provider: ButtonProvider()) { _ in
             AnswerButtonView(know: false).containerBackground(.clear, for: .widget)
         }
-        .configurationDisplayName("Не знаю")
-        .description("Вернёт слово через пять карточек и покажет следующее.")
+        .configurationDisplayName(t("Не знаю"))
+        .description(t("Вернёт слово через пять карточек и покажет следующее."))
         .supportedFamilies([.accessoryCircular])
     }
 }
 
 @main
 struct ReciWidgetBundle: WidgetBundle {
+    // The widget names and the card speak the language of the deck in use.
+    init() {
+        LockDeck.loadTables()
+        _ = Store(dir: LockDeck.dir)
+    }
+
     var body: some Widget {
         CardWidget()
         KnowWidget()

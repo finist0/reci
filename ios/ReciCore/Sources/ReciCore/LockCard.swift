@@ -7,25 +7,26 @@ public struct LockCard: Equatable {
     public let title: String?
     public let subtitle: String
     public let recall: Bool
-    // The first example, or its Russian side for a word to recall.
+    // The first example, or its translation for a word to recall.
     public var example: String? = nil
 
     public static func of(_ repo: Repo?) -> LockCard {
-        guard let repo else { return LockCard(title: nil, subtitle: "Откройте приложение", recall: false) }
+        guard let repo else { return LockCard(title: nil, subtitle: t("Откройте приложение"), recall: false) }
         guard let w = repo.current() else {
-            return LockCard(title: nil, subtitle: "Слова закончились: выберите другие в приложении", recall: false)
+            return LockCard(title: nil, subtitle: t("Слова закончились: выберите другие в приложении"), recall: false)
         }
-        let meanings = w.meanings.prefix(2).joined(separator: ", ")
+        let prefs = repo.prefs
+        let meanings = prefs.native(w.meanings.prefix(2).joined(separator: ", "))
         if w.isArticle {
-            return LockCard(title: w.pos == "compare" ? (w.meanings.first ?? w.cyr) : w.cyr,
-                            subtitle: w.pos == "compare" ? "похожие слова" : "заметка", recall: false)
+            return LockCard(title: w.pos == "compare" ? prefs.native(w.meanings.first ?? w.cyr) : prefs.native(w.cyr),
+                            subtitle: w.pos == "compare" ? t("похожие слова") : t("заметка"), recall: false)
         }
         // A word to recall shows its translation; the word itself opens with the app.
         let first = w.examples.first
         if repo.asksRecall(w) {
-            return LockCard(title: meanings, subtitle: "вспомните слово", recall: true, example: first.map { "«\($0.ru)»" })
+            return LockCard(title: meanings, subtitle: t("вспомните слово"), recall: true, example: first.map { "«\(prefs.native($0.tr))»" })
         }
-        let sr = first.map { repo.prefs.primary(repo.prefs.marked($0.sr.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: ""))) }
-        return LockCard(title: repo.prefs.headword(w), subtitle: meanings, recall: false, example: sr)
+        let text = first.map { prefs.primary(prefs.marked($0.text.replacingOccurrences(of: "[", with: "").replacingOccurrences(of: "]", with: ""))) }
+        return LockCard(title: prefs.headword(w), subtitle: meanings, recall: false, example: text)
     }
 }

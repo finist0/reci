@@ -55,10 +55,13 @@ final class AppModel: ObservableObject {
         if ProcessInfo.processInfo.arguments.contains("-uitest-crash") {
             crash.keep("2026-11-02T10:00:00Z, build 14\nexception type 1\nsignal 11")
         }
+        LockDeck.loadTables()
         dict = Dict.updater()
-        let (words, topics) = Dict.load(patch: dict.stored())
-        repo = Repo(store: Store(dir: LockDeck.dir), words: words, topics: topics)
-        LockDeck.writeDeck(words)
+        let store = Store(dir: LockDeck.dir)
+        let deck = store.prefs.deck
+        let (words, topics) = Dict.load(deck: deck, patch: deck.isFirst ? dict.stored() : nil)
+        repo = Repo(store: store, words: words, topics: topics)
+        LockDeck.writeDeck(words, deck: deck)
         telemetry = Telemetry(file: Self.telemetryFile(), post: Self.transport())
         crashOffer = crash.pending
         news = Self.checkNews(fresh: repo.store.progress.isEmpty)
@@ -69,6 +72,7 @@ final class AppModel: ObservableObject {
                 self.crashOffer = self.crash.pending
             }
         }
+        speech.deck = deck
     }
 
     private static let newsSeen = "whatsNewSeen"
@@ -120,12 +124,16 @@ final class AppModel: ObservableObject {
     // Looks for a dictionary patch now and then; a new one is built off the main actor and swapped
     // in, while the cards keep coming from the dictionary in use.
     func checkDictionary() {
+        guard deck.isFirst else { return }
         Task { @MainActor in
             let result = await dict.check { Dict.baseId() }
             guard result != .none else { return }
             let kept = dict.kept
-            let (words, topics) = await Task.detached { Dict.load(patch: kept.flatMap { DictPatch.read($0.file, base: $0.base) }) }.value
-            await Task.detached { LockDeck.writeDeck(words) }.value
+            let first = Decks.deck(Decks.first)
+            let (words, topics) = await Task.detached { Dict.load(deck: first, patch: kept.flatMap { DictPatch.read($0.file, base: $0.base) }) }.value
+            // The patch is kept for the first deck; another one may be in use by now.
+            guard deck.isFirst, !switching else { return }
+            await Task.detached { LockDeck.writeDeck(words, deck: first) }.value
             let fresh = Repo(store: repo.store, words: words, topics: topics)
             fresh.takePlace(of: repo)
             repo = fresh
@@ -208,7 +216,7 @@ final class AppModel: ObservableObject {
         Task { @MainActor in
             let sent = await telemetry.sendFeedback(kind: kind, text: text, card: card, email: email, app: appVersion, os: osName,
                                                     env: environment())
-            sentToast = sent ? "Спасибо! Сообщение отправлено" : "Сообщение уйдёт, когда появится интернет"
+            sentToast = sent ? t("Спасибо! Сообщение отправлено") : t("Сообщение уйдёт, когда появится интернет")
             toastShown += 1
             let shown = toastShown
             changed()
@@ -219,6 +227,41 @@ final class AppModel: ObservableObject {
     }
 
     var prefs: Prefs { repo.prefs }
+    var deck: Deck { repo.prefs.deck }
+
+    // Dates and system texts in the language of the interface.
+    var locale: Locale {
+        switch deck.native {
+        case "sr": return Locale(identifier: prefs.latinFirst ? "sr_Latn_RS" : "sr_RS")
+        case "en": return Locale(identifier: "en_US")
+        default: return Locale(identifier: "ru_RU")
+        }
+    }
+
+    // Set while the cards of another deck load.
+    private(set) var switching = false
+
+    // Another deck: its cards, its progress and its place in the cards, the interface in its
+    // native language and the voice of the language it teaches. The cards load off the main
+    // actor; the old ones stay until the new ones are in.
+    func switchDeck(_ id: String) {
+        guard id != deck.id, !switching else { return }
+        let d = Decks.deck(id)
+        let kept = d.isFirst ? dict.kept : nil
+        switching = true
+        Task { @MainActor in
+            let (words, topics) = await Task.detached { Dict.load(deck: d, patch: kept.flatMap { DictPatch.read($0.file, base: $0.base) }) }.value
+            await Task.detached { LockDeck.writeDeck(words, deck: d) }.value
+            repo.store.switchDeck(d.id)
+            repo = Repo(store: repo.store, words: words, topics: topics)
+            speech.deck = d
+            showing = nil
+            switching = false
+            syncShowing()
+            changed()
+            WidgetCenter.shared.reloadTimelines(ofKind: "card")
+        }
+    }
     var palette: Palette { palettes.indices.contains(prefs.theme) ? palettes[prefs.theme] : palettes[2] }
 
     func changed() {
@@ -249,12 +292,12 @@ final class AppModel: ObservableObject {
     private func stageLabel(_ w: Word) -> String? {
         if w.isArticle { return nil }
         let p = repo.shownProgress(w)
-        let what = prefs.cardMode == 2 ? "перевод" : "слово"
-        if repo.isDue(p) { return "Проверка: вспомните \(what)" }
-        if p.phase == Repo.recall { return "Вспомните \(what) · «Знаю» \(p.streak) из 3" }
-        if p.phase == Repo.learned { return "Выучено" }
-        if p.state == Mark.dontKnow || p.state == Mark.unsure { return "Ещё раз: запомните слово" }
-        return "Новое слово"
+        let what = prefs.cardMode == 2 ? t("перевод") : t("слово")
+        if repo.isDue(p) { return t("Проверка: вспомните %s", what) }
+        if p.phase == Repo.recall { return t("Вспомните %s · «Знаю» %d из 3", what, p.streak) }
+        if p.phase == Repo.learned { return t("Выучено") }
+        if p.state == Mark.dontKnow || p.state == Mark.unsure { return t("Ещё раз: запомните слово") }
+        return t("Новое слово")
     }
 
     // Makes sure the card on screen is picked and counted as shown once.

@@ -119,7 +119,7 @@ struct TopBar: View {
         HStack {
             DeckChip().layoutPriority(1)
             Spacer()
-            ForEach([("magnifyingglass", "Поиск", Route.search), ("book", "Грамматика", Route.grammar), ("gearshape", "Настройки", Route.settings)],
+            ForEach([("magnifyingglass", t("Поиск"), Route.search), ("book", t("Грамматика"), Route.grammar), ("gearshape", t("Настройки"), Route.settings)],
                     id: \.1) { item in
                 Button { router.go(item.2) } label: {
                     Image(systemName: item.0).font(.ui(19)).foregroundStyle(p.text).frame(width: 40, height: 40)
@@ -141,12 +141,12 @@ struct DeckChip: View {
         let first = cats.sorted().first
         let title = first.map { $0.hasPrefix("L") ? Labels.category($0).components(separatedBy: " ")[0] : Labels.category($0) } ?? "—"
         let more = cats.count > 1 ? " +\(cats.count - 1)" : ""
-        let (k, t) = counts(cats)
+        let (known, total) = counts(cats)
         Button { router.go(.categories) } label: {
             // Short of room, the chip drops the count, then the "+N" and the arrow, and only then
             // cuts the title.
             ViewThatFits(in: .horizontal) {
-                chip(title + more, count: "\(k)/\(t)", arrow: true)
+                chip(title + more, count: "\(known)/\(total)", arrow: true)
                 chip(title + more, count: nil, arrow: true)
                 chip(title, count: nil, arrow: true)
                 chip(title, count: nil, arrow: false)
@@ -185,14 +185,14 @@ struct Star: View {
             Image(systemName: fav ? "star.fill" : "star").font(.ui(20))
                 .foregroundStyle(fav ? markUnsure : model.palette.faint).frame(width: 40, height: 40)
         }
-        .accessibilityLabel("Избранное")
+        .accessibilityLabel(t("Избранное"))
     }
 }
 
 struct LearnedToast: View {
     @EnvironmentObject var model: AppModel
     var body: some View {
-        Label("Слово отмечено выученным", systemImage: "checkmark")
+        Label(t("Слово отмечено выученным"), systemImage: "checkmark")
             .font(.ui(14, .semibold)).foregroundStyle(.white)
             .padding(.horizontal, 16).padding(.vertical, 9)
             .background(Capsule().fill(model.palette.known))
@@ -205,9 +205,9 @@ struct LongPressHint: View {
     var body: some View {
         let p = model.palette
         HStack {
-            Text("Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.").font(.ui(14)).foregroundStyle(p.text)
+            Text(t("Слово уже знакомо? Удерживайте «Знаю» — оно сразу станет выученным.")).font(.ui(14)).foregroundStyle(p.text)
             Button("✕") { model.closeHint() }.foregroundStyle(p.secondary).frame(width: 40, height: 40)
-                .accessibilityLabel("Закрыть")
+                .accessibilityLabel(t("Закрыть"))
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight))
@@ -239,10 +239,10 @@ struct MarksRow: View {
     private func row(brief: Bool, dots: Bool) -> some View {
         let p = model.palette
         return HStack(spacing: 4) {
-            mark(article ? "Перечитать позже" : "Не знаю", brief: brief ? "Позже" : nil, dot: dots,
+            mark(article ? t("Перечитать позже") : t("Не знаю"), brief: brief ? t("Позже") : nil, dot: dots,
                  id: "markDontKnow", on: answered == Mark.dontKnow, color: article ? p.secondary : markDontKnow)
                 .onTapGesture { onAnswer(Mark.dontKnow, false) }
-            mark(article ? "Не показывать" : "Знаю", brief: brief ? "Скрыть" : nil, dot: dots,
+            mark(article ? t("Не показывать") : t("Знаю"), brief: brief ? t("Скрыть") : nil, dot: dots,
                  id: "markKnow", on: answered == Mark.known, color: p.known)
                 .gesture(
                     LongPressGesture(minimumDuration: 0.5)
@@ -277,10 +277,10 @@ struct BottomNav: View {
                 Image(systemName: "chevron.left").font(.ui(20, .semibold)).foregroundStyle(p.text)
                     .frame(width: 54, height: 54).background(Circle().fill(p.card))
             }
-            .accessibilityLabel("Предыдущее слово")
+            .accessibilityLabel(t("Предыдущее слово"))
             Button { model.step(1) } label: {
                 HStack {
-                    Text("Дальше").font(.ui(17, .semibold))
+                    Text(t("Дальше")).font(.ui(17, .semibold))
                     Image(systemName: "arrow.right")
                 }
                 .foregroundStyle(.white).frame(maxWidth: .infinity).frame(height: 54)
@@ -305,13 +305,13 @@ struct OneRow: View {
                 Image(systemName: "chevron.left").font(.ui(18, .semibold)).foregroundStyle(p.text)
                     .frame(width: 46, height: 46).background(Circle().fill(p.card))
             }
-            .accessibilityLabel("Предыдущее слово")
+            .accessibilityLabel(t("Предыдущее слово"))
             MarksRow(answered: answered, article: article, compact: true) { a, learned in model.answer(a, learned: learned) }
             Button { model.step(1) } label: {
                 Image(systemName: "arrow.right").font(.ui(18, .semibold)).foregroundStyle(.white)
                     .frame(width: 46, height: 46).background(Circle().fill(p.accent))
             }
-            .accessibilityLabel("Дальше")
+            .accessibilityLabel(t("Дальше"))
             .accessibilityIdentifier("next")
         }
         .padding(.horizontal, 14).padding(.top, 4).padding(.bottom, 8)
@@ -324,9 +324,9 @@ struct Empty: View {
     var body: some View {
         let p = model.palette
         VStack(spacing: 10) {
-            Text("Здесь пока пусто").font(.serif(22, .semibold)).foregroundStyle(p.word)
-            Text("В выбранных разделах не осталось слов").foregroundStyle(p.secondary)
-            Button("Выбрать слова") { router.go(.categories) }.buttonStyle(.borderedProminent).tint(p.accent)
+            Text(t("Здесь пока пусто")).font(.serif(22, .semibold)).foregroundStyle(p.word)
+            Text(t("В выбранных разделах не осталось слов")).foregroundStyle(p.secondary)
+            Button(t("Выбрать слова")) { router.go(.categories) }.buttonStyle(.borderedProminent).tint(p.accent)
         }
     }
 }

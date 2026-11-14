@@ -1,4 +1,5 @@
 import AppIntents
+import ReciCore
 import SwiftUI
 import WidgetKit
 
@@ -27,8 +28,8 @@ struct CardWidgetView: View {
                 card
                 Spacer(minLength: 0)
                 HStack {
-                    Button(intent: AnswerIntent(know: false)) { Label("Не знаю", systemImage: "xmark") }.tint(.red)
-                    Button(intent: AnswerIntent(know: true)) { Label("Знаю", systemImage: "checkmark") }.tint(.green)
+                    Button(intent: AnswerIntent(know: false)) { Label(t("Не знаю"), systemImage: "xmark") }.tint(.red)
+                    Button(intent: AnswerIntent(know: true)) { Label(t("Знаю"), systemImage: "checkmark") }.tint(.green)
                 }
                 .font(.system(size: 14, weight: .semibold))
             }
@@ -69,7 +70,7 @@ struct AnswerButtonView: View {
                 AccessoryWidgetBackground()
                 VStack(spacing: 0) {
                     Image(systemName: know ? "checkmark" : "xmark").font(.system(size: 18, weight: .bold))
-                    Text(know ? "Знаю" : "Не знаю").font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
+                    Text(know ? t("Знаю") : t("Не знаю")).font(.system(size: 9, weight: .semibold)).lineLimit(1).minimumScaleFactor(0.7)
                 }
             }
         }

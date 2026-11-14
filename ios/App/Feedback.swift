@@ -6,11 +6,12 @@ struct StatsNotice: View {
     var body: some View {
         let p = model.palette
         HStack {
-            Text("Приложение раз в день отправляет анонимную статистику: сколько карточек показано, какие разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика».")
+            Text(t("Приложение раз в день отправляет анонимную статистику: сколько карточек показано, какие ") +
+                 t("разделы и настройки выбраны. Отключить: Настройки → «Анонимная статистика»."))
                 .font(.ui(14)).foregroundStyle(p.text)
                 .accessibilityIdentifier("statsNotice")
             Button("✕") { model.closeNotice() }.foregroundStyle(p.secondary).frame(width: 40, height: 40)
-                .accessibilityLabel("Понятно")
+                .accessibilityLabel(t("Понятно"))
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight))
@@ -27,7 +28,7 @@ struct SchoolsButton: View {
         Button { router.go(.schools) } label: {
             Image(systemName: "studentdesk").font(.ui(18)).foregroundStyle(model.palette.faint).frame(width: 40, height: 40)
         }
-        .accessibilityLabel("Куда пойти учиться")
+        .accessibilityLabel(t("Куда пойти учиться"))
     }
 }
 
@@ -36,8 +37,8 @@ struct SchoolsScreen: View {
     @EnvironmentObject var model: AppModel
     var body: some View {
         VStack(spacing: 0) {
-            Header(title: "Куда пойти учиться?")
-            Text("Здесь могла быть реклама вашей школы сербского языка")
+            Header(title: t("Куда пойти учиться?"))
+            Text(t("Здесь могла быть реклама вашей школы сербского языка"))
                 .font(.ui(17)).foregroundStyle(model.palette.secondary).multilineTextAlignment(.center)
                 .padding(32).frame(maxWidth: .infinity, maxHeight: .infinity)
                 .accessibilityIdentifier("schoolsEmpty")
@@ -53,7 +54,7 @@ struct FlagButton: View {
         Button(action: action) {
             Image(systemName: "flag").font(.ui(18)).foregroundStyle(model.palette.faint).frame(width: 40, height: 40)
         }
-        .accessibilityLabel("Сообщить об ошибке")
+        .accessibilityLabel(t("Сообщить об ошибке"))
     }
 }
 
@@ -72,8 +73,10 @@ struct SentToast: View {
     }
 }
 
-private let wordProblems = [("translation", "Перевод"), ("stress", "Ударение"), ("example", "Пример"), ("forms", "Род или формы"), ("other", "Другое")]
-private let articleProblems = [("text", "Ошибка в тексте"), ("other", "Другое")]
+private var wordProblems: [(String, String)] {
+    [("translation", t("Перевод")), ("stress", t("Ударение")), ("example", t("Пример")), ("forms", t("Род или формы")), ("other", t("Другое"))]
+}
+private var articleProblems: [(String, String)] { [("text", t("Ошибка в тексте")), ("other", t("Другое"))] }
 
 // The layout of the forms below: a title, the fields, Cancel and Send.
 private struct FormFrame<Content: View>: View {
@@ -95,7 +98,7 @@ private struct FormFrame<Content: View>: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button("Отмена") { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(t("Отмена")) { dismiss() } }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(sendTitle) { if onSend() { dismiss() } }.disabled(!canSend).accessibilityIdentifier("send")
                 }
@@ -147,8 +150,8 @@ struct ReportSheet: View {
 
     var body: some View {
         let p = model.palette
-        FormFrame(title: "Что не так?", sendTitle: "Отправить", canSend: problem != nil, onSend: send) {
-            Text(model.prefs.latinFirst ? Translit.toLatin(w.cyr) : w.cyr).foregroundStyle(p.secondary)
+        FormFrame(title: t("Что не так?"), sendTitle: t("Отправить"), canSend: problem != nil, onSend: send) {
+            Text(w.pos == "note" ? model.prefs.native(w.cyr) : model.prefs.primary(w.cyr)).foregroundStyle(p.secondary)
             FlowLayout(spacing: 8) {
                 ForEach(w.isArticle ? articleProblems : wordProblems, id: \.0) { k, title in
                     Button { problem = k } label: {
@@ -160,8 +163,8 @@ struct ReportSheet: View {
                     .accessibilityIdentifier("problem:\(k)")
                 }
             }
-            Field(placeholder: "Что именно не так", text: $text, lines: 4, limit: 2000)
-            Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
+            Field(placeholder: t("Что именно не так"), text: $text, lines: 4, limit: 2000)
+            Field(placeholder: t("Почта для ответа, если нужен ответ"), text: $email, email: true)
             if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.ui(14)) }
         }
         .onAppear {
@@ -177,11 +180,11 @@ struct ReportSheet: View {
         let mail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         guard let problem else { return false }
         if body.isEmpty {
-            error = "Напишите, что не так"
+            error = t("Напишите, что не так")
             return false
         }
         if !mail.isEmpty && !Telemetry.isEmail(mail) {
-            error = "Проверьте адрес почты"
+            error = t("Проверьте адрес почты")
             return false
         }
         let card = CardInfo(key: String(w.key.prefix(120)), word: String(w.cyr.prefix(120)), problem: problem,
@@ -199,10 +202,10 @@ struct WriteSheet: View {
     @State private var started = false
 
     var body: some View {
-        FormFrame(title: "Сообщение", sendTitle: "Отправить", canSend: true, onSend: send) {
-            Text("Идея, ошибка, вопрос — что угодно.").foregroundStyle(model.palette.secondary)
-            Field(placeholder: "Сообщение", text: $text, lines: 6)
-            Field(placeholder: "Почта для ответа, если нужен ответ", text: $email, email: true)
+        FormFrame(title: t("Сообщение"), sendTitle: t("Отправить"), canSend: true, onSend: send) {
+            Text(t("Идея, ошибка, вопрос — что угодно.")).foregroundStyle(model.palette.secondary)
+            Field(placeholder: t("Сообщение"), text: $text, lines: 6)
+            Field(placeholder: t("Почта для ответа, если нужен ответ"), text: $email, email: true)
             if !error.isEmpty { Text(error).foregroundStyle(markDontKnow).font(.ui(14)) }
         }
         .onAppear {
@@ -217,11 +220,11 @@ struct WriteSheet: View {
         let body = text.trimmingCharacters(in: .whitespacesAndNewlines)
         let mail = email.trimmingCharacters(in: .whitespacesAndNewlines)
         if body.isEmpty {
-            error = "Напишите сообщение"
+            error = t("Напишите сообщение")
             return false
         }
         if !mail.isEmpty && !Telemetry.isEmail(mail) {
-            error = "Проверьте адрес почты"
+            error = t("Проверьте адрес почты")
             return false
         }
         model.sendFeedback(kind: "app", text: body, card: nil, email: mail)
@@ -241,9 +244,12 @@ struct WhatSentSheet: View {
         NavigationStack {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
-                    Text("Раз в день уходит: случайный номер этой установки, платформа, версии приложения и системы, язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы и настройки, какой способ показа карточки на экране блокировки выбран, какие экраны открывали.\n\nНе уходит: слова и ответы по отдельным словам, имя, почта, точное местоположение. Адрес IP сервер не сохраняет.")
+                    Text(t("Раз в день уходит: случайный номер этой установки, платформа, версии приложения и системы, ") +
+                         t("язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы ") +
+                         t("и настройки, какой способ показа карточки на экране блокировки выбран, какие экраны открывали.\n\n") +
+                         t("Не уходит: слова и ответы по отдельным словам, имя, почта, точное местоположение. Адрес IP сервер не сохраняет."))
                         .foregroundStyle(p.secondary)
-                    Text(last.map { "Последний пакет, \($0.day)" } ?? "Пока ничего не отправлялось").foregroundStyle(p.text)
+                    Text(last.map { t("Последний пакет, %s", $0.day) } ?? t("Пока ничего не отправлялось")).foregroundStyle(p.text)
                     if let last {
                         ScrollView(.horizontal) {
                             Text(packetText(last)).font(.ui(12, design: .monospaced)).fixedSize()
@@ -255,15 +261,15 @@ struct WhatSentSheet: View {
                     }
                     // Quoted when asking about a message or the deletion of the data.
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Номер этой установки, для статистики").font(.ui(13)).foregroundStyle(p.secondary)
+                        Text(t("Номер этой установки, для статистики")).font(.ui(13)).foregroundStyle(p.secondary)
                         Text(model.telemetry.state.id).font(.ui(12, design: .monospaced)).foregroundStyle(p.text)
                             .textSelection(.enabled).accessibilityIdentifier("installId")
-                        Text("Номер для сообщений разработчику").font(.ui(13)).foregroundStyle(p.secondary).padding(.top, 6)
+                        Text(t("Номер для сообщений разработчику")).font(.ui(13)).foregroundStyle(p.secondary).padding(.top, 6)
                         Text(model.telemetry.state.feedbackId).font(.ui(12, design: .monospaced)).foregroundStyle(p.text)
                             .textSelection(.enabled).accessibilityIdentifier("feedbackId")
                     }
-                    Link("Политика конфиденциальности", destination: URL(string: Telemetry.privacy)!)
-                    Button("Удалить мои данные с сервера") { asking = true }
+                    Link(t("Политика конфиденциальности"), destination: URL(string: Telemetry.privacy)!)
+                    Button(t("Удалить мои данные с сервера")) { asking = true }
                         .font(.ui(13)).foregroundStyle(p.secondary)
                     if let result {
                         Text(result).font(.ui(13)).foregroundStyle(p.text).accessibilityIdentifier("forgetResult")
@@ -271,21 +277,23 @@ struct WhatSentSheet: View {
                 }
                 .padding(20)
             }
-            .alert("Удалить данные с сервера?", isPresented: $asking) {
-                Button("Отмена", role: .cancel) {}
-                Button("Удалить", role: .destructive) {
+            .alert(t("Удалить данные с сервера?"), isPresented: $asking) {
+                Button(t("Отмена"), role: .cancel) {}
+                Button(t("Удалить"), role: .destructive) {
                     Task {
                         result = await model.telemetry.forget()
-                            ? "Данные удалены с сервера" : "Не удалось связаться с сервером. Попробуйте позже"
+                            ? t("Данные удалены с сервера") : t("Не удалось связаться с сервером. Попробуйте позже")
                     }
                 }
             } message: {
-                Text("С сервера разработчика удалятся статистика и сообщения, отправленные с этого телефона. Прогресс и настройки на телефоне останутся. Приложение получит новые номера и дальше будет отправлять статистику уже с ними, если она включена.")
+                Text(t("С сервера разработчика удалятся статистика и сообщения, отправленные с этого телефона. Прогресс и ") +
+                     t("настройки на телефоне останутся. Приложение получит новые номера и дальше будет отправлять ") +
+                     t("статистику уже с ними, если она включена."))
             }
             .background(p.card.ignoresSafeArea())
-            .navigationTitle("Анонимная статистика")
+            .navigationTitle(t("Анонимная статистика"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Закрыть") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(t("Закрыть")) { dismiss() } } }
         }
         .tint(p.accent)
     }
@@ -297,7 +305,9 @@ struct WhatSentSheet: View {
     }
 }
 
-let shareText = "НЕРодная речь — сербские слова для тех, кто говорит по-русски: карточки с ударениями, примерами и грамматикой. Бесплатно.\nAndroid: https://play.google.com/store/apps/details?id=org.kostja.reci\niPhone и компьютер: https://finist0.github.io/reci/web/"
+func shareText(_ deck: Deck) -> String {
+    deck.shareText + "\nAndroid: https://play.google.com/store/apps/details?id=org.kostja.reci\n" + t("iPhone и компьютер:") + " https://finist0.github.io/reci/web/"
+}
 
 // No App Store page yet, so there is nothing to rate on the iPhone.
 struct HelpSheet: View {
@@ -309,10 +319,10 @@ struct HelpSheet: View {
         let p = model.palette
         NavigationStack {
             VStack(alignment: .leading, spacing: 14) {
-                Text("Приложение бесплатное. Вот чем можно помочь:").foregroundStyle(p.secondary)
+                Text(t("Приложение бесплатное. Вот чем можно помочь:")).foregroundStyle(p.secondary)
                 VStack(alignment: .leading, spacing: 0) {
-                    ShareLink(item: shareText) {
-                        row("Поделиться с другом", "Ссылки на Android, iPhone и компьютер")
+                    ShareLink(item: shareText(model.deck)) {
+                        row(t("Поделиться с другом"), t("Ссылки на Android, iPhone и компьютер"))
                     }
                     .simultaneousGesture(TapGesture().onEnded { model.telemetry.count("opened", "share") })
                     .accessibilityIdentifier("share")
@@ -321,7 +331,7 @@ struct HelpSheet: View {
                         model.telemetry.count("opened", "star")
                         openURL(URL(string: "https://github.com/finist0/reci")!)
                     } label: {
-                        row("Поставить звезду на GitHub", "Там лежит код приложения")
+                        row(t("Поставить звезду на GitHub"), t("Там лежит код приложения"))
                     }
                     .accessibilityIdentifier("star")
                 }
@@ -330,9 +340,9 @@ struct HelpSheet: View {
             }
             .padding(20)
             .background(p.card.ignoresSafeArea())
-            .navigationTitle("Помочь автору")
+            .navigationTitle(t("Помочь автору"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button("Закрыть") { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(t("Закрыть")) { dismiss() } } }
         }
         .tint(p.accent)
     }

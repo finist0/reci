@@ -19,10 +19,16 @@ enum LockDeck {
         return base.appendingPathComponent("reci", isDirectory: true)
     }
 
+    // The decks and the interface strings, from the resources of the app or of the widgets.
+    static func loadTables() {
+        if let data = Bundle.main.url(forResource: "decks", withExtension: "json").flatMap({ try? Data(contentsOf: $0) }) { Decks.load(data) }
+        if let data = Bundle.main.url(forResource: "ui", withExtension: "json").flatMap({ try? Data(contentsOf: $0) }) { I18n.load(data) }
+    }
+
     // The widgets have little memory, so they read a short copy of the dictionary: only the
     // fields the learning rules and a lock screen card need, with the first example only. The
-    // app writes it at start.
-    private static var deckURL: URL { dir.appendingPathComponent("deck.json") }
+    // app writes it at start and when the deck changes, one copy per deck.
+    private static func deckURL(_ deck: Deck) -> URL { dir.appendingPathComponent(deck.scoped("deck.json")) }
 
     private struct Short: Encodable {
         let key, cyr, acc, pos, gram, topic: String
@@ -31,17 +37,20 @@ enum LockDeck {
         let examples: [Example]
     }
 
-    static func writeDeck(_ words: [Word]) {
+    static func writeDeck(_ words: [Word], deck: Deck) {
         let short = words.map { Short(key: $0.key, cyr: $0.cyr, acc: $0.acc, pos: $0.pos, gram: $0.gram, topic: $0.topic,
                                       level: $0.level, meanings: Array($0.meanings.prefix(3)), examples: Array($0.examples.prefix(1))) }
-        if let data = try? JSONEncoder().encode(short) { try? data.write(to: deckURL, options: .atomic) }
+        let enc = JSONEncoder()
+        enc.userInfo[Deck.userInfoKey] = deck
+        if let data = try? enc.encode(short) { try? data.write(to: deckURL(deck), options: .atomic) }
     }
 
     // The repository as a widget or an intent sees it, or nil before the app ran once.
     static func repo() -> Repo? {
-        guard let data = try? Data(contentsOf: deckURL), let words = try? JSONDecoder().decode([Word].self, from: data)
-        else { return nil }
-        return Repo(store: Store(dir: dir), words: words)
+        let store = Store(dir: dir)
+        let deck = store.prefs.deck
+        guard let data = try? Data(contentsOf: deckURL(deck)), let words = try? Word.decode(data, deck: deck) else { return nil }
+        return Repo(store: store, words: words)
     }
 
     // Answers the card on the lock screen and moves on, as the buttons of the card screen do.

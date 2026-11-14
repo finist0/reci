@@ -49,7 +49,7 @@ public final class Repo {
     private lazy var compareIndex: [String: [Word]] = {
         var m: [String: [Word]] = [:]
         for c in words where c.pos == "compare" {
-            for r in c.related { m[r.sr, default: []].append(c) }
+            for r in c.related { m[r.word, default: []].append(c) }
         }
         return m
     }()
@@ -286,7 +286,7 @@ public final class Repo {
             let known = progressOf(w.key)?.state == Mark.known
             if w.level > 0 { add("L\(w.level)", known) } else { add("X:" + w.pos, known) }
             add("T:" + w.topic, known)
-            for (id, _) in Labels.lists where inCategory(w, id) { add(id, known) }
+            for id in Labels.listIds where inCategory(w, id) { add(id, known) }
         }
         return out
     }
@@ -332,8 +332,9 @@ public final class Repo {
         return cats.contains { !$0.hasPrefix("X:") && inCategory(w, $0) }
     }
 
-    public static func collate(_ a: String, _ b: String) -> Bool {
-        a.compare(b, locale: Locale(identifier: "sr")) == .orderedAscending
+    // In the alphabet of the language learned.
+    public static func collate(_ a: String, _ b: String, _ lang: String = "sr") -> Bool {
+        a.compare(b, locale: Locale(identifier: lang)) == .orderedAscending
     }
 
     private var queueKey = ""
@@ -347,7 +348,10 @@ public final class Repo {
         let chosen = (order == 1 ? shuffled(seed) : words).filter { learnable($0, cats) }
         let phrases = shuffled(seed).filter { $0.pos == "phrase" && learnable($0, cats) }
         var plain = chosen.filter { $0.pos != "phrase" }
-        if order == 2 { plain.sort { Repo.collate($0.cyr, $1.cyr) } }
+        if order == 2 {
+            let lang = prefs.deck.target
+            plain.sort { Repo.collate($0.cyr, $1.cyr, lang) }
+        }
         var out: [Word] = []
         var ph = 0
         for (i, w) in plain.enumerated() {

@@ -1,52 +1,6 @@
 import Foundation
 
-// Labels and text helpers, the same as in the Android app and the web version.
-public enum Labels {
-    public static let levels: [(Int, String)] = [
-        (1, "A1 · Начальный"), (2, "A2 · Элементарный"), (3, "B1 · Средний"), (4, "B2 · Выше среднего"), (5, "C1 · Продвинутый"),
-    ]
-
-    public static let topics: [(String, String)] = [
-        ("basic", "Базовые слова"), ("people", "Люди"), ("family", "Семья"), ("body", "Тело"), ("health", "Здоровье"),
-        ("home", "Дом"), ("food", "Еда и напитки"), ("clothes", "Одежда"), ("city", "Город"), ("transport", "Транспорт"),
-        ("travel", "Путешествия"), ("nature", "Природа"), ("weather", "Погода"), ("animals", "Животные"), ("time", "Время"),
-        ("numbers", "Числа и количество"), ("colors", "Цвета и формы"), ("work", "Работа"), ("education", "Учёба"),
-        ("money", "Деньги и покупки"), ("communication", "Общение"), ("emotions", "Чувства"), ("character", "Характер"),
-        ("leisure", "Отдых и спорт"), ("culture", "Культура"), ("tech", "Техника"), ("society", "Общество"),
-        ("actions", "Действия"), ("qualities", "Качества"), ("abstract", "Абстрактные понятия"),
-    ]
-
-    public static let sections: [(String, String)] = [("X:phrase", "Выражения"), ("X:compare", "Похожие слова"), ("X:note", "Заметки")]
-    public static let lists: [(String, String)] = [("M:dontknow", "Не знаю"), ("M:known", "Знаю"), ("M:fav", "Избранное")]
-    public static let orders = ["По частоте", "Вперемешку", "По алфавиту"]
-
-    public static func category(_ id: String) -> String {
-        if id.hasPrefix("L") { return levels.first { "L\($0.0)" == id }?.1 ?? id }
-        if id.hasPrefix("T:") { return topics.first { "T:" + $0.0 == id }?.1 ?? id }
-        if id.hasPrefix("X:") { return sections.first { $0.0 == id }?.1 ?? id }
-        return lists.first { $0.0 == id }?.1 ?? id
-    }
-
-    public static func levelShort(_ level: Int) -> String {
-        (levels.first { $0.0 == level }?.1 ?? "").components(separatedBy: " ").first ?? ""
-    }
-
-    private static let posNames = [
-        "noun": "сущ.", "verb": "гл.", "adj": "прил.", "adv": "нар.", "pron": "мест.", "prep": "предл.",
-        "conj": "союз", "num": "числ.", "part": "част.", "interj": "межд.", "phrase": "выражение",
-        "compare": "похожие слова", "note": "заметка",
-    ]
-
-    public static func pos(_ code: String) -> String { posNames[code] ?? code }
-}
-
-public func plural(_ n: Int, _ one: String, _ few: String, _ many: String) -> String {
-    let m10 = n % 10, m100 = n % 100
-    if m10 == 1 && m100 != 11 { return one }
-    if (2...4).contains(m10) && (m100 < 12 || m100 > 14) { return few }
-    return many
-}
-
+// Text helpers, the same as in the Android app and the web version.
 public enum Translit {
     private static let latin: [Character: String] = [
         "а": "a", "б": "b", "в": "v", "г": "g", "д": "d", "ђ": "đ", "е": "e", "ж": "ž", "з": "z",
@@ -92,7 +46,7 @@ public enum Translit {
         return out.precomposedStringWithCanonicalMapping
     }
 
-    // Drops the marks of Cyrillic vowels and р only: the acute of ć or of Montenegrin с́ is part of the letter.
+    // Drops the marks of Cyrillic vowels and Serbian р only: the acute of ć or of Montenegrin с́ is part of the letter.
     public static func strip(_ text: String) -> String {
         let s = text.decomposedStringWithCanonicalMapping.unicodeScalars
         var out = String.UnicodeScalarView()
@@ -100,7 +54,7 @@ public enum Translit {
         for sc in s {
             let mark = stress.contains(String(sc)) || sc == "\u{304}"
             if !mark || !vowel { out.append(sc) }
-            if sc.properties.generalCategory != .nonspacingMark { vowel = "аеиоурАЕИОУР".unicodeScalars.contains(sc) }
+            if sc.properties.generalCategory != .nonspacingMark { vowel = "аеиоурАЕИОУРяюыэёЯЮЫЭЁ".unicodeScalars.contains(sc) }
         }
         return out.count == s.count ? text : String(out).precomposedStringWithCanonicalMapping
     }
@@ -111,27 +65,46 @@ public enum Translit {
     }
 }
 
-// How Serbian text is shown under the current settings.
+// How text is shown under the current settings.
 public extension Prefs {
-    func primary(_ cyr: String) -> String { latinFirst ? Translit.toLatin(cyr) : cyr }
+    // Text in the language learned: Serbian in the script the user reads first.
+    func primary(_ cyr: String) -> String { latinFirst && deck.target == "sr" ? Translit.toLatin(cyr) : cyr }
+
+    // Text in the user's own language: a translation, a note, a grammar label.
+    func native(_ text: String) -> String { latinFirst && deck.native == "sr" ? Translit.toLatin(text) : text }
 
     func headword(_ w: Word) -> String {
-        // A note's title is Russian; transliterating it would garble it.
-        if w.pos == "note" { return w.cyr }
+        // A note's title is in the user's language.
+        if w.pos == "note" { return native(w.cyr) }
         return primary(w.acc.isEmpty ? w.cyr : Translit.showAccents(w.acc, accentMode))
     }
 
-    // Serbian text that may carry stress marks: an example, a note.
+    // Text that may carry stress marks: an example, a note.
     func marked(_ text: String) -> String { Translit.showAccents(text, accentMode) }
 
-    // A word a card refers to, with the stress of its own card when there is one.
-    func linked(_ sr: String, _ target: Word?) -> String {
-        guard let acc = target?.acc, !acc.isEmpty else { return primary(sr) }
-        return primary(marked(acc))
+    // A word a card refers to, stressed as given or as on its own card when there is one.
+    func linked(_ word: String, acc: String = "", _ target: Word?) -> String {
+        if !acc.isEmpty { return primary(marked(acc)) }
+        guard let a = target?.acc, !a.isEmpty else { return primary(word) }
+        return primary(marked(a))
     }
 
     func secondary(_ cyr: String) -> String? {
-        guard showBothScripts else { return nil }
+        guard showBothScripts, deck.target == "sr" else { return nil }
         return latinFirst ? cyr : Translit.toLatin(cyr)
+    }
+}
+
+// Search by a word or by its translation: Serbian may be typed in either script, Russian
+// without ё.
+public enum Search {
+    static func norm(_ s: String) -> String { s.lowercased().replacingOccurrences(of: "ё", with: "е") }
+
+    public static func matches(_ w: Word, _ query: String, byMeaning: Bool) -> Bool {
+        let q = norm(query.trimmingCharacters(in: .whitespaces))
+        if q.isEmpty { return false }
+        if byMeaning { return w.meanings.contains { norm($0).contains(q) || Translit.toLatin(norm($0)).contains(q) } }
+        let c = norm(w.cyr)
+        return c.hasPrefix(q) || Translit.toLatin(c).hasPrefix(q)
     }
 }

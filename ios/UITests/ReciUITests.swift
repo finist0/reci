@@ -138,6 +138,20 @@ final class ReciUITests: XCTestCase {
         back()
         XCTAssertNil(headword.range(of: "[\\u0400-\\u04FF]", options: .regularExpression))
     }
+
+    // Russian for Serbs: each deck is titled in its own language, and the interface follows the deck.
+    func testTheRussianDeckSpeaksSerbian() {
+        openSettings()
+        let ru = reach(app.buttons["deck:ru-sr"].firstMatch)
+        XCTAssertEqual(ru.label, "Учим руски · матерњи српски")
+        ru.tap()
+        XCTAssertTrue(app.staticTexts["Подешавања"].waitForExistence(timeout: 10))
+        XCTAssertTrue(app.buttons["deck:ru-sr"].isSelected)
+        back()
+        XCTAssertTrue(app.staticTexts["stage"].waitForExistence(timeout: 10))
+        XCTAssertEqual(app.staticTexts["stage"].label, "Нова реч")
+        XCTAssertTrue(app.buttons["Подешавања"].exists)
+    }
 }
 
 // The statistics notice and switch, reporting a card and writing to the developer. The app answers

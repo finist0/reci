@@ -147,9 +147,17 @@
   "en": "Come back here: instead of “grant” it will say “granted”.",
   "sr": "Вратите се овде: уместо „дозволи” писаће „има”."
  },
+ "Вернёт слово через пять карточек и покажет следующее.": {
+  "en": "Brings the word back after five cards and shows the next one.",
+  "sr": "Враћа реч после пет картица и приказује следећу."
+ },
  "Версия %s": {
   "en": "Version %s",
   "sr": "Верзија %s"
+ },
+ "Виджеты": {
+  "en": "Widgets",
+  "sr": "Виџети"
  },
  "Видно только перевод: вспомните слово и откройте его кнопкой или ответом.": {
   "en": "Only the translation is shown: recall the word and open it with the button or an answer.",
@@ -174,6 +182,10 @@
  "Вспомните %s · «Знаю» %d из 3": {
   "en": "Recall %s · “Know” %d of 3",
   "sr": "Сетите се: %s · „Знам” %d од 3"
+ },
+ "Вспомните слово": {
+  "en": "Recall the word",
+  "sr": "Сетите се речи"
  },
  "Выбрать слова": {
   "en": "Choose words",
@@ -234,6 +246,18 @@
  "До конца дня": {
   "en": "Until the end of the day",
   "sr": "До краја дана"
+ },
+ "Добавьте действие Set Wallpaper Photo → Lock Screen, выключите Show Preview.": {
+  "en": "Add the Set Wallpaper Photo action → Lock Screen, turn Show Preview off.",
+  "sr": "Додајте радњу Set Wallpaper Photo → Lock Screen, искључите Show Preview."
+ },
+ "Добавьте действие «Обои с карточкой» (НЕРодная речь).": {
+  "en": "Add the “Обои с карточкой” action (НЕРодная речь).",
+  "sr": "Додајте радњу „Обои с карточкой” (НЕРодная речь)."
+ },
+ "Добавьте рядом «Знаю» и «Не знаю» (круглые виджеты).": {
+  "en": "Next to it add “Know” and “Don't know” (the round widgets).",
+  "sr": "Поред њега додајте „Знам” и „Не знам” (округли виџети)."
  },
  "Долгое нажатие на раздел, тему или отметку открывает список слов": {
   "en": "A long press on a section, topic or mark opens its word list",
@@ -363,9 +387,25 @@
   "en": "How to say it in Serbian",
   "sr": "Како се каже на српском"
  },
+ "Карточка": {
+  "en": "Card",
+  "sr": "Картица"
+ },
+ "Карточка и кнопки — виджеты экрана блокировки. Ответ виджетом сразу показывает следующее слово.": {
+  "en": "The card and the buttons are lock screen widgets. Answering with a widget shows the next word at once.",
+  "sr": "Картица и дугмад су виџети закључаног екрана. Одговор виџетом одмах приказује следећу реч."
+ },
+ "Карточка на экране блокировки": {
+  "en": "Card on the lock screen",
+  "sr": "Картица на закључаном екрану"
+ },
  "Карточка при включении экрана": {
   "en": "A card when the screen turns on",
   "sr": "Картица кад се екран упали"
+ },
+ "Карточка становится обоями экрана блокировки. Её рисует действие «Обои с карточкой» для приложения «Команды»; ответы — круглыми виджетами «Знаю» и «Не знаю».": {
+  "en": "The card becomes the lock screen wallpaper. The “Обои с карточкой” action for the Shortcuts app draws it; answers go through the round “Know” and “Don't know” widgets.",
+  "sr": "Картица постаје позадина закључаног екрана. Црта је радња „Обои с карточкой” за апликацију „Пречице”; одговара се округлим виџетима „Знам” и „Не знам”."
  },
  "Карточки": {
   "en": "Cards",
@@ -431,9 +471,25 @@
   "en": "On older Android versions and some phones the path differs: Battery → Battery optimization → ",
   "sr": "На старим верзијама Android-а и на неким телефонима пут је другачији: Battery → Battery optimization → "
  },
+ "На экран блокировки добавьте круглые виджеты «Знаю» и «Не знаю».": {
+  "en": "Add the round “Know” and “Don't know” widgets to the lock screen.",
+  "sr": "На закључани екран додајте округле виџете „Знам” и „Не знам”."
+ },
  "Надёжнее понять, идёт ли звонок": {
   "en": "Tells more reliably whether a call is on",
   "sr": "Поузданије препознаје да ли је позив у току"
+ },
+ "Нажмите Done.": {
+  "en": "Tap Done.",
+  "sr": "Додирните Done."
+ },
+ "Нажмите и удерживайте экран блокировки → Customize → Lock Screen.": {
+  "en": "Touch and hold the lock screen → Customize → Lock Screen.",
+  "sr": "Притисните и држите закључани екран → Customize → Lock Screen."
+ },
+ "Нажмите на рамку под часами → добавьте «Карточка» (широкий виджет).": {
+  "en": "Tap the frame below the clock → add “Card” (the wide widget).",
+  "sr": "Додирните оквир испод сата → додајте „Картица” (широки виџет)."
  },
  "Назад": {
   "en": "Back",
@@ -543,6 +599,14 @@
   "en": "About",
   "sr": "О апликацији"
  },
+ "Обои": {
+  "en": "Wallpaper",
+  "sr": "Позадина"
+ },
+ "Обои обновляются, когда срабатывает команда, а не сразу после ответа.": {
+  "en": "The wallpaper changes when the shortcut runs, not right after an answer.",
+  "sr": "Позадина се мења кад се пречица покрене, а не одмах после одговора."
+ },
  "Обратная связь": {
   "en": "Feedback",
   "sr": "Повратне информације"
@@ -575,9 +639,21 @@
   "en": "The app's page in the Android settings will open. There:",
   "sr": "Отвориће се страница апликације у подешавањима Android-а. Тамо:"
  },
+ "Откройте «Команды» → Automation → New Automation → Time of Day (например, каждый час) → Run Immediately.": {
+  "en": "Open Shortcuts → Automation → New Automation → Time of Day (say, every hour) → Run Immediately.",
+  "sr": "Отворите „Пречице” → Automation → New Automation → Time of Day (на пример, сваког сата) → Run Immediately."
+ },
+ "Откройте приложение": {
+  "en": "Open the app",
+  "sr": "Отворите апликацију"
+ },
  "Отмена": {
   "en": "Cancel",
   "sr": "Откажи"
+ },
+ "Отмечает слово на карточке и показывает следующее.": {
+  "en": "Marks the word on the card and shows the next one.",
+  "sr": "Означава реч на картици и приказује следећу."
  },
  "Отправить": {
   "en": "Send",
@@ -634,6 +710,10 @@
  "Поделиться, оценить, поставить звезду": {
   "en": "Share, rate, star",
   "sr": "Подели, оцени, дај звездицу"
+ },
+ "Поделиться, поставить звезду": {
+  "en": "Share, star",
+  "sr": "Подели, дај звездицу"
  },
  "Подпись другим алфавитом": {
   "en": "Caption in the other script",
@@ -887,6 +967,10 @@
   "en": "Words",
   "sr": "Речи"
  },
+ "Слова закончились: выберите другие в приложении": {
+  "en": "No words left: choose others in the app",
+  "sr": "Речи су потрошене: изаберите друге у апликацији"
+ },
  "Слова и прогресс не отправляются.": {
   "en": "Words and progress are not sent.",
   "sr": "Речи и напредак се не шаљу."
@@ -914,6 +998,10 @@
  "Слово учится по шагам: сначала показано целиком, после «Знаю» ": {
   "en": "A word is learned in steps: first it is shown whole, after “Know” ",
   "sr": "Реч се учи у корацима: прво је приказана цела, после „Знам” "
+ },
+ "Слово, которое вы сейчас учите.": {
+  "en": "The word you are learning now.",
+  "sr": "Реч коју сада учите."
  },
  "Снова показывать %s?": {
   "en": "Show %s again?",
@@ -1075,6 +1163,10 @@
   "en": "What is wrong with the card?",
   "sr": "Шта није у реду с картицом?"
  },
+ "Что не так?": {
+  "en": "What's wrong?",
+  "sr": "Шта није у реду?"
+ },
  "Что нового": {
   "en": "What's new",
   "sr": "Шта је ново"
@@ -1131,6 +1223,10 @@
   "en": "English",
   "sr": "енглески"
  },
+ "антонимы": {
+  "en": "antonyms",
+  "sr": "антоними"
+ },
  "будут, но слов в шторке не будет.": {
   "en": "be there, but there will be no words in the shade.",
   "sr": "бити, али речи у траци обавештења неће."
@@ -1146,6 +1242,10 @@
  "веб-версия": {
   "en": "web version",
   "sr": "веб верзија"
+ },
+ "вспомните слово": {
+  "en": "recall the word",
+  "sr": "сетите се речи"
  },
  "выдать": {
   "en": "grant",
@@ -1190,6 +1290,10 @@
  "и настройки, какие экраны открывали.": {
   "en": "and settings, which screens were opened.",
   "sr": "и подешавања, који су екрани отварани."
+ },
+ "и настройки, какой способ показа карточки на экране блокировки выбран, какие экраны открывали.\n\n": {
+  "en": "and settings, which way of showing the card on the lock screen is chosen, which screens were opened.\n\n",
+  "sr": "и подешавања, који је начин приказа картице на закључаном екрану изабран, који су екрани отварани.\n\n"
  },
  "из %d слов знаю": {
   "en": "of %d words I know",
@@ -1295,6 +1399,10 @@
   "en": "Serbian",
   "sr": "српски"
  },
+ "синонимы": {
+  "en": "synonyms",
+  "sr": "синоними"
+ },
  "словам": {
   "en": "words",
   "sr": "речи"
@@ -1354,6 +1462,10 @@
  "это исправить? В отчёте место в коде, где случилась ошибка, модель телефона, версия Android ": {
   "en": "fix it? The report holds the place in the code where it failed, the phone model, the Android version ",
   "sr": "то да исправи? У извештају су место у коду где је дошло до грешке, модел телефона, верзија Android-а "
+ },
+ "это исправить? В отчёте место в коде, где случилась ошибка, модель телефона, версия iOS ": {
+  "en": "fix it? The report holds the place in the code where it failed, the phone model, the iOS version ",
+  "sr": "то да исправи? У извештају су место у коду где је дошло до грешке, модел телефона, верзија iOS-а "
  },
  "язык, сколько карточек показано и ответов дано, сколько слов выучено, выбранные разделы ": {
   "en": "the language, how many cards were shown and answered, how many words are learned, the chosen sections ",
