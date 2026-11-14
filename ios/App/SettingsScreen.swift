@@ -44,12 +44,10 @@ struct SettingsScreen: View {
                     Group {
                         GroupTitle(text: t("Язык"))
                         Panel {
-                            if Decks.all.count > 1 {
-                                ForEach(Decks.all, id: \.id) { d in
-                                    deckRow(d, on: d.id == deck.id)
-                                    Line()
-                                }
-                            }
+                            langChoice(t("Учу"), Decks.targets, deck.target) { model.switchDeck(Decks.pick($0, deck.native).id) }
+                            Line()
+                            langChoice(t("Перевод на"), Decks.natives(deck.target), deck.native) { model.switchDeck(Decks.pick(deck.target, $0).id) }
+                            Line()
                             // Each language is named in itself, so that a user who cannot read
                             // the interface finds their own.
                             menuChoice(t("Язык интерфейса"), [t("Как у колоды"), "Русский", "Српски", "English"],
@@ -334,21 +332,19 @@ struct SettingsScreen: View {
         .accessibilityIdentifier(title)
     }
 
-    // A deck, titled in its own native language, so that a user finds the line in their language.
-    private func deckRow(_ d: Deck, on: Bool) -> some View {
-        let p = model.palette
-        return Button { model.switchDeck(d.id) } label: {
+    // A language of the deck: a choice among several, a plain row when there is nothing to choose.
+    @ViewBuilder
+    private func langChoice(_ title: String, _ langs: [String], _ lang: String, _ onSelect: @escaping (String) -> Void) -> some View {
+        if langs.count > 1 {
+            choice(title, langs.map(Decks.name), langs.firstIndex(of: lang) ?? 0) { onSelect(langs[$0]) }
+        } else {
             HStack {
-                Text(Decks.title(d)).font(.ui(16, on ? .semibold : .regular)).foregroundStyle(on ? p.accent : p.text)
-                    .multilineTextAlignment(.leading)
+                Text(title).font(.ui(16)).foregroundStyle(model.palette.text)
                 Spacer()
-                if on { Image(systemName: "checkmark").font(.ui(15, .semibold)).foregroundStyle(p.accent) }
+                Text(Decks.name(lang)).font(.ui(16)).foregroundStyle(model.palette.secondary)
             }
             .padding(.horizontal, 18).padding(.vertical, 14)
-            .contentShape(Rectangle())
         }
-        .accessibilityIdentifier("deck:\(d.id)")
-        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func toggle(_ title: String, _ summary: String?, _ on: Bool, _ set: @escaping (Bool) -> Void) -> some View {

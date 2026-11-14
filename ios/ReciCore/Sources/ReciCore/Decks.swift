@@ -74,10 +74,24 @@ public enum Decks {
         }
     }
 
-    // "Учу сербский · перевод на русский", in the deck's own native language, so that a user
-    // finds the line in their language among the others.
-    public static func title(_ d: Deck) -> String {
-        I18n.format(I18n.tIn(d.native, "Учу %s · перевод на %s"), [langName(d.target, d.native), langName(d.native, d.native)])
+    // A language as an option of the settings, named in the interface language.
+    public static func name(_ code: String) -> String {
+        let s = langName(code, I18n.lang)
+        return s.prefix(1).uppercased() + String(s.dropFirst())
+    }
+
+    // The settings choose the language learned and the language of the translations, not a deck.
+    public static var targets: [String] {
+        var seen = Set<String>()
+        return all.map(\.target).filter { seen.insert($0).inserted }
+    }
+
+    public static func natives(_ target: String) -> [String] { all.filter { $0.target == target }.map(\.native) }
+
+    // The deck of the two languages, else the first one of the language learned: a change of
+    // the language learned keeps the translations where a deck has them.
+    public static func pick(_ target: String, _ native: String) -> Deck {
+        all.first { $0.target == target && $0.native == native } ?? all.first { $0.target == target } ?? all[0]
     }
 }
 

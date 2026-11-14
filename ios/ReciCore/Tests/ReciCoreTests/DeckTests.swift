@@ -188,12 +188,60 @@ final class DeckTests: XCTestCase {
         XCTAssertEqual(t("Учить %d %s", 3, plural(3, "карточку", "карточки", "карточек")), "Учить 3 карточки")
     }
 
-    func testEachDeckIsTitledInItsOwnLanguage() {
-        XCTAssertEqual(Decks.title(Decks.deck("sr-ru")), "Учу сербский · перевод на русский")
-        XCTAssertEqual(Decks.title(Decks.deck("ru-sr")), "Учим руски · превод на српски")
+    func testLanguagesAreNamedInTheInterfaceLanguage() {
+        I18n.lang = "ru"
+        XCTAssertEqual(Decks.name("sr"), "Сербский")
+        I18n.lang = "sr"
+        XCTAssertEqual(Decks.name("ru"), "Руски")
         I18n.latin = true
-        XCTAssertEqual(Decks.title(Decks.deck("ru-sr")), "Učim ruski · maternji srpski")
-        XCTAssertEqual(Decks.title(Decks.deck("sr-ru")), "Учу сербский · перевод на русский")
+        XCTAssertEqual(Decks.name("ru"), "Ruski")
+        I18n.lang = "en"
+        XCTAssertEqual(Decks.name("en"), "English")
+    }
+
+    // What the settings do on a tap of the language learned.
+    private func learn(_ store: Store, _ target: String) {
+        store.switchDeck(Decks.pick(target, store.prefs.deck.native).id)
+        XCTAssertEqual(store.prefs.deck.target, target)
+    }
+
+    func testTheLanguageLearnedSwitchesTheDeckAndEachKeepsItsProgress() throws {
+        XCTAssertEqual(Decks.targets, ["sr", "ru"])
+        XCTAssertEqual(Decks.natives("sr"), ["ru"])
+        XCTAssertEqual(Decks.natives("ru"), ["sr"])
+        let store = Fixtures.tempStore()
+        let sr = Repo(store: store, words: Fixtures.words)
+        let kuca = try XCTUnwrap(sr.word("кућа"))
+        sr.answer(kuca, Mark.known, learned: true)
+
+        learn(store, "ru")
+        XCTAssertEqual(store.prefs.deckId, "ru-sr")
+        let ru = Repo(store: store, words: Fixtures.ruWords)
+        let dom = try XCTUnwrap(ru.word("дом"))
+        XCTAssertEqual(ru.progress(dom).state, Mark.new)
+        ru.answer(dom, Mark.dontKnow)
+
+        learn(store, "sr")
+        XCTAssertEqual(store.prefs.deckId, "sr-ru")
+        XCTAssertEqual(Repo(store: store, words: Fixtures.words).progress(kuca).state, Mark.known)
+        XCTAssertNil(store.progress["дом"])
+        learn(store, "ru")
+        XCTAssertEqual(store.progress["дом"]?.state, Mark.dontKnow)
+    }
+
+    func testTheTranslationsFollowTheLanguageLearnedAndStayWhereTheyCan() {
+        let srRu = Decks.deck("sr-ru"), ruSr = Decks.deck("ru-sr")
+        let srEn = Deck(id: "sr-en", target: "sr", native: "en", words: "words.json", grammar: "")
+        let decks = Decks.all
+        Decks.all = [srRu, ruSr, srEn]
+        defer { Decks.all = decks }
+        XCTAssertEqual(Decks.targets, ["sr", "ru"])
+        XCTAssertEqual(Decks.natives("sr"), ["ru", "en"])
+        XCTAssertEqual(Decks.natives("ru"), ["sr"])
+        XCTAssertEqual(Decks.pick("sr", "en"), srEn, "English translations stay")
+        XCTAssertEqual(Decks.pick("sr", "ru"), srRu)
+        XCTAssertEqual(Decks.pick("sr", "sr"), srRu, "no Serbian deck translates into Serbian")
+        XCTAssertEqual(Decks.pick("ru", "en"), ruSr, "no Russian deck translates into English")
     }
 
     func testSerbianInterfaceFollowsTheScriptSetting() {
