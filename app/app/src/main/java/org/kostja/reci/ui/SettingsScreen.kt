@@ -385,8 +385,8 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 Column(Modifier.padding(start = 18.dp, end = 18.dp, top = 18.dp)) {
                     Text(
                         buildAnnotatedString {
-                            withStyle(SpanStyle(color = p.titleRed)) { append(t("НЕ")) }
-                            append(t("РОДНАЯ РЕЧЬ"))
+                            withStyle(SpanStyle(color = p.titleRed)) { append("НЕ") }
+                            append("РОДНАЯ РЕЧЬ")
                         },
                         fontFamily = Display,
                         fontSize = 26.sp,

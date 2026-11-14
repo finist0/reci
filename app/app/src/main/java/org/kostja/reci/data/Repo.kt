@@ -395,7 +395,7 @@ object Repo {
         val plain = chosen.filter { it.pos != "phrase" }.let { list ->
             if (order != Order.ALPHA) list
             else {
-                val coll = Collator.getInstance(Locale.forLanguageTag("sr"))
+                val coll = Collator.getInstance(Locale.forLanguageTag(Decks.current.target))
                 list.sortedWith { a, b -> coll.compare(a.cyr, b.cyr) }
             }
         }

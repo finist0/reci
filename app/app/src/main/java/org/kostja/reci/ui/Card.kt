@@ -67,6 +67,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import kotlinx.coroutines.delay
 import org.kostja.reci.R
 import org.kostja.reci.data.Labels
+import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.State
@@ -234,7 +235,7 @@ fun CardText(
                 Modifier.fillMaxWidth().padding(top = 4.dp, end = 8.dp, bottom = 8.dp),
                 horizontalArrangement = Arrangement.End,
             ) {
-                if (onSchools != null) SchoolsButton(onClick = onSchools)
+                if (onSchools != null && Decks.current.target == "sr") SchoolsButton(onClick = onSchools)
                 ReportFlag(onClick = onReport)
             }
         }
