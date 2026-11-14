@@ -1,6 +1,7 @@
 // Language pairs and the interface language, the counterpart of data/Deck.kt. A deck has the
-// language learned (target) and the user's own (native), which the interface speaks. Decks are
-// listed in assets/decks.json, so a new pair needs data only.
+// language learned (target) and the user's own (native), which the interface speaks unless the
+// user picked another one (prefs.uiLang). Decks are listed in assets/decks.json, so a new pair
+// needs data only.
 
 import { prefs, deck, useDeck, hasProgress, FIRST } from "./store.js";
 import { toLatin } from "./data.js";
@@ -28,7 +29,7 @@ export const current = () => all.find(d => d.id === deck()) ?? all[0];
 // Tests set it to see a language without switching decks.
 export const i18n = { override: null };
 
-export const lang = () => i18n.override ?? current().native;
+export const lang = () => i18n.override ?? (prefs.uiLang || current().native);
 
 // For dates and language names: Serbian in the script the user reads.
 export const locale = () => (lang() === "sr" && prefs.latinFirst ? "sr-Latn" : lang());
@@ -64,7 +65,7 @@ export const primary = s => (prefs.latinFirst && current().target === "sr" ? toL
 export const native = s => (prefs.latinFirst && current().native === "sr" ? toLatin(s) : s);
 
 // The script setting matters wherever Serbian is shown.
-export const hasSerbian = () => current().target === "sr" || current().native === "sr";
+export const hasSerbian = () => current().target === "sr" || current().native === "sr" || lang() === "sr";
 
 const langName = (code, l) => tIn(l, code === "sr" ? "сербский" : code === "ru" ? "русский" : code === "en" ? "английский" : code);
 

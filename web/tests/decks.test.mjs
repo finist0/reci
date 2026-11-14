@@ -129,6 +129,29 @@ test("the English interface", () => {
     assert.equal(inLanguage("en", () => t("Нет такой строки %d", 5)), "Нет такой строки 5");
 });
 
+test("the interface language is chosen apart from the deck and stays over a deck switch", async () => {
+    assert.equal(S.prefs.uiLang, "");
+    S.setPref("uiLang", "en");
+    assert.equal(t("Настройки"), "Settings");
+    assert.equal(plural(5, "карточку", "карточки", "карточек"), "cards");
+    // The cards stay in the language of the deck: the search of translations asks for Russian.
+    assert.equal(Decks.meaningHint(), "word in Russian");
+
+    await R.switchDeck("ru-sr");
+    assert.equal(t("Настройки"), "Settings");
+    assert.equal(Decks.meaningHint(), "word in Serbian");
+    S.setPref("uiLang", "");
+    assert.equal(t("Настройки"), "Подешавања");
+    await R.switchDeck("sr-ru");
+    assert.equal(t("Настройки"), "Настройки");
+
+    S.setPref("uiLang", "sr");
+    assert.equal(inLanguage("en", () => t("Настройки")), "Settings");
+    assert.equal(t("Настройки"), "Подешавања");
+    assert.equal(Decks.lang(), "sr");
+    S.setPref("uiLang", "");
+});
+
 test("plural forms in Russian, Serbian and English", () => {
     const forms = l => inLanguage(l, () => [1, 2, 5, 11, 12, 21, 22, 25, 111, 112].map(n => plural(n, "карточку", "карточки", "карточек")));
     assert.deepEqual(forms("ru"), ["карточку", "карточки", "карточек", "карточек", "карточек", "карточку", "карточки", "карточек", "карточек", "карточек"]);

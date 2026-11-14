@@ -10,6 +10,8 @@ export const FIRST = "sr-ru";
 export const NEW = 0, DONT_KNOW = 1, UNSURE = 2, KNOWN = 3;
 
 const defaults = {
+    // The interface language: "ru", "sr" or "en"; "" speaks the native language of the deck.
+    uiLang: "",
     latinFirst: false,
     showBothScripts: true,
     autoSpeak: false,

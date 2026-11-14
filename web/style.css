@@ -636,6 +636,9 @@ input { font: inherit; color: var(--text); }
     white-space: nowrap;
 }
 
+/* A long option takes two lines; the others stretch to its height. */
+.segments.wrap button { white-space: normal; padding: 9px 2px; }
+
 .segments button.on { background: var(--card); color: var(--accent); font-weight: 600; }
 
 .themes { display: flex; gap: 12px; overflow-x: auto; margin: 10px -18px 0; padding: 0 14px; }

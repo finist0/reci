@@ -73,6 +73,7 @@ test("the ping carries only the fields the server accepts", async () => {
     assert.deepEqual(p.cats, S.prefs.categories);
     assert.equal(p.lock, undefined);
     assert.equal(p.deck, "sr-ru");
+    assert.equal(p.ui, "");
 });
 
 test("one ping a day, and the sums start again after it", async () => {
@@ -193,6 +194,7 @@ test("a message tells where the app runs within the server's limits", async () =
     }
     for (const k of ["browser", "screen", "ratio", "locale", "mode", "theme", "latin"]) assert.ok(k in env, k);
     assert.equal(env.browser, "Chrome 141");
+    assert.equal(env.ui, "");
 });
 
 test("a crash report goes out without the remembered email", async () => {

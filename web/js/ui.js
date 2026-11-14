@@ -779,9 +779,9 @@ const toggle = (title, summary, on, a) => `
         <span class="switch ${on ? "on" : ""}"></span>
     </button>`;
 
-const choice = (title, options, selected, a) => `
+const choice = (title, options, selected, a, cls = "") => `
     <div class="choice"><div class="setting-title">${esc(title)}</div>
-        <div class="segments">${options.map((o, i) => `<button class="${i === selected ? "on" : ""}" ${act(a, i)}>${esc(o)}</button>`).join("")}</div>
+        <div class="segments ${cls}">${options.map((o, i) => `<button class="${i === selected ? "on" : ""}" ${act(a, i)}>${esc(o)}</button>`).join("")}</div>
     </div>`;
 
 const navRow = (title, summary, a, arg = "") => `
@@ -797,6 +797,9 @@ const deckRow = d => {
         <span class="setting-main"><span class="setting-title">${esc(Decks.title(d))}</span></span>${on ? icon("check") : ""}
     </button>`;
 };
+
+// The values of prefs.uiLang in the order of the interface language choice.
+const UI_LANGS = ["", "ru", "sr", "en"];
 
 const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 
@@ -825,7 +828,9 @@ function settingsScreen(e) {
         <b>Android:</b> ${t("в Chrome меню ⋮ → «Добавить на главный экран» или «Установить приложение».")}<br>
         <b>${t("Компьютер:")}</b> ${t("в Chrome или Edge значок установки в адресной строке.")}<br>
         ${t("Прогресс хранится в этом браузере на этом устройстве.")}</div>`);
-    const decks = Decks.all.length > 1 ? groupTitle(t("Язык")) + panel(Decks.all.map(deckRow).join(line)) : "";
+    // Each language is named in itself, so that a user who cannot read the interface finds their own.
+    const languages = groupTitle(t("Язык")) + panel((Decks.all.length > 1 ? Decks.all.map(deckRow).join(line) + line : "") +
+        choice(t("Язык интерфейса"), [t("Как у колоды"), "Русский", "Српски", "English"], Math.max(0, UI_LANGS.indexOf(prefs.uiLang)), "uilang", "wrap"));
     const accents = serbian ? choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode, "accents")
         // One kind of mark only: "with" is mode 1, "without" is mode 2.
         : choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode === 2 ? 1 : 0, "stressplace");
@@ -839,7 +844,7 @@ function settingsScreen(e) {
                     <span><span class="dot" style="background:var(--accent)"></span>${R.todayCount()} ${t("сегодня")}</span></div>
             </div>
             ${install}
-            ${decks}
+            ${languages}
             ${groupTitle(t("Учёба"))}
             ${panel(navRow(t("Что учим"), (cats.length === 1 ? D.category(cats[0]) : t("Разделов: %d", cats.length)) + " · " + D.orders()[prefs.order], "categories") + line +
                 choice(t("Карточки"), [t("Обучение"), t("Перевод"), t("Слово")], prefs.cardMode, "cardmode") + `<div class="note">${esc(modeText)}</div>` + line +
@@ -1074,6 +1079,7 @@ const actions = {
     reviewknown: () => setPref("reviewKnown", !prefs.reviewKnown),
     theme: arg => setPref("theme", Number(arg)),
     alphabet: arg => setPref("latinFirst", arg === "1"),
+    uilang: arg => setPref("uiLang", UI_LANGS[Number(arg)]),
     bothscripts: () => setPref("showBothScripts", !prefs.showBothScripts),
     accents: arg => setPref("accentMode", Number(arg)),
     stressplace: arg => setPref("accentMode", Number(arg) + 1),
