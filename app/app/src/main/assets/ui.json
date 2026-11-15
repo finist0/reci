@@ -1539,6 +1539,10 @@
   "en": "Card mistakes fixed: meanings broken into single letters, typos in examples, wrong stress in notes.",
   "sr": "Исправљене грешке у картицама: значења растурена на појединачна слова, грешке у куцању у примерима, погрешни нагласци у белешкама."
  },
+ "Когда включена латиница, русские слова в сербском тексте остаются кириллицей: в заметках, заголовках разборов и формах слова.": {
+  "en": "With the Latin script on, Russian words inside Serbian text stay in Cyrillic: in notes, comparison titles and word forms.",
+  "sr": "Кад је укључена латиница, руске речи у српском тексту остају ћирилицом: у белешкама, насловима поређења и облицима речи."
+ },
  "Язык интерфейса можно выбрать отдельно: русский, сербский или английский.": {
   "en": "The interface language can be chosen on its own: Russian, Serbian or English.",
   "sr": "Језик интерфејса може да се изабере посебно: руски, српски или енглески."
