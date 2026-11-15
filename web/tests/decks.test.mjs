@@ -249,6 +249,26 @@ test("the learned language and the native one each follow the script setting whe
     S.setPref("latinFirst", false);
 });
 
+test("braces keep the words of the other language in their own script", async () => {
+    S.setPref("latinFirst", true);
+    try {
+        assert.equal(Decks.primary("{мн.} паре ({деньги})"), "мн. pare (деньги)");
+        assert.equal(Decks.native("сказать — то же, что {рећи}"), "сказать — то же, что reći");
+        await R.switchDeck("ru-sr");
+        assert.equal(Decks.native("{на мой взгляд} = по мом мишљењу"), "на мой взгляд = po mom mišljenju");
+        assert.equal(Decks.native("{живот} или {жизнь}?"), "живот ili жизнь?");
+        assert.equal(Decks.primary("{ген}. взгля́да"), "gen. взгля́да");
+        assert.equal(Decks.native("{ничего"), "{ničego", "an unclosed brace is text");
+        S.setPref("latinFirst", false);
+        assert.equal(Decks.native("{на мой взгляд} = по мом мишљењу"), "на мой взгляд = по мом мишљењу");
+        assert.equal(Decks.primary("{ген}. взгля́да"), "ген. взгля́да");
+        assert.ok(D.searchMatch({ cyr: "x", meanings: ["{живот} или {жизнь}?"] }, D.norm("живот или"), true));
+    } finally {
+        await R.switchDeck("sr-ru");
+        S.setPref("latinFirst", false);
+    }
+});
+
 // Decks with English translations over the cards the app carries in any case: their own assets
 // may not be built yet.
 const srEn = { id: "sr-en", target: "sr", native: "en", words: "words.json", grammar: "" };

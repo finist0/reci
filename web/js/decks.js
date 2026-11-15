@@ -84,16 +84,23 @@ export function plural(n, one, few, many) {
     return t(many);
 }
 
-// Text in the language learned: Serbian in the script the user reads first.
-export const primary = s => (prefs.latinFirst && current().target === "sr" ? toLatin(s) : s);
-
 // Cyrillic in the translations that the script setting turns into Latin: Serbian ones, or
 // Serbian words quoted in translations into a language not written in Cyrillic.
 const CYRILLIC = ["ru", "sr"];
 export const serbianInNative = d => d.native === "sr" || (d.target === "sr" && !CYRILLIC.includes(d.native));
 
+const inTarget = s => (prefs.latinFirst && current().target === "sr" ? toLatin(s) : s);
+const inNative = s => (prefs.latinFirst && serbianInNative(current()) ? toLatin(s) : s);
+
+// {...} in a card's text holds words of the deck's other language: Russian quoted in a Serbian
+// note, a Russian gloss in the forms of a Serbian word. Each part keeps the script of its own.
+const mixed = (s, own, other) => s.replace(/\{([^}]*)\}|[^{]+|\{/g, (m, inner) => (inner === undefined ? own(m) : other(inner)));
+
+// Text in the language learned: Serbian in the script the user reads first.
+export const primary = s => mixed(s, inTarget, inNative);
+
 // Text in the user's own language: a translation, a note, a grammar label.
-export const native = s => (prefs.latinFirst && serbianInNative(current()) ? toLatin(s) : s);
+export const native = s => mixed(s, inNative, inTarget);
 
 // The script setting matters wherever Serbian is shown.
 export const hasSerbian = () => current().target === "sr" || current().native === "sr" || lang() === "sr";

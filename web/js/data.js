@@ -138,8 +138,9 @@ export function strip(text) {
 // Text with stress marks as the accent setting wants it: 0 as is, 1 the place only, 2 none.
 export const showAccents = (text, mode) => (mode === 0 ? text : mode === 1 ? placeOnly(text) : strip(text));
 
-// Serbian may be typed in either script, Russian without ё.
-export const norm = s => s.toLowerCase().replaceAll("ё", "е");
+// Serbian may be typed in either script, Russian without ё. The braces that mark the words of
+// the other language are not typed.
+export const norm = s => s.toLowerCase().replaceAll("ё", "е").replace(/[{}]/g, "");
 
 // A word by its start, or a translation containing the query, q normalized. Translations into
 // English are typed in Latin letters, as Serbian Latin is: the search chips tell which is meant.
