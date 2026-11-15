@@ -166,7 +166,8 @@ class Marker:
 
     def mark(self, text, base, other_words=None, labels=False, lexical=True):
         """text with {} around each run of words not in base. A text with braces is taken as
-        marked by hand.
+        marked by hand, and empty braces mark a text with no words of the other language: they
+        are dropped.
 
         other_words: the words of the other language, when the text has no others.
         labels: the text is the forms of a word, whose labels (ген., кратко:) and what follows
@@ -174,7 +175,7 @@ class Marker:
         lexical: whether the words of the decks tell the language of a word spelled alike in
         both; without them only its spelling and its neighbours do."""
         if not text or "{" in text:
-            return text
+            return text.replace("{}", "")
         other = "ru" if base == "sr" else "sr"
         res = self.langs(text, base, other_words, lexical)
         if labels:

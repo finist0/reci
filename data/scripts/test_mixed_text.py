@@ -24,6 +24,10 @@ class Rules(unittest.TestCase):
         self.assertEqual(self.m.mark("руски живо́т је стомак", "sr"), "руски {живо́т} је стомак")
         self.assertEqual(mt.Marker(mt.Lexicon()).mark("живо́т", "sr"), "живо́т")
 
+    def test_empty_braces_keep_a_text_unmarked(self):
+        self.assertEqual(self.m.mark("стол је сто{}", "sr"), "стол је сто")
+        self.assertEqual(self.m.mark("{стол} је сто{}", "sr"), "{стол} је сто")
+
     def test_a_word_written_in_one_language_only_is_of_it(self):
         self.assertEqual(self.m.mark("стол је сто, код као", "sr"), "{стол} је сто, код као")
 

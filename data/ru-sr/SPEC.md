@@ -82,7 +82,9 @@ meaning (`вода`, `брат`) need no note; keep their cards short.
 The Serbian text may quote Russian freely: the build finds the Russian words and wraps them in
 braces, `{на мой взгляд} = по мом мишљењу`, so the app keeps them in Cyrillic when it shows
 Serbian in Latin (see `data/scripts/mixed_text.py`). Where it guesses wrong, wrap the Russian words
-in braces yourself: a text with braces is taken as it is.
+in braces yourself: a text with braces is taken as it is. A Serbian word the build takes for
+Russian (`замке`, also a Russian form of `замок`) is kept in Latin by empty braces anywhere in the
+text, `Бројеви и падежи: замке иза 2-4 и 5+{}`: the build drops them and marks nothing.
 
 Topic: the main area of meaning. `basic` for function words and very general words, `actions`
 for general verbs, `qualities` for general adjectives.
