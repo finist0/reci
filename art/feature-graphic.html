@@ -1,6 +1,7 @@
 <!doctype html>
-<!-- The Google Play feature graphic, 1024x500. Rendered to feature-graphic.png by
-     feature-graphic.mjs; open this page in a browser to see it. -->
+<!-- The Google Play feature graphic, 1024x500, one per store language: ?lang=ru, sr or en.
+     Rendered to feature-graphic-<lang>.png by feature-graphic.mjs; open this page in a
+     browser to see it. -->
 <html lang="ru">
 <head>
 <meta charset="utf-8">
@@ -22,7 +23,7 @@
     .word b { font: 600 46px "Literata", serif; color: #263D1A; }
     .word i { font-style: normal; font-size: 24px; color: #6E6A64; }
     .chips { margin-top: 26px; display: flex; gap: 10px; }
-    .chips span { padding: 8px 16px; border-radius: 999px; background: #4F7F34; color: #fff; font-size: 19px; font-weight: 600; }
+    .chips span { padding: 8px 16px; border-radius: 999px; background: #4F7F34; color: #fff; font-size: 19px; font-weight: 600; white-space: nowrap; }
 </style>
 </head>
 <body>
@@ -30,10 +31,31 @@
     <img class="icon" src="../web/icon.svg" alt="">
     <div>
         <div class="title"><span>НЕ</span>РОДНАЯ РЕЧЬ</div>
-        <div class="sub">Сербские слова для тех,<br>кто говорит по&#8209;русски</div>
-        <div class="word"><b>ку́ћа</b><i>kuća — дом</i></div>
-        <div class="chips"><span>10 000 карточек</span><span>ударения</span><span>грамматика</span></div>
+        <div class="sub"></div>
+        <div class="word"><b></b><i></i></div>
+        <div class="chips"></div>
     </div>
 </div>
+<script>
+    const texts = {
+        ru: { sub: "Сербские и русские слова<br>на экране блокировки", word: "ку́ћа", tr: "kuća — дом",
+              chips: ["16 000 карточек", "ударения", "грамматика"] },
+        sr: { sub: "Руске и српске речи<br>на закључаном екрану", word: "взгля́д", tr: "— поглед",
+              chips: ["4.200 руских речи", "акценти", "лажни пријатељи"] },
+        en: { sub: "Serbian and Russian words<br>on your lock screen", word: "ку́ћа", tr: "kuća — house",
+              chips: ["16,000 Serbian cards", "4,200 Russian words", "stress marks"] },
+    };
+    const lang = new URLSearchParams(location.search).get("lang") || "ru";
+    const t = texts[lang];
+    document.documentElement.lang = lang;
+    document.querySelector(".sub").innerHTML = t.sub;
+    document.querySelector(".word b").textContent = t.word;
+    document.querySelector(".word i").textContent = t.tr;
+    document.querySelector(".chips").innerHTML = t.chips.map(c => `<span>${c}</span>`).join("");
+    // Longer chips shrink to keep to one line inside the banner.
+    const chips = document.querySelector(".chips");
+    for (let size = 19; size > 14 && chips.getBoundingClientRect().right > 1024 - 56; size--)
+        chips.querySelectorAll("span").forEach(c => (c.style.fontSize = `${size - 1}px`));
+</script>
 </body>
 </html>
