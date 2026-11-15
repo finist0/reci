@@ -79,6 +79,11 @@ Examples:
 Leave it empty when there is nothing important to say. Words the same in both languages and
 meaning (`вода`, `брат`) need no note; keep their cards short.
 
+The Serbian text may quote Russian freely: the build finds the Russian words and wraps them in
+braces, `{на мой взгляд} = по мом мишљењу`, so the app keeps them in Cyrillic when it shows
+Serbian in Latin (see `data/scripts/mixed_text.py`). Where it guesses wrong, wrap the Russian words
+in braces yourself: a text with braces is taken as it is.
+
 Topic: the main area of meaning. `basic` for function words and very general words, `actions`
 for general verbs, `qualities` for general adjectives.
 

@@ -16,6 +16,7 @@ import unicodedata
 from pathlib import Path
 
 import build_patches
+import mixed_text
 
 ROOT = Path(__file__).resolve().parents[2]
 ASSETS = ROOT / "app" / "app" / "src" / "main" / "assets"
@@ -289,6 +290,39 @@ def split_stress(e):
             r[t], r["acc"] = bare, unicodedata.normalize("NFC", r[t])
 
 
+def mark_languages(words):
+    """Braces around the words of the other language in the texts that mix the two, so the apps
+    leave Russian in Cyrillic when they show Serbian in Latin. See mixed_text.py."""
+    t, n = DECK["target"], DECK["native"]
+    if {t, n} != {"sr", "ru"}:
+        return
+    # Russian words in the notes of the deck for Serbs carry stress marks, Serbian ones none.
+    marker = mixed_text.Marker(mixed_text.Lexicon.load(), stress="ru" if n == "sr" else None)
+    for e in words:
+        # Forms are in the language learned, their labels in the user's own.
+        if e.get("forms"):
+            e["forms"] = marker.mark(e["forms"], t, labels=True, lexical=False)
+        # Russian notes on Serbian words are left as written: a Russian word taken for Serbian
+        # would come out in Latin, which is worse than a Serbian one left in Cyrillic.
+        if n != "sr":
+            continue
+        mark = lambda s: marker.mark(s, n)
+        if e["pos"] == "compare" and e["meanings"]:
+            # The title asks which of the compared words: they alone are Russian in it.
+            cmp = set(mixed_text.words_of(e["cyr"] + " " + " ".join(r[t] for r in e.get("related", []))))
+            e["meanings"] = [marker.mark(e["meanings"][0], n, other_words=cmp)] + [mark(m) for m in e["meanings"][1:]]
+        else:
+            e["meanings"] = [mark(m) for m in e["meanings"]]
+        if e["pos"] == "note":
+            e["cyr"] = mark(e["cyr"])
+        if e.get("note"):
+            e["note"] = mark(e["note"])
+        if e.get("tips"):
+            e["tips"] = [mark(x) for x in e["tips"]]
+        for x in e.get("examples", []) + e.get("related", []):
+            x[n] = mark(x[n])
+
+
 # The grammar labels of both source decks in English.
 EN_GRAM = {"м. р.": "m.", "ж. р.": "f.", "ср. р.": "n.", "с. р.": "n.", "мн.": "pl.", "м. р. мн.": "m. pl.",
            "ж. р. мн.": "f. pl.", "ср. р. мн.": "n. pl.", "несов.": "impf.", "сов.": "pf.", "несвр.": "impf.",
@@ -418,6 +452,7 @@ def main():
                 mismatches += 1
     if MORPH is None and "--check" not in sys.argv:
         print("pymorphy3 missing (see data/requirements.txt): gender mismatches are not flagged", file=sys.stderr)
+    mark_languages(out)
     out = [{"key": e["key"], **{f: e[f] for f in FIELDS if f in e}} for e in out]
     if "--check" not in sys.argv:
         OUT.parent.mkdir(parents=True, exist_ok=True)

@@ -73,7 +73,7 @@ class Releases(unittest.TestCase):
             env.update(GIT_AUTHOR_DATE=date, GIT_COMMITTER_DATE=date)
         subprocess.run(["git", "-C", str(self.root), *args], check=True, capture_output=True, env=env)
 
-    def commit(self, words, date, updater=True, grammar=None, strip=False):
+    def commit(self, words, date, updater=True, grammar=None, strip=False, braces=False):
         assets = self.root / bp.ASSETS
         assets.mkdir(parents=True, exist_ok=True)
         (assets / "words.json").write_text(json.dumps(words, ensure_ascii=False))
@@ -87,6 +87,8 @@ class Releases(unittest.TestCase):
         acc = self.root / bp.ACCENTS
         acc.parent.mkdir(parents=True, exist_ok=True)
         acc.write_text("fun strip(text: String)" if strip else "fun placeOnly(acc: String)")
+        tr = self.root / bp.TRANSLIT
+        tr.write_text("fun mixed(text: String)" if braces else "fun toLatin(text: String)")
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "c", date=date)
 
@@ -169,6 +171,28 @@ class Releases(unittest.TestCase):
         files = bp.build()
         [e] = json.loads(files["manifest.json"])["patches"].values()
         self.assertEqual(json.loads(files[e["file"]])["words"][0]["note"], "кућа")
+
+    def test_only_releases_that_read_braces_get_them(self):
+        base = card("а", 1, ["a"])
+        self.commit([base], "2026-10-01T20:00:00+01:00")
+        self.tag("v1.0", "2026-10-01T20:00:00+01:00")
+        # v1.1 reads braces, but shares its dictionary and so its patch with v1.0.
+        self.commit([base], "2026-10-02T20:00:00+01:00", braces=True)
+        self.tag("v1.1", "2026-10-02T20:00:00+01:00")
+        braced = {**base, "forms": "{мн.} паре ({деньги})", "related": [{"sr": "пара", "ru": "{пара}"}]}
+        self.commit([braced], "2026-10-03T20:00:00+01:00", braces=True)
+        files = bp.build()
+        [e] = json.loads(files["manifest.json"])["patches"].values()
+        got = json.loads(files[e["file"]])["words"][0]
+        self.assertEqual((got["forms"], got["related"][0]["ru"]), ("мн. паре (деньги)", "пара"))
+        # A release of its own dictionary that reads them gets them.
+        self.commit([card("а", 1, ["b"])], "2026-10-04T20:00:00+01:00", braces=True)
+        self.tag("v1.2", "2026-10-04T20:00:00+01:00")
+        self.commit([braced], "2026-10-05T20:00:00+01:00", braces=True)
+        files = bp.build()
+        got = {e["release"]: json.loads(files[e["file"]])["words"][0]
+               for e in json.loads(files["manifest.json"])["patches"].values()}
+        self.assertEqual(got["v1.2"]["forms"], "{мн.} паре ({деньги})")
 
     def test_latin_letters_keep_their_marks(self):
         self.assertEqual(bp.bare("ćevapi, с́, ку̏ћа, ср̏це"), "ćevapi, с́, кућа, срце")

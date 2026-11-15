@@ -48,6 +48,11 @@ Forms:
 - adjective: feminine and neuter, comparative when irregular: `добра, добро; сравн. бољи`
 - pronoun, numeral: key case forms if useful
 
+The labels (`ген.`, `сов.`) and Russian glosses in the forms are wrapped in braces by the build, so
+the app keeps them in Cyrillic when it shows Serbian in Latin. A Serbian word in a Russian text
+(a note, a translation) may be wrapped in braces by hand, `«{јесте}»`: the app then shows it in
+the script the user reads Serbian in.
+
 Examples:
 - natural everyday Serbian, 4-12 words, ekavian, Cyrillic, correct grammar and punctuation;
 - the headword's form in the sentence is wrapped in square brackets: `Наша [кућа] је близу мора.`

@@ -132,6 +132,7 @@ python3 -m venv /path/to/venv
 | `ios/ReciCore/Tests/…/LockCardTests.swift` | что показывает карточка на экране блокировки |
 | `ios/ReciCore/Tests/…/DictUpdateTests.swift` | поправки словаря на iPhone: те же случаи, SHA-256 |
 | `data/scripts/test_build_patches.py` | сборка поправок: общие случаи, выбор выпусков, `--check` |
+| `data/scripts/test_mixed_text.py` | русские слова в сербском тексте и подписи форм: что сборка берёт в фигурные скобки |
 | `ios/ReciCore/Tests/…/TelemetryTests.swift` | статистика и очередь сообщений: поля, раз в день, без сети |
 | `ios/ReciCore/Tests/…/WhatsNewTests.swift` | окно «Что нового»: какие версии и пункты показать |
 | `ios/UITests/ReciUITests.swift` | карточка и настройки в симуляторе iPhone; раскладка на iPhone SE и больших iPhone; уведомление о статистике, флажок, сообщения, «Помочь автору»; окно «Что нового»; снимки экранов |

@@ -35,6 +35,9 @@ UPDATER = "app/app/src/main/java/org/kostja/reci/data/DictUpdate.kt"
 # the accent setting says, and read them out; their patches get these texts without the marks.
 ACCENTS = "app/app/src/main/java/org/kostja/reci/data/Accents.kt"
 STRESS_SET = set("\u030f\u0311\u0300\u0301\u0304")
+# Releases whose Translit.kt has no mixed() show the braces around the words of the other
+# language in a text; their patches get the texts without the braces.
+TRANSLIT = "app/app/src/main/java/org/kostja/reci/data/Translit.kt"
 KEEP = datetime.timedelta(days=183)
 
 
@@ -71,6 +74,14 @@ def marks_shown(tag):
         return False
 
 
+def reads_braces(tag):
+    """Whether the release shows a text with braces in the scripts of its two languages."""
+    try:
+        return "fun mixed(" in git("show", f"{tag}:{TRANSLIT}")
+    except subprocess.CalledProcessError:
+        return False
+
+
 def bare(text):
     """The text without the stress marks of Cyrillic vowels and р; ѐ and ѝ lose theirs too."""
     d = unicodedata.normalize("NFD", text)
@@ -95,6 +106,19 @@ def unmarked(words):
             w["examples"] = [{**e, "sr": bare(e["sr"])} for e in w["examples"]]
         out.append(w)
     return out
+
+
+def unbraced(words):
+    """The dictionary with the braces of its texts dropped, for older releases."""
+    def drop(x):
+        if isinstance(x, str):
+            return x.replace("{", "").replace("}", "")
+        if isinstance(x, list):
+            return [drop(i) for i in x]
+        if isinstance(x, dict):
+            return {k: drop(v) for k, v in x.items()}
+        return x
+    return [drop(w) for w in words]
 
 
 def patch(base_words, base_grammar, words, grammar):
@@ -136,6 +160,7 @@ def build():
     # Releases with the same dictionary share a patch, so one that shows the marks unhidden
     # decides for all of them.
     shown = {bid: all(marks_shown(t) for t in bases if bases[t] == bid) for bid in bases.values()}
+    braces = {bid: all(reads_braces(t) for t in bases if bases[t] == bid) for bid in bases.values()}
     for tag, date in tags:
         bw = git("show", f"{tag}:{ASSETS}/words.json", binary=True)
         bg = git("show", f"{tag}:{ASSETS}/grammar.json", binary=True)
@@ -144,6 +169,8 @@ def build():
             continue
         base_words, base_grammar = json.loads(bw), json.loads(bg)
         target = words if shown[bid] else unmarked(words)
+        if not braces[bid]:
+            target = unbraced(target)
         p = {**patch(base_words, base_grammar, target, grammar), "base": bid}
         if apply(base_words, base_grammar, p) != (target, grammar):
             sys.exit(f"the patch for {tag} does not give the current dictionary")
