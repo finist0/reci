@@ -125,6 +125,7 @@ struct TopBar: View {
                     Image(systemName: item.0).font(.ui(19)).foregroundStyle(p.text).frame(width: 40, height: 40)
                 }
                 .accessibilityLabel(item.1)
+                .accessibilityIdentifier(item.2.statName)
             }
         }
         .padding(.horizontal, 14).padding(.top, 4)

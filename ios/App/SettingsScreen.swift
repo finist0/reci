@@ -156,11 +156,12 @@ struct SettingsScreen: View {
                             toggle(t("Анонимная статистика"), t("Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки"),
                                    model.telemetry.state.enabled) { v in model.setStatsEnabled(v) }
                             Line()
-                            navRow(t("Что отправляется"), model.telemetry.state.last.map { t("Последний раз: %s", $0.day) } ?? t("Ещё ничего не отправлялось")) {
+                            navRow(t("Что отправляется"), model.telemetry.state.last.map { t("Последний раз: %s", $0.day) } ?? t("Ещё ничего не отправлялось"),
+                                   id: "whatIsSent") {
                                 whatSent = true
                             }
                             Line()
-                            navRow(t("Помочь автору"), t("Поделиться, поставить звезду")) { helping = true }
+                            navRow(t("Помочь автору"), t("Поделиться, поставить звезду"), id: "helpTheAuthor") { helping = true }
                         }
                         if let toast = model.sentToast { SentToast(text: toast).padding(.top, 10) }
                     }
@@ -320,7 +321,8 @@ struct SettingsScreen: View {
         .padding(18).frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private func navRow(_ title: String, _ summary: String?, action: @escaping () -> Void) -> some View {
+    // UI tests find a row by its title, or by an id that stays the same in every interface language.
+    private func navRow(_ title: String, _ summary: String?, id: String? = nil, action: @escaping () -> Void) -> some View {
         let p = model.palette
         return Button(action: action) {
             HStack {
@@ -335,7 +337,7 @@ struct SettingsScreen: View {
             .padding(.horizontal, 18).padding(.vertical, 13)
             .contentShape(Rectangle())
         }
-        .accessibilityIdentifier(title)
+        .accessibilityIdentifier(id ?? title)
     }
 
     private func toggle(_ title: String, _ summary: String?, _ on: Bool, _ set: @escaping (Bool) -> Void) -> some View {

@@ -329,7 +329,7 @@ final class FeedbackUITests: XCTestCase {
     func testHelpTheAuthor() {
         launch()
         openSettings()
-        reach(app.buttons["Помочь автору"]).tap()
+        reach(app.buttons["helpTheAuthor"]).tap()
         XCTAssertTrue(app.navigationBars["Помочь автору"].waitForExistence(timeout: 5))
         XCTAssertTrue(app.buttons["share"].exists)
         XCTAssertTrue(app.buttons["star"].exists)
@@ -341,7 +341,7 @@ final class FeedbackUITests: XCTestCase {
     func testWhatIsSentShowsBothIdsAndForgetsThemOnRequest() {
         launch()
         openSettings()
-        reach(app.buttons["Что отправляется"]).tap()
+        reach(app.buttons["whatIsSent"]).tap()
         let installId = app.staticTexts["installId"]
         XCTAssertTrue(installId.waitForExistence(timeout: 5))
         let before = installId.label
@@ -360,7 +360,7 @@ final class FeedbackUITests: XCTestCase {
     func testTheStatisticsSwitchAndWhatIsSent() {
         launch()
         openSettings()
-        let row = reach(app.buttons["Что отправляется"])
+        let row = reach(app.buttons["whatIsSent"])
         XCTAssertTrue(row.label.contains("Последний раз:"))
         row.tap()
         XCTAssertTrue(app.staticTexts["packet"].waitForExistence(timeout: 5))
@@ -372,73 +372,122 @@ final class FeedbackUITests: XCTestCase {
     }
 }
 
+// A first start on a phone in this language picks the deck and the interface language
+// (Decks.guess, Decks.guessUi); the store page of the language gets these screens.
+struct ShotLanguage {
+    let code: String
+    // The start of a word of the language learned, for the search screen.
+    let query: String
+
+    var args: [String] { ["-uitest-reset", "-AppleLanguages", "(\(code))"] }
+    // The Russian shots keep the names they had before there were others.
+    var prefix: String { code == "ru" ? "" : "\(code)-" }
+
+    static let ru = ShotLanguage(code: "ru", query: "кућ")
+    static let en = ShotLanguage(code: "en", query: "кућ")
+    // Russian with Serbian translations.
+    static let sr = ShotLanguage(code: "sr", query: "дом")
+}
+
 // Screens of the app for the store pages and for looking at the app without an iPhone. They
 // are kept in the test results; the iOS workflow exports them as PNG files.
 final class ScreenshotUITests: XCTestCase {
-    func testScreens() {
+    func testScreens() { screens(.ru) }
+
+    func testScreensInEnglish() throws {
+        try skipUnlessAsked(.en)
+        screens(.en)
+    }
+
+    func testScreensInSerbian() throws {
+        try skipUnlessAsked(.sr)
+        screens(.sr)
+    }
+
+    func testLockScreen() { lockScreen(.ru) }
+
+    func testLockScreenInEnglish() throws {
+        try skipUnlessAsked(.en)
+        lockScreen(.en)
+    }
+
+    func testLockScreenInSerbian() throws {
+        try skipUnlessAsked(.sr)
+        lockScreen(.sr)
+    }
+
+    // Only the devices that feed the App Store need the other languages: CI sets
+    // TEST_RUNNER_SCREENSHOT_LANGUAGES there, and xcodebuild passes it on without the prefix.
+    private func skipUnlessAsked(_ lang: ShotLanguage) throws {
+        let asked = (ProcessInfo.processInfo.environment["SCREENSHOT_LANGUAGES"] ?? "").split(separator: " ").map(String.init)
+        try XCTSkipUnless(asked.contains(lang.code), "SCREENSHOT_LANGUAGES has no \(lang.code)")
+    }
+
+    private func screens(_ lang: ShotLanguage) {
         continueAfterFailure = false
         let app = XCUIApplication()
-        app.launchArguments = fresh
+        app.launchArguments = lang.args
         app.launch()
         XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 20))
         let shot = { (name: String) in
             // Let screen transitions and button highlights finish.
             sleep(1)
             let a = XCTAttachment(screenshot: app.screenshot())
-            a.name = name
+            a.name = lang.prefix + name
             a.lifetime = .keepAlways
             self.add(a)
         }
         shot("1-card-with-notice")
-        let flag = app.buttons["Сообщить об ошибке"].firstMatch
+        let flag = app.buttons["report"].firstMatch
         for _ in 0..<15 {
             if flag.isHittable { break }
             app.swipeUp()
         }
-        flag.tap(opening: app.navigationBars["Что не так?"])
+        flag.tap(opening: app.buttons["problem:stress"])
         app.buttons["problem:stress"].tap()
         shot("2-report")
-        app.buttons["Отмена"].tap()
-        app.buttons["Понятно"].tap()
+        app.buttons["cancel"].tap()
+        app.buttons["closeNotice"].tap()
         app.buttons["next"].tap()
         shot("3-card")
-        app.buttons["Поиск"].tap()
+        app.buttons["search"].tap()
         app.textFields.firstMatch.tap()
         // A fresh simulator explains swipe typing over the keyboard first.
         if app.buttons["Continue"].waitForExistence(timeout: 2) { app.buttons["Continue"].tap() }
-        app.textFields.firstMatch.typeText("кућ")
+        app.textFields.firstMatch.typeText(lang.query)
         shot("4-search")
-        app.buttons["Назад"].firstMatch.tap()
-        app.buttons["Грамматика"].tap()
+        app.buttons["back"].firstMatch.tap()
+        app.buttons["grammar"].tap()
         shot("5-grammar")
-        app.buttons["Назад"].firstMatch.tap()
-        app.buttons["Настройки"].tap()
-        _ = app.staticTexts["Настройки"].waitForExistence(timeout: 5)
+        app.buttons["back"].firstMatch.tap()
+        app.buttons["settings"].tap()
+        _ = app.staticTexts["knownCount"].waitForExistence(timeout: 5)
         shot("6-settings")
+        let help = app.buttons["helpTheAuthor"]
         for _ in 0..<15 {
-            if app.buttons["Помочь автору"].isHittable { break }
+            if help.isHittable { break }
             app.swipeUp()
         }
         shot("7-settings-feedback")
-        app.buttons["Что отправляется"].tap()
+        app.buttons["whatIsSent"].tap()
         _ = app.staticTexts["packet"].waitForExistence(timeout: 5)
         shot("8-what-is-sent")
-        app.buttons["Закрыть"].tap()
-        app.buttons["Помочь автору"].tap()
-        _ = app.navigationBars["Помочь автору"].waitForExistence(timeout: 5)
+        app.buttons["close"].tap()
+        help.tap()
+        _ = app.buttons["share"].waitForExistence(timeout: 5)
         shot("9-help-the-author")
     }
 
     // The real widgets and wallpaper on a stand-in lock screen, see LockPreview.swift.
-    func testLockScreen() {
+    private func lockScreen(_ lang: ShotLanguage) {
         continueAfterFailure = false
         for mode in ["widgets", "wallpaper"] {
             let app = XCUIApplication()
-            app.launchArguments = fresh + ["-uitest-lockpreview", mode]
+            app.launchArguments = lang.args + ["-uitest-lockpreview", mode]
             app.launch()
             XCTAssertTrue(app.descendants(matching: .any)["lockPreview"].firstMatch.waitForExistence(timeout: 20))
             let a = XCTAttachment(screenshot: app.screenshot())
-            a.name = "10-lock-\(mode)"
+            a.name = "\(lang.prefix)10-lock-\(mode)"
             a.lifetime = .keepAlways
             add(a)
             app.terminate()

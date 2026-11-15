@@ -11,7 +11,7 @@ struct StatsNotice: View {
                 .font(.ui(14)).foregroundStyle(p.text)
                 .accessibilityIdentifier("statsNotice")
             Button("✕") { model.closeNotice() }.foregroundStyle(p.secondary).frame(width: 40, height: 40)
-                .accessibilityLabel(t("Понятно"))
+                .accessibilityLabel(t("Понятно")).accessibilityIdentifier("closeNotice")
         }
         .padding(12)
         .background(RoundedRectangle(cornerRadius: 14).fill(p.highlight))
@@ -55,6 +55,7 @@ struct FlagButton: View {
             Image(systemName: "flag").font(.ui(18)).foregroundStyle(model.palette.faint).frame(width: 40, height: 40)
         }
         .accessibilityLabel(t("Сообщить об ошибке"))
+        .accessibilityIdentifier("report")
     }
 }
 
@@ -98,7 +99,7 @@ private struct FormFrame<Content: View>: View {
             .navigationTitle(title)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .cancellationAction) { Button(t("Отмена")) { dismiss() } }
+                ToolbarItem(placement: .cancellationAction) { Button(t("Отмена")) { dismiss() }.accessibilityIdentifier("cancel") }
                 ToolbarItem(placement: .confirmationAction) {
                     Button(sendTitle) { if onSend() { dismiss() } }.disabled(!canSend).accessibilityIdentifier("send")
                 }
@@ -294,7 +295,7 @@ struct WhatSentSheet: View {
             .background(p.card.ignoresSafeArea())
             .navigationTitle(t("Анонимная статистика"))
             .navigationBarTitleDisplayMode(.inline)
-            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(t("Закрыть")) { dismiss() } } }
+            .toolbar { ToolbarItem(placement: .confirmationAction) { Button(t("Закрыть")) { dismiss() }.accessibilityIdentifier("close") } }
         }
         .tint(p.accent)
     }

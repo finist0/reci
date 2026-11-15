@@ -94,6 +94,7 @@ struct Header: View {
                     .frame(width: 44, height: 44).background(Circle().fill(model.palette.card))
             }
             .accessibilityLabel(t("Назад"))
+            .accessibilityIdentifier("back")
             Text(title).font(.serif(24, .semibold)).foregroundStyle(model.palette.word).lineLimit(1)
             Spacer()
         }
