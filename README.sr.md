@@ -13,14 +13,14 @@
 енглеском.
 
 <p align="center">
-  <img src="screenshots/1-card.png" width="250" alt="Картица нове речи">
-  <img src="screenshots/2-lock-phrase.png" width="250" alt="Израз на закључаном екрану">
-  <img src="screenshots/3-compare.png" width="250" alt="Поређење сличних речи">
+  <img src="screenshots/sr-1-card.png" width="250" alt="Картица нове речи">
+  <img src="screenshots/sr-2-lock-phrase.png" width="250" alt="Реч на закључаном екрану">
+  <img src="screenshots/sr-3-compare.png" width="250" alt="Поређење сличних речи">
 </p>
 <p align="center">
-  <img src="screenshots/4-dark.png" width="250" alt="Тамна тема">
-  <img src="screenshots/5-grammar.png" width="250" alt="Приручник граматике">
-  <img src="screenshots/6-settings.png" width="250" alt="Подешавања">
+  <img src="screenshots/sr-4-dark.png" width="250" alt="Тамна тема">
+  <img src="screenshots/sr-5-grammar.png" width="250" alt="Приручник: сличне речи и белешке">
+  <img src="screenshots/sr-6-settings.png" width="250" alt="Подешавања">
 </p>
 
 <a id="why-it-works"></a>

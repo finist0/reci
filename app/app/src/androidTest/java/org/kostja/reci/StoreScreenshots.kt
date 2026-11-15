@@ -22,6 +22,7 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
+import org.kostja.reci.data.t
 import org.kostja.reci.lock.LockActivity
 import org.kostja.reci.lock.LockService
 import org.kostja.reci.ui.MainActivity
@@ -31,6 +32,7 @@ import java.util.concurrent.TimeUnit
 
 // The screenshots for Google Play and the README, at 1080x2160: Google Play takes no phone
 // screenshot longer than twice its width. Skipped unless asked for, see docs/development.md.
+// The lang argument picks the store page: ru, en or sr, each with its own deck and interface.
 @RunWith(AndroidJUnit4::class)
 class StoreScreenshots {
     companion object {
@@ -43,6 +45,14 @@ class StoreScreenshots {
     private val inst = InstrumentationRegistry.getInstrumentation()
     private val ctx = inst.targetContext
     private val out = File(ctx.getExternalFilesDir(null), "shots")
+    private val lang = InstrumentationRegistry.getArguments().getString("lang") ?: "ru"
+    private val deck = when (lang) {
+        "en" -> "sr-en"
+        "sr" -> "ru-sr"
+        else -> "sr-ru"
+    }
+    // The Russian shots keep the names they had before there were others.
+    private val prefix = if (lang == "ru") "" else "$lang-"
 
     private fun shell(cmd: String) {
         inst.uiAutomation.executeShellCommand(cmd).use { pfd ->
@@ -60,7 +70,7 @@ class StoreScreenshots {
         compose.waitForIdle()
         Thread.sleep(1200)
         val bmp = inst.uiAutomation.takeScreenshot()
-        val file = File(out, "$name.png")
+        val file = File(out, "$prefix$name.png")
         file.outputStream().use { bmp.compress(Bitmap.CompressFormat.PNG, 100, it) }
         // The test run uninstalls the app and its files; this copy stays for adb pull.
         shell("mkdir -p $PULL")
@@ -68,7 +78,7 @@ class StoreScreenshots {
     }
 
     private fun click(text: String) {
-        compose.onNodeWithText(text).performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithText(t(text)).performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
     }
 
@@ -84,7 +94,7 @@ class StoreScreenshots {
 
     // The card screens alone, for checking the layout on a given screen and font size.
     private fun cardShots() {
-        compose.onAllNodesWithContentDescription("Сообщить об ошибке")[0].performScrollTo()
+        compose.onAllNodesWithContentDescription(t("Сообщить об ошибке"))[0].performScrollTo()
         shot("1-card-end")
         Repo.setCategories(setOf("X:phrase"))
         compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == false }
@@ -95,23 +105,29 @@ class StoreScreenshots {
     }
 
     private fun storeShots(theme: Int) {
-        compose.onAllNodesWithContentDescription("Сообщить об ошибке")[0].performScrollTo().performClick()
+        compose.onAllNodesWithContentDescription(t("Сообщить об ошибке"))[0].performScrollTo().performClick()
         click("Ударение")
         shot("7-report")
         click("Отмена")
 
-        compose.onNodeWithContentDescription("Грамматика").performClick()
+        compose.onNodeWithContentDescription(t("Грамматика")).performClick()
         compose.waitForIdle()
-        click("Падежи: обзор")
-        shot("5-grammar")
-        compose.onNodeWithContentDescription("Назад").performClick()
-        compose.onNodeWithContentDescription("Назад").performClick()
+        // Only Serbian with Russian translations has grammar topics; the other decks show
+        // the list of comparisons.
+        if (deck == "sr-ru") {
+            click("Падежи: обзор")
+            shot("5-grammar")
+            compose.onNodeWithContentDescription(t("Назад")).performClick()
+        } else {
+            shot("5-grammar")
+        }
+        compose.onNodeWithContentDescription(t("Назад")).performClick()
 
-        compose.onNodeWithContentDescription("Настройки").performClick()
+        compose.onNodeWithContentDescription(t("Настройки")).performClick()
         shot("6-settings")
-        compose.onNodeWithText("Помочь автору").performScrollTo()
+        compose.onNodeWithText(t("Помочь автору")).performScrollTo()
         shot("8-feedback")
-        compose.onNodeWithContentDescription("Назад").performClick()
+        compose.onNodeWithContentDescription(t("Назад")).performClick()
 
         Repo.setCategories(setOf("X:compare"))
         compose.waitUntil(10_000) { Repo.current()?.key?.startsWith("cmp:") == true }
@@ -138,7 +154,9 @@ class StoreScreenshots {
         val theme = Prefs.theme
         try {
             FakeServer.install(closeNotice = true)
-            ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", "ru").putString("deck", "sr-ru").commit()
+            ctx.getSharedPreferences("prefs", Context.MODE_PRIVATE).edit().clear().putString("ui_lang", lang).commit()
+            // The app has already loaded the deck the phone language picked.
+            Repo.switchDeck(deck)
             waitIo()
             Repo.resetAll()
             waitIo()
@@ -148,7 +166,8 @@ class StoreScreenshots {
             shot("1-card")
             if (cardOnly) cardShots() else storeShots(theme)
 
-            Repo.setCategories(setOf("X:phrase"))
+            // The Russian deck has no phrases: its lock screen shows a word.
+            Repo.setCategories(if (deck == "ru-sr") setOf("L1") else setOf("X:phrase"))
             activity.close()
             if (Build.VERSION.SDK_INT >= 33) {
                 inst.uiAutomation.grantRuntimePermission(ctx.packageName, Manifest.permission.POST_NOTIFICATIONS)

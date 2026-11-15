@@ -12,14 +12,14 @@ You can also learn Serbian with Russian translations, or Russian with Serbian on
 interface is in English, Serbian or Russian.
 
 <p align="center">
-  <img src="screenshots/1-card.png" width="250" alt="A new word card">
-  <img src="screenshots/2-lock-phrase.png" width="250" alt="A phrase on the lock screen">
-  <img src="screenshots/3-compare.png" width="250" alt="Two similar words compared">
+  <img src="screenshots/en-1-card.png" width="250" alt="A new word card">
+  <img src="screenshots/en-2-lock-phrase.png" width="250" alt="A phrase on the lock screen">
+  <img src="screenshots/en-3-compare.png" width="250" alt="Two similar words compared">
 </p>
 <p align="center">
-  <img src="screenshots/4-dark.png" width="250" alt="Dark theme">
-  <img src="screenshots/5-grammar.png" width="250" alt="Grammar reference">
-  <img src="screenshots/6-settings.png" width="250" alt="Settings">
+  <img src="screenshots/en-4-dark.png" width="250" alt="Dark theme">
+  <img src="screenshots/en-5-grammar.png" width="250" alt="Reference: similar words and notes">
+  <img src="screenshots/en-6-settings.png" width="250" alt="Settings">
 </p>
 
 <a id="why-it-works"></a>
