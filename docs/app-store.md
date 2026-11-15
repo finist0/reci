@@ -13,17 +13,27 @@ Android.
 
 - **русский** (Russian): ловушки сербского для тех, кто говорит по-русски;
 - **сербский**: ловушки русского для тех, кто говорит по-сербски;
-- **английский** (English U.S. и English U.K., текст один): разборы и заметки, написанные
-  для говорящих по-английски.
+- **английский** (English U.S.): разборы и заметки, написанные для говорящих по-английски.
 
 Сербского среди языков App Store Connect нет. В витринах Сербии, Черногории и Боснии и
 Герцеговины основной язык English (U.K.), дополнительный Croatian. Поэтому:
 
-- English (U.K.) заполните тем же английским текстом: в Сербии это основной язык витрины;
+- English (U.K.) не заводим: название в каждой локализации должно быть своим, а второго
+  английского названия у нас нет. Витрина Сербии покажет English (U.S.);
 - сербский текст записан латиницей и кладётся в локализацию Croatian, читатель хорватского
   его поймёт;
 - кто читает на языке, для которого локализации нет, видит основной язык (Primary
   Language). Английский для этого подходит лучше русского.
+
+Название в каждой локализации должно быть своим: имя, которое уже занято (в том числе
+другой локализацией), App Store Connect не сохраняет. Поэтому на иконке везде «НЕРодная
+речь», а в карточке магазина:
+
+| Локализация | Название |
+|---|---|
+| Russian | НЕРодная речь |
+| Croatian | Nerodna reč |
+| English (U.S.) | Nerodnaya Rech |
 
 Ключевые слова Apple считает в байтах UTF-8: буква кириллицы или латиница с диакритикой
 (č, ć, š, ž, đ) занимает два байта. Слова из названия и подзаголовка Apple ищет и так, в
@@ -134,7 +144,7 @@ Android.
 ### Naziv (do 30 znakova)
 
 ```
-НЕРодная речь
+Nerodna reč
 ```
 
 ### Podnaslov (do 30 znakova)
@@ -226,12 +236,12 @@ POŠTENO
 • Otvoren kod: github.com/finist0/reci
 ```
 
-## English (U.S. and U.K.)
+## English (U.S.)
 
 ### Name (up to 30 characters)
 
 ```
-НЕРодная речь
+Nerodnaya Rech
 ```
 
 ### Subtitle (up to 30 characters)
@@ -299,8 +309,8 @@ HANDY
 • Pronunciation in the phone's voice.
 • A long press on "Know" marks a word you already know as learned.
 • Answered by mistake? The back button brings the card back, and the answer can be changed.
-• Search by word or by translation, favourites.
-• Eight colour themes, light and dark.
+• Search by word or by translation, favorites.
+• Eight color themes, light and dark.
 • Card fixes arrive by themselves, without an app update.
 • Works on iPad too.
 • Save your progress to a file and move it to another phone or a computer.
@@ -338,26 +348,35 @@ HONEST
 
 ### Скриншоты
 
-Apple просит снимки iPhone 6,9 дюйма и, раз приложение работает на iPad, iPad 13 дюймов. Их
-снимает сценарий `ios.yml`, артефакты на странице запуска:
+Apple просит снимки iPhone с Dynamic Island среднего размера (6,1 и 6,3 дюйма) и, раз
+приложение работает на iPad, iPad 13 дюймов. Снимки iPhone среднего размера Apple показывает
+на всех iPhone. Их снимает сценарий `ios.yml`, артефакты на странице запуска:
 
-| Устройство | Артефакт | Размер |
-|---|---|---|
-| iPhone 6,9 дюйма | `ios-screenshots-iphone-17-pro-max` | 1320×2868 |
-| iPad 13 дюймов | `ios-screenshots-ipad-pro-13` | 2064×2752 |
+| Устройство | Артефакт | Размер снимка | Размер в App Store |
+|---|---|---|---|
+| iPhone 6,9 дюйма | `ios-screenshots-iphone-17-pro-max` | 1320×2868 | 1206×2622 |
+| iPad 13 дюймов | `ios-screenshots-ipad-pro-13` | 2064×2752 | 2064×2752 |
 
-Порядок: `3-card`, `10-lock-widgets`, `5-grammar`, `4-search`, `6-settings`.
+Снимки iPhone перед загрузкой уменьшаем до 1206×2622: пропорции те же. Альфа-канал
+убираем.
 
-Тесты снимают телефон с русским языком, поэтому на всех снимках русский интерфейс. Для
-сербской и английской страниц своих снимков пока нет, и App Store покажет на них снимки
-основного языка.
+Порядок: `3-card`, `10-lock-widgets`, `10-lock-wallpaper`, `5-grammar`, `4-search`,
+`6-settings`.
+
+Тесты снимают свежую установку на телефоне с тремя языками, и приложение само выбирает
+колоду и язык интерфейса по языку телефона. Снимки каждой страницы различаются приставкой:
+
+| Страница | Приставка | Колода | Интерфейс |
+|---|---|---|---|
+| Russian | нет, `3-card.png` | сербский с русским переводом | русский |
+| English (U.S.) | `en-`, `en-3-card.png` | сербский с английским переводом | английский |
+| Croatian (сербский) | `sr-`, `sr-3-card.png` | русский с сербским переводом | сербский, кириллица |
 
 ### Возрастной рейтинг
 
-В словаре есть бранные и грубые слова с пометкой (кретен, дупе, кучка и другие), поэтому:
+Все ответы None, рейтинг 4+:
 
-- **Profanity or Crude Humor:** Infrequent/Mild;
-- всё остальное: None;
+- грубых слов, которые стоило бы отметить, в словаре нет;
 - в приложении нет общения между людьми, покупок и доступа к интернету в браузере;
 - раздел «Куда пойти учиться?» отведён под рекламу школ сербского языка.
 
@@ -373,7 +392,7 @@ Apple просит снимки iPhone 6,9 дюйма и, раз приложе�
 | Identifiers → Device ID (случайный номер установки, который создаёт само приложение) | Analytics | нет | нет |
 | Diagnostics → Crash Data (отчёт о падении, только если человек согласился) | App Functionality | нет | нет |
 | Diagnostics → Other Diagnostic Data (устройство, экран и настройки в сообщениях) | App Functionality | нет | нет |
-| User Content → Customer Support (текст сообщения разработчику) | App Functionality | нет | нет |
+| User Content → Customer Support (текст сообщения разработчику) | App Functionality | да | нет |
 | Contact Info → Email Address (только если человек сам указал её для ответа) | App Functionality | да | нет |
 
 Tracking (слежка между приложениями и сайтами других компаний): нет.
