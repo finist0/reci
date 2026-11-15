@@ -48,6 +48,7 @@ import org.kostja.reci.data.Crash
 import org.kostja.reci.data.Env
 import org.kostja.reci.data.Decks
 import org.kostja.reci.data.Prefs
+import org.kostja.reci.data.Translit
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.State
 import org.kostja.reci.data.Telemetry
@@ -171,7 +172,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
         title = { Text(t("Что не так с карточкой?")) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(Prefs.primary(w.cyr), color = p.secondary)
+                Text(if (w.pos == "note") Prefs.native(w.cyr) else Prefs.primary(w.cyr), color = p.secondary)
                 FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     for ((k, t) in if (Repo.isArticle(w)) ARTICLE_PROBLEMS else WORD_PROBLEMS) {
                         SelectChip(t, problem == k) { problem = k }
@@ -198,7 +199,7 @@ fun ReportDialog(w: Word, onDismiss: () -> Unit) {
                 }
                 if (error.isNotEmpty()) return@TextButton
                 val card = JSONObject()
-                    .put("key", w.key.take(120)).put("word", w.cyr.take(120)).put("problem", problem)
+                    .put("key", w.key.take(120)).put("word", Translit.plain(w.cyr).take(120)).put("problem", problem)
                     .put("latin", Prefs.latinFirst).put("stress", Prefs.accentMode).put("deck", Decks.current.id)
                 Telemetry.sendFeedback("card", text.trim(), card, mail, Env.of(ctx), toast)
                 onDismiss()

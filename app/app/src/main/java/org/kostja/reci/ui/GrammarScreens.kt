@@ -114,8 +114,9 @@ fun GrammarIndexScreen(open: (String) -> Unit, openCard: (String) -> Unit, back:
         Repo.words.filter { it.pos == "compare" || it.pos == "note" }.groupBy { it.pos }
     }
     val cards = articles[if (tab == 1) "compare" else "note"].orEmpty().filter { w ->
-        q.isEmpty() || w.cyr.lowercase().contains(q) || Translit.toLatin(w.cyr).lowercase().contains(q) ||
-            w.meanings.any { it.lowercase().contains(q) } || w.related.any { it.word.contains(q) }
+        val cyr = Translit.plain(w.cyr).lowercase()
+        q.isEmpty() || cyr.contains(q) || Translit.toLatin(cyr).contains(q) ||
+            w.meanings.any { Translit.plain(it).lowercase().contains(q) } || w.related.any { it.word.contains(q) }
     }
     val counts = intArrayOf(all.size, articles["compare"].orEmpty().size, articles["note"].orEmpty().size)
 

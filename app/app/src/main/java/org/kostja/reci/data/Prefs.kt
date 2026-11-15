@@ -279,11 +279,14 @@ object Prefs {
         changed()
     }
 
+    private fun inTarget(s: String) = if (latinFirst && Decks.current.target == "sr") Translit.toLatin(s) else s
+    private fun inNative(s: String) = if (latinFirst && Decks.current.serbianInNative) Translit.toLatin(s) else s
+
     // Text in the language learned: Serbian in the script the user reads first.
-    fun primary(cyr: String) = if (latinFirst && Decks.current.target == "sr") Translit.toLatin(cyr) else cyr
+    fun primary(cyr: String) = Translit.mixed(cyr, ::inTarget, ::inNative)
 
     // Text in the user's own language: a translation, a note, a grammar label.
-    fun native(text: String) = if (latinFirst && Decks.current.serbianInNative) Translit.toLatin(text) else text
+    fun native(text: String) = Translit.mixed(text, ::inNative, ::inTarget)
 
     // Serbian text that may carry stress marks: an example, a note.
     fun marked(text: String) = Accents.show(text, accentMode)

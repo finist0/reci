@@ -389,6 +389,28 @@ class DeckTest {
     }
 
     @Test
+    fun bracesKeepTheWordsOfTheOtherLanguageInTheirOwnScript() {
+        Prefs.latinFirst = true
+        try {
+            assertEquals("мн. pare (деньги)", Prefs.primary("{мн.} паре ({деньги})"))
+            assertEquals("сказать — то же, что reći", Prefs.native("сказать — то же, что {рећи}"))
+            switchTo("ru-sr")
+            assertEquals("на мой взгляд = po mom mišljenju", Prefs.native("{на мой взгляд} = по мом мишљењу"))
+            assertEquals("живот ili жизнь?", Prefs.native("{живот} или {жизнь}?"))
+            assertEquals("gen. взгля́да", Prefs.primary("{ген}. взгля́да"))
+            assertEquals("an unclosed brace is text", "{ničego", Prefs.native("{ничего"))
+            Prefs.latinFirst = false
+            assertEquals("на мой взгляд = по мом мишљењу", Prefs.native("{на мой взгляд} = по мом мишљењу"))
+            assertEquals("ген. взгля́да", Prefs.primary("{ген}. взгля́да"))
+            val w = WordJson.parse("""{"key": "cmp:живот-жизнь", "cyr": "живот · жизнь", "meanings": ["{живот} или {жизнь}?"]}""")!!
+            assertTrue(searchMatch(w, "живот или", byMeaning = true))
+        } finally {
+            Prefs.latinFirst = false
+            switchTo("sr-ru")
+        }
+    }
+
+    @Test
     fun englishHasTwoPluralForms() {
         I18n.langOverride = "en"
         try {

@@ -34,4 +34,27 @@ object Translit {
         }
         return Normalizer.normalize(sb, Normalizer.Form.NFC)
     }
+
+    // {...} in a card's text holds words of the deck's other language: Russian quoted in a
+    // Serbian note, a Russian gloss in the forms of a Serbian word. Each part keeps the script of
+    // its own language.
+    fun mixed(text: String, own: (String) -> String, other: (String) -> String): String {
+        if ('{' !in text) return own(text)
+        val sb = StringBuilder(text.length + 8)
+        var i = 0
+        while (i < text.length) {
+            val open = text.indexOf('{', i)
+            val close = if (open < 0) -1 else text.indexOf('}', open + 1)
+            if (close < 0) {
+                sb.append(own(text.substring(i)))
+                break
+            }
+            sb.append(own(text.substring(i, open))).append(other(text.substring(open + 1, close)))
+            i = close + 1
+        }
+        return sb.toString()
+    }
+
+    // The text as typed in a search: without the braces.
+    fun plain(text: String) = text.replace("{", "").replace("}", "")
 }

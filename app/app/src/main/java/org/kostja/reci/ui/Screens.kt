@@ -298,7 +298,7 @@ private fun LevelRow(name: String, known: Int, total: Int, selected: Boolean, on
 // typed in Latin letters, as Serbian Latin is: the chips tell which one is looked for.
 internal fun searchMatch(w: Word, q0: String, byMeaning: Boolean): Boolean {
     val q = q0.replace('ё', 'е')
-    fun norm(s: String) = s.lowercase().replace('ё', 'е')
+    fun norm(s: String) = Translit.plain(s).lowercase().replace('ё', 'е')
     if (byMeaning) return w.meanings.any { norm(it).contains(q) || Translit.toLatin(norm(it)).contains(q) }
     return norm(w.cyr).startsWith(q) || Translit.toLatin(norm(w.cyr)).startsWith(q)
 }
@@ -455,7 +455,8 @@ fun WordListScreen(category: String, open: (String) -> Unit, back: () -> Unit) {
     val all = remember(Repo.version.intValue, category) { Repo.words.filter { Repo.inCategory(it, category) } }
     val q = query.trim().lowercase()
     val shown = if (q.isEmpty()) all else all.filter { w ->
-        w.cyr.lowercase().contains(q) || Translit.toLatin(w.cyr).lowercase().contains(q) || w.meanings.any { it.lowercase().contains(q) }
+        val cyr = Translit.plain(w.cyr).lowercase()
+        cyr.contains(q) || Translit.toLatin(cyr).contains(q) || w.meanings.any { Translit.plain(it).lowercase().contains(q) }
     }
 
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
