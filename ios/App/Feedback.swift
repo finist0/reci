@@ -188,7 +188,7 @@ struct ReportSheet: View {
             error = t("Проверьте адрес почты")
             return false
         }
-        let card = CardInfo(key: String(w.key.prefix(120)), word: String(w.cyr.prefix(120)), problem: problem,
+        let card = CardInfo(key: String(w.key.prefix(120)), word: String(Translit.plain(w.cyr).prefix(120)), problem: problem,
                             latin: model.prefs.latinFirst, stress: model.prefs.accentMode,
                             deck: model.prefs.deckId)
         model.sendFeedback(kind: "card", text: body, card: card, email: mail)

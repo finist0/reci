@@ -63,15 +63,35 @@ public enum Translit {
     public static func showAccents(_ text: String, _ mode: Int) -> String {
         mode == 0 ? text : mode == 1 ? placeOnly(text) : strip(text)
     }
+
+    // {...} in a card's text holds words of the deck's other language: Russian quoted in a
+    // Serbian note, a Russian gloss in the forms of a Serbian word. Each part keeps the script of
+    // its own language.
+    public static func mixed(_ text: String, _ own: (String) -> String, _ other: (String) -> String) -> String {
+        guard text.contains("{") else { return own(text) }
+        var out = ""
+        var rest = Substring(text)
+        while let open = rest.firstIndex(of: "{"), let close = rest[open...].firstIndex(of: "}") {
+            out += own(String(rest[..<open])) + other(String(rest[rest.index(after: open)..<close]))
+            rest = rest[rest.index(after: close)...]
+        }
+        return out + own(String(rest))
+    }
+
+    // The text as typed in a search: without the braces.
+    public static func plain(_ text: String) -> String { text.filter { $0 != "{" && $0 != "}" } }
 }
 
 // How text is shown under the current settings.
 public extension Prefs {
+    private func inTarget(_ s: String) -> String { latinFirst && deck.target == "sr" ? Translit.toLatin(s) : s }
+    private func inNative(_ s: String) -> String { latinFirst && deck.serbianInNative ? Translit.toLatin(s) : s }
+
     // Text in the language learned: Serbian in the script the user reads first.
-    func primary(_ cyr: String) -> String { latinFirst && deck.target == "sr" ? Translit.toLatin(cyr) : cyr }
+    func primary(_ cyr: String) -> String { Translit.mixed(cyr, inTarget, inNative) }
 
     // Text in the user's own language: a translation, a note, a grammar label.
-    func native(_ text: String) -> String { latinFirst && deck.serbianInNative ? Translit.toLatin(text) : text }
+    func native(_ text: String) -> String { Translit.mixed(text, inNative, inTarget) }
 
     func headword(_ w: Word) -> String {
         // A note's title is in the user's language.
@@ -99,7 +119,7 @@ public extension Prefs {
 // without ё. Translations into English are typed in Latin letters, as Serbian Latin is: the
 // search picker tells which one is looked for.
 public enum Search {
-    static func norm(_ s: String) -> String { s.lowercased().replacingOccurrences(of: "ё", with: "е") }
+    static func norm(_ s: String) -> String { Translit.plain(s).lowercased().replacingOccurrences(of: "ё", with: "е") }
 
     public static func matches(_ w: Word, _ query: String, byMeaning: Bool) -> Bool {
         let q = norm(query.trimmingCharacters(in: .whitespaces))

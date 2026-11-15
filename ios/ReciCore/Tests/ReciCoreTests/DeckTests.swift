@@ -171,6 +171,23 @@ final class DeckTests: XCTestCase {
         XCTAssertEqual(p.secondary("кућа"), "кућа")
     }
 
+    func testBracesKeepTheWordsOfTheOtherLanguageInTheirOwnScript() throws {
+        var p = Prefs()
+        p.latinFirst = true
+        XCTAssertEqual(p.primary("{мн.} паре ({деньги})"), "мн. pare (деньги)")
+        XCTAssertEqual(p.native("сказать — то же, что {рећи}"), "сказать — то же, что reći")
+        p.deckId = "ru-sr"
+        XCTAssertEqual(p.native("{на мой взгляд} = по мом мишљењу"), "на мой взгляд = po mom mišljenju")
+        XCTAssertEqual(p.native("{живот} или {жизнь}?"), "живот ili жизнь?")
+        XCTAssertEqual(p.primary("{ген}. взгля́да"), "gen. взгля́да")
+        XCTAssertEqual(p.native("{ничего"), "{ničego", "an unclosed brace is text")
+        p.latinFirst = false
+        XCTAssertEqual(p.native("{на мой взгляд} = по мом мишљењу"), "на мой взгляд = по мом мишљењу")
+        XCTAssertEqual(p.primary("{ген}. взгля́да"), "ген. взгля́да")
+        let cmp = try XCTUnwrap(Fixtures.ruWords.first { $0.key == "cmp:живот-жизнь" })
+        XCTAssertTrue(Search.matches(cmp, "живот или", byMeaning: true))
+    }
+
     func testTheInterfaceLanguageIsChosenApartFromTheDeck() throws {
         let store = Fixtures.tempStore()
         XCTAssertEqual(store.prefs.uiLang, "ru")

@@ -235,8 +235,9 @@ struct ListScreen: View {
         let all = model.repo.words.filter { model.repo.inCategory($0, id) }
         let query = q.trimmingCharacters(in: .whitespaces).lowercased()
         let shown = query.isEmpty ? all : all.filter { w in
-            w.cyr.lowercased().contains(query) || Translit.toLatin(w.cyr).lowercased().contains(query)
-                || w.meanings.contains { $0.lowercased().contains(query) }
+            let cyr = Translit.plain(w.cyr).lowercased()
+            return cyr.contains(query) || Translit.toLatin(cyr).contains(query)
+                || w.meanings.contains { Translit.plain($0).lowercased().contains(query) }
         }
         VStack(spacing: 0) {
             Header(title: "\(Labels.category(id)) · \(all.count)")

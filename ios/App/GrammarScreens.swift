@@ -94,8 +94,9 @@ struct GrammarScreen: View {
     private func articles() -> [Word] {
         let q = q.trimmingCharacters(in: .whitespaces).lowercased()
         return model.repo.words.filter { $0.pos == (tab == 1 ? "compare" : "note") }.filter { w in
-            q.isEmpty || w.cyr.lowercased().contains(q) || Translit.toLatin(w.cyr).lowercased().contains(q)
-                || w.meanings.contains { $0.lowercased().contains(q) } || w.related.contains { $0.word.contains(q) }
+            let cyr = Translit.plain(w.cyr).lowercased()
+            return q.isEmpty || cyr.contains(q) || Translit.toLatin(cyr).contains(q)
+                || w.meanings.contains { Translit.plain($0).lowercased().contains(q) } || w.related.contains { $0.word.contains(q) }
         }
     }
 
