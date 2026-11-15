@@ -188,6 +188,32 @@ final class DeckTests: XCTestCase {
         XCTAssertTrue(Search.matches(cmp, "живот или", byMeaning: true))
     }
 
+    // A Latin letter next to a Cyrillic one, or fewer letters Serbian lacks than the text had (й
+    // and ё come out as ĭ and ë): a Russian word turned into Latin.
+    private func transliterated(_ text: String, _ shown: String) -> Bool {
+        let letters = shown.unicodeScalars.filter { $0.properties.generalCategory != .nonspacingMark }
+        let cyrillic = { (c: Unicode.Scalar) in (0x400...0x4FF).contains(c.value) }
+        let latin = { (c: Unicode.Scalar) in c.properties.isAlphabetic && c.value < 0x250 }
+        let russianOnly = { (s: String) in s.filter { "ыэъьяюёйщЫЭЪЬЯЮЁЙЩ".contains($0) }.count }
+        return zip(letters, letters.dropFirst()).contains { (cyrillic($0) && latin($1)) || (latin($0) && cyrillic($1)) }
+            || russianOnly(shown) != russianOnly(text)
+    }
+
+    func testTheLatinSettingTurnsNoRussianWordIntoLatin() {
+        var p = Prefs()
+        p.latinFirst = true
+        for (id, words) in [("sr-ru", Fixtures.words), ("ru-sr", Fixtures.ruWords)] {
+            p.deckId = id
+            let bad = words.flatMap { w -> [String] in
+                let native = w.meanings + w.examples.map(\.tr) + w.related.map(\.tr) + [w.note] + w.tips + (w.pos == "note" ? [w.cyr] : [])
+                let primary = [w.forms] + w.examples.map(\.text) + (w.pos == "note" ? [] : [w.cyr])
+                let shown = native.map { ($0, p.native($0)) } + primary.map { ($0, p.primary($0)) }
+                return shown.filter { transliterated($0.0, $0.1) }.map { "\(w.key): \($0.1)" }
+            }
+            XCTAssertEqual(bad, [], id)
+        }
+    }
+
     func testTheInterfaceLanguageIsChosenApartFromTheDeck() throws {
         let store = Fixtures.tempStore()
         XCTAssertEqual(store.prefs.uiLang, "ru")

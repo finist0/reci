@@ -109,6 +109,42 @@ for (const deck of decks) {
     });
 }
 
+// What the Latin setting shows in Latin: the outside of braces in the texts of the side that is
+// Serbian, the inside of them in the other side's texts.
+const RUSSIAN_ONLY = /[ыэъьяюёйщ]/i;
+const outside = s => s.replace(/\{[^}]*\}/g, "");
+const inside = s => (s.match(/\{[^}]*\}/g) ?? []).join("");
+
+function transliteratedRussian({ target: t, native: n }, cards) {
+    const latin = { [t]: t === "sr", [n]: n === "sr" || (t === "sr" && n !== "ru") };
+    const problems = [];
+    const check = (c, field, lang, texts) => {
+        const other = lang === t ? n : t;
+        for (const s of texts) {
+            if ((latin[lang] && RUSSIAN_ONLY.test(outside(s))) || (latin[other] && RUSSIAN_ONLY.test(inside(s)))) {
+                problems.push(`${c.key} ${field}: ${JSON.stringify(s)}`);
+            }
+        }
+    };
+    for (const c of cards) {
+        check(c, "meanings", n, c.meanings);
+        check(c, c.pos === "note" ? "title" : "cyr", c.pos === "note" ? n : t, [c.cyr]);
+        check(c, "forms", t, [c.forms ?? ""]);
+        check(c, "note", n, [c.note ?? "", ...(c.tips ?? [])]);
+        check(c, "examples", t, c.examples.map(e => e[t]));
+        check(c, "examples", n, c.examples.map(e => e[n]));
+        check(c, "related", t, c.related.map(r => r.acc || r[t]));
+        check(c, "related", n, c.related.map(r => r[n]));
+    }
+    return problems;
+}
+
+for (const deck of decks) {
+    test(`${deck.id}: the Latin setting turns no Russian word into Latin`, () => {
+        assert.deepEqual(transliteratedRussian(deck, read(deck.words)), []);
+    });
+}
+
 test("a card in the wrong language is caught", () => {
     const [srRu, ruSr, srEn, ruEn] = decks;
     const card = (over, ex = { sr: "Наша [кућа] је близу мора.", ru: "Наш дом недалеко от моря." }) => ({

@@ -213,3 +213,34 @@ test("the Russian deck speaks Russian and searches Russian without ё", async t 
     const rows = await page.eval("[...document.querySelectorAll('.row-sub')].map(e => e.textContent)");
     assert.ok(rows.some(s => s.includes("кућа")), `no кућа among ${rows.slice(0, 5)}`);
 });
+
+test("in Latin the Russian words of a Serbian text stay in Cyrillic", async t => {
+    const page = await app(t, { lang: "sr", storage: { "reci.prefs": JSON.stringify({ latinFirst: true }) } });
+    assert.equal(await deck(page), "ru-sr");
+    const tiles = () => page.eval("[...document.querySelectorAll('.tile')].map(e => e.textContent)");
+    await page.tap('[data-act="ref"]');
+    const compares = await tiles();
+    for (const s of ["живот ili жизнь?", "надеть ili одеть?", "вредный ili трудолюбивый?"]) assert.ok(compares.includes(s), s);
+    await page.tap('[data-act="tab"][data-arg="2"]');
+    const notes = await tiles();
+    for (const s of ["Что́бы tamo gde srpski ima „da“", "Imati: у меня́ есть и у меня́ нет"]) assert.ok(notes.includes(s), s);
+
+    await page.tap('[data-act="tab"][data-arg="1"]');
+    await page.tap(".tile", "живот ili жизнь?");
+    assert.equal(await textOf(page, ".article-title"), "живот ili жизнь?");
+    assert.match(await textOf(page, ".article-text"), /^Lažni prijatelj: ruski живо́т je stomak, a srpskom životu odgovara жизнь\.$/);
+    await page.tap('[data-act="back"]');
+    await page.tap(".tile", "надеть ili одеть?");
+    assert.match(await page.text(), /obući nešto na sebe — надеть пальто/);
+    await page.tap('[data-act="back"]');
+    await page.tap('[data-act="back"]');
+
+    await page.tap('[data-act="search"]');
+    await page.waitFor("document.activeElement?.dataset?.input === 'search'");
+    await page.type("взгляд");
+    await page.tap(".row-word", "взгляд");
+    await page.waitFor("document.querySelector('.detail')");
+    assert.match(await textOf(page, ".useful"), /на мой взгляд = po mom mišljenju/);
+    assert.match(await textOf(page, ".forms"), /^gen\. взгля́да$/);
+    assert.deepEqual(page.errors, []);
+});

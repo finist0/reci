@@ -410,6 +410,33 @@ class DeckTest {
         }
     }
 
+    // A Latin letter next to a Cyrillic one, or fewer letters Serbian lacks than the text had (й
+    // and ё come out as ĭ and ë): a Russian word turned into Latin.
+    private val mixedScripts = Regex("""\p{IsLatin}\p{M}*\p{IsCyrillic}|\p{IsCyrillic}\p{M}*\p{IsLatin}""")
+    private val russianOnly = Regex("[ыэъьяюёйщЫЭЪЬЯЮЁЙЩ]")
+
+    private fun latinProblems(): List<String> = Repo.words.flatMap { w ->
+        val native = w.meanings + w.examples.map { it.tr } + w.related.map { it.tr } + w.note + w.tips +
+            listOfNotNull(w.cyr.takeIf { w.pos == "note" })
+        val primary = listOf(w.forms) + w.examples.map { it.text } + listOfNotNull(w.cyr.takeIf { w.pos != "note" })
+        (native.map { it to Prefs.native(it) } + primary.map { it to Prefs.primary(it) }).filter { (text, shown) ->
+            mixedScripts.containsMatchIn(shown) || russianOnly.findAll(shown).count() != russianOnly.findAll(text).count()
+        }.map { "${w.key}: ${it.second}" }
+    }
+
+    @Test
+    fun theLatinSettingTurnsNoRussianWordIntoLatin() {
+        Prefs.latinFirst = true
+        try {
+            assertEquals(emptyList<String>(), latinProblems())
+            switchTo("ru-sr")
+            assertEquals(emptyList<String>(), latinProblems())
+        } finally {
+            Prefs.latinFirst = false
+            switchTo("sr-ru")
+        }
+    }
+
     @Test
     fun englishHasTwoPluralForms() {
         I18n.langOverride = "en"
