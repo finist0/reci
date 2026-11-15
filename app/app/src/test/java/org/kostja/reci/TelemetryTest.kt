@@ -183,6 +183,19 @@ class TelemetryTest {
     }
 
     @Test
+    fun noPingFromAFirebaseTestLabPhone() {
+        android.provider.Settings.System.putString(app.contentResolver, "firebase.test.lab", "true")
+        try {
+            Telemetry.init(app)
+            pingSkipped()
+        } finally {
+            android.provider.Settings.System.putString(app.contentResolver, "firebase.test.lab", null)
+            Telemetry.init(app)
+        }
+        assertTrue(ping())
+    }
+
+    @Test
     fun nothingIsSentOrCollectedWhileStatisticsAreOff() {
         Telemetry.enabled = false
         Telemetry.count("cards")

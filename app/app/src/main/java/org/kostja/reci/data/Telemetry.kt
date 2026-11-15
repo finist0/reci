@@ -43,6 +43,9 @@ object Telemetry {
     var now: () -> Long = System::currentTimeMillis
     // Whether the lock card may start over the lock screen; without it the card never shows.
     private var canShowLockCard: () -> Boolean = { false }
+    // Google Play runs every uploaded build on Firebase Test Lab phones, which would count as
+    // new users that never answer a card.
+    private var testLab = false
 
     // Network calls run one at a time off the main thread; results come back on it.
     private val io = Executors.newSingleThreadExecutor()
@@ -56,6 +59,7 @@ object Telemetry {
         appVersion = clean(ctx.packageManager.getPackageInfo(ctx.packageName, 0).versionName)
         val app = ctx.applicationContext
         canShowLockCard = { Settings.canDrawOverlays(app) }
+        testLab = Settings.System.getString(ctx.contentResolver, "firebase.test.lab") == "true"
         sp.edit {
             if (!sp.contains("id")) putString("id", UUID.randomUUID().toString())
             if (!sp.contains("feedback_id")) putString("feedback_id", UUID.randomUUID().toString())
@@ -188,7 +192,7 @@ object Telemetry {
     fun sendPing(learned: () -> Int, done: (Boolean) -> Unit = {}) {
         val t = now()
         val day = localDay(t)
-        if (sending || !enabled || !noticeShown || sentDay == day || t - sp.getLong("tried_at", 0) < RETRY) return
+        if (testLab || sending || !enabled || !noticeShown || sentDay == day || t - sp.getLong("tried_at", 0) < RETRY) return
         sending = true
         sp.edit { putLong("tried_at", t) }
         io.execute {
