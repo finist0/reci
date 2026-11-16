@@ -53,6 +53,8 @@ targets:
       path: App/Info.plist
       properties:
         CFBundleDisplayName: НЕРодная речь
+        # The interface languages of ui.json; the App Store lists only the ones named here.
+        CFBundleLocalizations: [en, ru, sr]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         UIAppFonts: [literata.ttf, ruslan_display.ttf]
@@ -91,6 +93,7 @@ targets:
       path: Widget/Info.plist
       properties:
         CFBundleDisplayName: НЕРодная речь
+        CFBundleLocalizations: [en, ru, sr]
         CFBundleShortVersionString: $(MARKETING_VERSION)
         CFBundleVersion: $(CURRENT_PROJECT_VERSION)
         NSExtension:
