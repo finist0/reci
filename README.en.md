@@ -83,7 +83,7 @@ How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/lea
 <table>
 <tr>
 <td align="center"><a href="#install-google-play"><img src="art/badges/google-play-en.png" alt="Google Play" height="44"></a><br><sub>Google Play: testing</sub></td>
-<td align="center"><a href="#install-testflight"><img src="art/badges/app-store-en.svg" alt="App Store" height="44"></a><br><sub>iPhone: testing in TestFlight</sub></td>
+<td align="center"><a href="https://apps.apple.com/app/id6831608708"><img src="art/badges/app-store-en.svg" alt="App Store" height="44"></a><br><sub>iPhone and iPad: App Store</sub></td>
 <td align="center"><a href="#install-apk"><img src="art/badges/apk-en.svg" alt="Android APK" height="44"></a><br><sub>APK from the Releases page</sub></td>
 <td align="center"><a href="#install-web"><img src="art/badges/web-en.svg" alt="Web version" height="44"></a><br><sub>Web version in a browser</sub></td>
 </tr>
@@ -104,28 +104,26 @@ requires that much testing before the app can be released to everyone.
 
 Then [set it up on Android](#android-setup).
 
-<a id="install-testflight"></a>
-### iPhone: testing in TestFlight
+<a id="install-app-store"></a>
+### iPhone and iPad: App Store
 
-1. Install TestFlight from the App Store.
-2. Open https://testflight.apple.com/join/3x3Hs9DV on the iPhone and install the app.
-   Updates then come through TestFlight.
-3. Open the app → Settings → "Card on the lock screen" → "Wallpaper". The card becomes the
+1. Install Nerodnaya Rech from the App Store: https://apps.apple.com/app/id6831608708.
+2. Open the app → Settings → "Card on the lock screen" → "Wallpaper". The card becomes the
    lock screen wallpaper: the Card Wallpaper action (НЕРодная речь) for the Shortcuts app
    draws it.
-4. Build the shortcut: the "Create the shortcut" button there opens Shortcuts.
+3. Build the shortcut: the "Create the shortcut" button there opens Shortcuts.
    1. New Shortcut → Rename → Card Wallpaper.
    2. Add Action → Card Wallpaper (НЕРодная речь).
    3. Add Action → Set Wallpaper Photo: Lock Screen, turn off Show Preview and
       Crop to Subject.
-5. Let the shortcut run by itself.
+4. Let the shortcut run by itself.
    - iOS 17, 18 and 26: Automation → New Automation → Time of Day (Daily) →
      Run Immediately → Next → Card Wallpaper. A second automation the same way:
      App → НЕРодная речь → Is Closed.
    - iOS 27: in the shortcut itself add the Time of Day and
      App → НЕРодная речь → Is Closed triggers from Automation, then Info (ⓘ) → Privacy →
      Allow Running When Locked.
-6. Add the round "Know" and "Don't know" widgets under the clock: touch and hold the lock
+5. Add the round "Know" and "Don't know" widgets under the clock: touch and hold the lock
    screen → Customize (on iOS 17 and 18 also → Lock Screen) →
    Add Widgets.
 
@@ -187,7 +185,7 @@ The same cards, learning, search and reference, in a browser:
 **[finist0.github.io/reci/web](https://finist0.github.io/reci/web/)**
 
 There is no lock screen card there: browsers do not allow it. On the iPhone it comes with the
-app from TestFlight.
+app from the App Store.
 
 To install the web version as an app:
 

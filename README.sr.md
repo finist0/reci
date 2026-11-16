@@ -85,7 +85,7 @@
 <table>
 <tr>
 <td align="center"><a href="#install-google-play"><img src="art/badges/google-play-en.png" alt="Google Play" height="44"></a><br><sub>Google Play: тестирање</sub></td>
-<td align="center"><a href="#install-testflight"><img src="art/badges/app-store-en.svg" alt="App Store" height="44"></a><br><sub>iPhone: тестирање у TestFlight-у</sub></td>
+<td align="center"><a href="https://apps.apple.com/app/id6831608708"><img src="art/badges/app-store-en.svg" alt="App Store" height="44"></a><br><sub>iPhone и iPad: App Store</sub></td>
 <td align="center"><a href="#install-apk"><img src="art/badges/apk-en.svg" alt="Android APK" height="44"></a><br><sub>APK са странице Releases</sub></td>
 <td align="center"><a href="#install-web"><img src="art/badges/web-en.svg" alt="Web version" height="44"></a><br><sub>Веб-верзија у прегледачу</sub></td>
 </tr>
@@ -107,28 +107,26 @@
 
 Затим: [подешавање на Android-у](#android-setup).
 
-<a id="install-testflight"></a>
-### iPhone: тестирање у TestFlight-у
+<a id="install-app-store"></a>
+### iPhone и iPad: App Store
 
-1. Инсталирајте апликацију TestFlight из App Store-а.
-2. На iPhone-у отворите везу https://testflight.apple.com/join/3x3Hs9DV и инсталирајте
-   апликацију. Ажурирања ће стизати преко TestFlight-а.
-3. Отворите апликацију → „Подешавања“ → „Картица на закључаном екрану“ → „Позадина“.
+1. Инсталирајте апликацију „НЕРодная речь“ из App Store-а: https://apps.apple.com/app/id6831608708.
+2. Отворите апликацију → „Подешавања“ → „Картица на закључаном екрану“ → „Позадина“.
    Картица постаје позадина закључаног екрана: црта је радња Card Wallpaper
    (НЕРодная речь) за апликацију Shortcuts.
-4. Направите пречицу: дугме „Направи пречицу“ на истом месту отвара Shortcuts.
+3. Направите пречицу: дугме „Направи пречицу“ на истом месту отвара Shortcuts.
    1. New Shortcut → Rename → Card Wallpaper.
    2. Add Action → Card Wallpaper (НЕРодная речь).
    3. Add Action → Set Wallpaper Photo: Lock Screen, искључите Show Preview и
       Crop to Subject.
-5. Нека се пречица покреће сама.
+4. Нека се пречица покреће сама.
    - iOS 17, 18 и 26: Automation → New Automation → Time of Day (Daily) →
      Run Immediately → Next → Card Wallpaper. Другу аутоматизацију додајте исто тако:
      App → НЕРодная речь → Is Closed.
    - iOS 27: у самој пречици додајте из Automation окидаче Time of Day и
      App → НЕРодная речь → Is Closed, затим Info (ⓘ) → Privacy →
      Allow Running When Locked.
-6. Испод сата додајте округле виџете „Знам“ и „Не знам“: додирните и држите закључани
+5. Испод сата додајте округле виџете „Знам“ и „Не знам“: додирните и држите закључани
    екран → Customize (на iOS 17 и 18 још → Lock Screen) → Add Widgets.
 
 Нова позадина се појављује кад се аутоматизација покрене, а не одмах после одговора.
@@ -188,7 +186,7 @@
 **[finist0.github.io/reci/web](https://finist0.github.io/reci/web/)**
 
 Картице на закључаном екрану тамо нема: прегледачи то не дозвољавају. На iPhone-у је има
-у апликацији из TestFlight-а.
+у апликацији из App Store-а.
 
 Како да инсталирате веб-верзију као апликацију:
 

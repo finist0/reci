@@ -86,7 +86,7 @@
 <table>
 <tr>
 <td align="center"><a href="#install-google-play"><img src="art/badges/google-play-en.png" alt="Google Play" height="44"></a><br><sub>Google Play: тестирование</sub></td>
-<td align="center"><a href="#install-testflight"><img src="art/badges/app-store-en.svg" alt="App Store" height="44"></a><br><sub>iPhone: тестирование в TestFlight</sub></td>
+<td align="center"><a href="https://apps.apple.com/app/id6831608708"><img src="art/badges/app-store-en.svg" alt="App Store" height="44"></a><br><sub>iPhone и iPad: App Store</sub></td>
 <td align="center"><a href="#install-apk"><img src="art/badges/apk-en.svg" alt="Android APK" height="44"></a><br><sub>APK со страницы Releases</sub></td>
 <td align="center"><a href="#install-web"><img src="art/badges/web-en.svg" alt="Web version" height="44"></a><br><sub>Веб-версия в браузере</sub></td>
 </tr>
@@ -108,28 +108,26 @@
 
 Дальше — [настройка на Android](#android-setup).
 
-<a id="install-testflight"></a>
-### iPhone: тестирование в TestFlight
+<a id="install-app-store"></a>
+### iPhone и iPad: App Store
 
-1. Поставьте из App Store приложение TestFlight.
-2. Откройте на iPhone ссылку https://testflight.apple.com/join/3x3Hs9DV и установите
-   НЕРодную речь. Обновления будут приходить через TestFlight.
-3. Откройте приложение → «Настройки» → «Карточка на экране блокировки» → «Обои».
+1. Установите НЕРодную речь из App Store: https://apps.apple.com/app/id6831608708.
+2. Откройте приложение → «Настройки» → «Карточка на экране блокировки» → «Обои».
    Карточка станет обоями экрана блокировки: её рисует действие Card Wallpaper
    (НЕРодная речь) для приложения Shortcuts.
-4. Соберите команду: кнопка «Создать команду» там же откроет Shortcuts.
+3. Соберите команду: кнопка «Создать команду» там же откроет Shortcuts.
    1. New Shortcut → Rename → Card Wallpaper.
    2. Add Action → Card Wallpaper (НЕРодная речь).
    3. Add Action → Set Wallpaper Photo: Lock Screen, выключите Show Preview и
       Crop to Subject.
-5. Пусть команда запускается сама.
+4. Пусть команда запускается сама.
    - iOS 17, 18 и 26: Automation → New Automation → Time of Day (Daily) →
      Run Immediately → Next → Card Wallpaper. Вторая автоматизация так же:
      App → НЕРодная речь → Is Closed.
    - iOS 27: в самой команде добавьте из Automation триггеры Time of Day и
      App → НЕРодная речь → Is Closed, затем Info (ⓘ) → Privacy →
      Allow Running When Locked.
-6. Добавьте под часами круглые виджеты «Знаю» и «Не знаю»: нажмите и удерживайте экран
+5. Добавьте под часами круглые виджеты «Знаю» и «Не знаю»: нажмите и удерживайте экран
    блокировки → Customize (на iOS 17 и 18 ещё → Lock Screen) → Add Widgets.
 
 Новые обои появляются, когда срабатывает автоматизация, а не сразу после ответа.
@@ -188,7 +186,7 @@
 **[finist0.github.io/reci/web](https://finist0.github.io/reci/web/)**
 
 Карточки на экране блокировки там нет: браузеры этого не позволяют. На iPhone она есть в
-приложении из TestFlight.
+приложении из App Store.
 
 Как поставить веб-версию как приложение:
 
