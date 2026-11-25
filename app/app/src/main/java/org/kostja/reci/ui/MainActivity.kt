@@ -203,7 +203,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun handle(intent: Intent?) {
-        val s = Screen.fromRoute(intent?.getStringExtra(EXTRA_ROUTE)) ?: return
+        // Before Android 12, Back on the card finishes the activity, and the recent apps start it
+        // again with the intent that first opened it.
+        if (intent == null || intent.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY != 0) return
+        val s = Screen.fromRoute(intent.getStringExtra(EXTRA_ROUTE)) ?: return
         // The same word reported again from the lock card needs its form up again.
         if (stack.last() != s || (s is Screen.Detail && s.report)) stack.add(s)
     }
