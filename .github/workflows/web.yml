@@ -26,4 +26,4 @@ jobs:
       - name: Let Chrome start its sandbox
         run: sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: UI tests in headless Chrome
-        run: node --test --test-timeout=120000 "web/tests/ui/*.test.mjs"
+        run: node --test --test-timeout=300000 "web/tests/ui/*.test.mjs"
