@@ -225,6 +225,17 @@ class FeedbackTest {
     }
 
     @Test
+    fun theRecentAppsOpenTheCardNotTheFormTheLockCardOpenedBefore() {
+        FakeServer.install(closeNotice = true)
+        activity = ActivityScenario.launch(
+            Intent(ctx, MainActivity::class.java).putExtra(MainActivity.EXTRA_ROUTE, "report:кућа")
+                .addFlags(Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY)
+        )
+        compose.waitUntil(10_000) { Repo.current() != null }
+        assertFalse(exists("Что не так с карточкой?"))
+    }
+
+    @Test
     fun aTurnedScreenKeepsTheFormFromTheLockCardOnce() {
         launch(route = "report:кућа")
         activity!!.recreate()
