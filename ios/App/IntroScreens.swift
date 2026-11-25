@@ -55,6 +55,8 @@ struct PairScreen: View {
         .disabled(loading)
         .opacity(loading ? 0.6 : 1)
         .background(p.bg.ignoresSafeArea())
+        // Without it the screen's id would replace the ids of the buttons in it.
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("pair")
         .onAppear {
             target = model.deck.target
@@ -142,6 +144,7 @@ struct LockOfferScreen: View {
             .padding(.horizontal, 18).padding(.vertical, 10)
         }
         .background(p.bg.ignoresSafeArea())
+        .accessibilityElement(children: .contain)
         .accessibilityIdentifier("lockOffer")
         .fullScreenCover(item: Binding(get: { preview.map(Look.init) }, set: { preview = $0?.mode })) { look in
             LookScreen(mode: look.mode, onBack: { preview = nil }, onSetUp: { onSetUp(look.mode) })
