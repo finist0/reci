@@ -70,11 +70,16 @@ sealed interface Screen {
             "grammar" -> GrammarIndex
             else -> when {
                 route?.startsWith("report:") == true -> Detail(route.removePrefix("report:"), report = true)
-                route == null || !route.startsWith("grammar:") -> null
-                route.startsWith("grammar:cmp:") -> Detail(route.substringAfter(':'))
-                route.startsWith("grammar:w:") -> Detail(route.removePrefix("grammar:w:"))
-                else -> GrammarTopic(route.substringAfter(':'))
+                route?.startsWith("grammar:") == true -> fromGrammar(route.substringAfter(':'))
+                else -> null
             }
+        }
+
+        // A link from a card or a grammar topic: a comparison, a word or another topic.
+        fun fromGrammar(id: String): Screen = when {
+            id.startsWith("cmp:") -> Detail(id)
+            id.startsWith("w:") -> Detail(id.drop(2))
+            else -> GrammarTopic(id)
         }
 
         // Also the screens that only the app itself opens.
@@ -141,16 +146,7 @@ class MainActivity : ComponentActivity() {
                             onSettings = { go(Screen.Settings()) },
                             onCategories = { go(Screen.Categories) },
                             onSchools = { go(Screen.Schools) },
-                            onGrammar = { id ->
-                                go(
-                                    when {
-                                        id == null -> Screen.GrammarIndex
-                                        id.startsWith("cmp:") -> Screen.Detail(id)
-                                        id.startsWith("w:") -> Screen.Detail(id.drop(2))
-                                        else -> Screen.GrammarTopic(id)
-                                    }
-                                )
-                            },
+                            onGrammar = { id -> go(if (id == null) Screen.GrammarIndex else Screen.fromGrammar(id)) },
                         )
                     }
                     Screen.Categories -> CategoriesScreen(openList = { go(Screen.Words(it)) }, back = back)
@@ -163,15 +159,7 @@ class MainActivity : ComponentActivity() {
                         back = back,
                     )
                     Screen.Schools -> SchoolsScreen(back)
-                    is Screen.Detail -> DetailScreen(s.key, back, s.report, onSchools = { go(Screen.Schools) }) { id ->
-                        go(
-                            when {
-                                id.startsWith("cmp:") -> Screen.Detail(id)
-                                id.startsWith("w:") -> Screen.Detail(id.drop(2))
-                                else -> Screen.GrammarTopic(id)
-                            }
-                        )
-                    }
+                    is Screen.Detail -> DetailScreen(s.key, back, s.report, onSchools = { go(Screen.Schools) }) { go(Screen.fromGrammar(it)) }
                     Screen.GrammarIndex -> GrammarIndexScreen(
                         open = { go(Screen.GrammarTopic(it)) },
                         openCard = { go(Screen.Detail(it)) },
