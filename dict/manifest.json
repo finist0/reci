@@ -4,26 +4,26 @@
   "0ce8db31bcb7cefc8522fc3ae62d3a79": {
    "release": "v2.1",
    "file": "patch-0ce8db31bcb7cefc8522fc3ae62d3a79.json",
-   "sha256": "a1dd19b4fce251c2f171d3f1c92435c8b53d8e0d236e2f64d5a27e360905b3f0",
-   "size": 1356455
+   "sha256": "7ee217980672870abf6348a99d33ba7a0bcde7fe5dc64d6ba373fc6adb857e1b",
+   "size": 1359894
   },
   "fa1e77a8019d8198b47ad8b162884ee0": {
    "release": "v2.0",
    "file": "patch-fa1e77a8019d8198b47ad8b162884ee0.json",
-   "sha256": "99c5d736c0ccba87eed4b87250039030525df2e4b6361fdcf7c398b094e1b7d7",
-   "size": 1363613
+   "sha256": "bad11ba4bdd30b9ec02baded258cc36919d28b2b4b102dbb8efe377ff2689d62",
+   "size": 1367040
   },
   "8b1d981ed242235f80677348e7f75738": {
    "release": "v1.5",
    "file": "patch-8b1d981ed242235f80677348e7f75738.json",
-   "sha256": "b680cbbd877ed5ad4d7b39769c7c7fc7b717a770640796e9e13db18b59b773b9",
-   "size": 11545467
+   "sha256": "4dd36975f73c26a8885474b2c5efaa3a999014dd5ae3aa6df50559a363f48253",
+   "size": 11550432
   },
   "819db8c5e4e189d7751babac6067f100": {
    "release": "v1.1",
    "file": "patch-819db8c5e4e189d7751babac6067f100.json",
-   "sha256": "24be42bd086ac6530293835c02858f7c5dd91b41a6df874e5f77482deee20a02",
-   "size": 11003475
+   "sha256": "cb677908bd652efab6ec6fc672dd7f66731bd979f94f2728c6a8a0d74e7e3904",
+   "size": 11008414
   }
  }
 }
