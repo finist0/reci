@@ -44,6 +44,8 @@ POS = {"noun", "verb", "adj", "adv", "pron", "prep", "conj", "num", "part", "int
 LEVEL_BOUNDS = (500, 1100, 2000, 3000)
 LATIN = re.compile(r"[A-Za-zčćžšđČĆŽŠĐ]")
 CYR_RU_ONLY = re.compile(r"[ыэъёщЫЭЪЁЩ]")
+# Also not Serbian, but the forms of a Serbian word note things in Russian ("не склоняется").
+CYR_RU_ONLY_WORD = re.compile(r"[ыэъёщяюйьЫЭЪЁЩЯЮЙЬ]")
 FIELDS = ("tips", "cyr", "acc", "pos", "gram", "ruGram", "ruNoun", "forms", "meanings", "level", "topic", "rank",
           "examples", "syn", "synAcc", "ant", "antAcc", "related", "note")
 SR_GENDER = {"м. р.": "masc", "ж. р.": "femn", "ср. р.": "neut"}
@@ -160,7 +162,7 @@ def check(e):
     for t in sr:
         if LATIN.search(t):
             errs.append(f"latin letters in Serbian text {t!r}")
-        if CYR_RU_ONLY.search(t):
+        if (CYR_RU_ONLY if t == e.get("forms") else CYR_RU_ONLY_WORD).search(t):
             errs.append(f"Russian-only letters in Serbian text {t!r}")
     if not e.get("examples"):
         errs.append("no examples")
@@ -265,7 +267,7 @@ def check_ru(e):
         if LATIN.search(t) or SR_ONLY.search(t):
             errs.append(f"non-Russian letters in {t!r}")
     for t in sr:
-        if LATIN.search(t) or CYR_RU_ONLY.search(t):
+        if LATIN.search(t) or CYR_RU_ONLY_WORD.search(t):
             errs.append(f"non-Serbian letters in {t!r}")
     if not e.get("examples"):
         errs.append("no examples")
