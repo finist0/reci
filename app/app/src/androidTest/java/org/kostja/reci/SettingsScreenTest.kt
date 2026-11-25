@@ -251,8 +251,10 @@ class SettingsScreenTest {
         val dark = Palettes.indexOfFirst { it.name == "Ноћ" }
         settings("Ноћ")
         assertEquals(dark, Prefs.theme)
-        val image = compose.onRoot().captureToImage().toPixelMap()
-        assertEquals(Palettes[dark].bg, image[2, image.height / 2])
+        val pixel = { compose.onRoot().captureToImage().toPixelMap().let { it[2, it.height / 2] } }
+        // In a full run the screen is now and then still dimmed at 60%, as behind a closing dialog.
+        runCatching { compose.waitUntil(5_000) { pixel() == Palettes[dark].bg } }
+        assertEquals(Palettes[dark].bg, pixel())
     }
 
     @Test
