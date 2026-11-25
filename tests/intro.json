@@ -1,0 +1,74 @@
+[
+  {
+    "name": "A new user chooses the languages, then is offered the card",
+    "fresh": true,
+    "steps": [
+      {"day": 0, "expect": "pair"},
+      {"day": 0, "news": true, "expect": "pair"},
+      {"do": "pair"},
+      {"day": 0, "expect": "offer"}
+    ]
+  },
+  {
+    "name": "Later brings the offer back once, three days on",
+    "fresh": true,
+    "steps": [
+      {"do": "pair"},
+      {"day": 0, "expect": "offer"},
+      {"do": "later", "day": 0},
+      {"day": 0, "expect": "none"},
+      {"day": 2.9, "expect": "none"},
+      {"day": 3, "expect": "offer"},
+      {"do": "later", "day": 3},
+      {"day": 6, "expect": "none"},
+      {"day": 400, "expect": "none"}
+    ]
+  },
+  {
+    "name": "Set up ends the offers",
+    "fresh": true,
+    "steps": [
+      {"do": "pair"},
+      {"day": 0, "expect": "offer"},
+      {"do": "setup"},
+      {"day": 0, "expect": "none"},
+      {"day": 3, "expect": "none"}
+    ]
+  },
+  {
+    "name": "A card set up in the settings meanwhile ends the offers",
+    "fresh": true,
+    "steps": [
+      {"do": "pair"},
+      {"do": "later", "day": 0},
+      {"day": 3, "works": true, "expect": "none"},
+      {"day": 4, "expect": "none"}
+    ]
+  },
+  {
+    "name": "An update is offered the card once and is not asked for the languages",
+    "fresh": false,
+    "steps": [
+      {"day": 0, "expect": "offer"},
+      {"do": "later", "day": 0},
+      {"day": 3, "expect": "none"},
+      {"day": 30, "expect": "none"}
+    ]
+  },
+  {
+    "name": "An update whose card already works is not offered it",
+    "fresh": false,
+    "steps": [
+      {"day": 0, "works": true, "expect": "none"},
+      {"day": 1, "expect": "none"}
+    ]
+  },
+  {
+    "name": "The news of an update put the offer off to the next start",
+    "fresh": false,
+    "steps": [
+      {"day": 0, "news": true, "expect": "none"},
+      {"day": 0, "expect": "offer"}
+    ]
+  }
+]
