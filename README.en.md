@@ -45,15 +45,15 @@ interface is in English, Serbian or Russian.
 - **Four language pairs:**
   - Serbian with English translations: 16,000 cards with 12,500 words, 2,500 phrases and
     idioms, 380 comparisons of similar words and 630 notes on the language and customs;
-  - Russian with English translations: 4,200 words with stress, forms and examples, 340
+  - Russian with English translations: 8,800 words with stress, forms and examples, 340
     comparisons and notes;
   - Serbian with Russian translations: the same words and phrases, and a grammar
     reference in Russian, 26 topics with tables;
-  - Russian with Serbian translations: the same 4,200 words, 400 comparisons and notes
+  - Russian with Serbian translations: the same 8,800 words, 400 comparisons and notes
     on language and customs.
 - **Choose in the settings** what you learn ("Learning") and the translations ("Translated
   into"). A learned word stays learned with any translation.
-- **Almost 30,000 Serbian and over 9,000 Russian examples** with translations, synonyms,
+- **Almost 30,000 Serbian and over 18,000 Russian examples** with translations, synonyms,
   antonyms, related words, all stressed.
 - **Interface in English, Serbian or Russian.** A new install takes it from the phone's
   language; it can be changed in the settings.
