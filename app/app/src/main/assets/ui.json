@@ -1603,6 +1603,10 @@
   "en": "Chosen by the phone's language. You can change it all later in the settings.",
   "sr": "Изабрано по језику телефона. Све се може касније променити у подешавањима."
  },
+ "Выбрано по языку браузера. Всё можно поменять потом в настройках.": {
+  "en": "Chosen by the browser's language. You can change it all later in the settings.",
+  "sr": "Изабрано по језику прегледача. Све се може касније променити у подешавањима."
+ },
  "Главное в приложении": {
   "en": "The heart of the app",
   "sr": "Најважније у апликацији"

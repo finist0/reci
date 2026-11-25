@@ -911,7 +911,39 @@ function settingsScreen(e) {
 const schoolsScreen = () => `<div class="screen-col">${header(t("Куда пойти учиться?"))}
     <div class="schools-empty">${t("Здесь могла быть реклама вашей школы сербского языка")}</div></div>`;
 
+// A word to show each language learned by, so that Serbian is not taken for Russian.
+const SAMPLES = { sr: "ку́ћа · kuća", ru: "доро́га" };
+
+// The first start: which language to learn and the language of the translations, preset by the
+// browser's language. Shown instead of the cards until "Начать".
+const pair = { name: "pair" };
+
+function pairScreen(e) {
+    e.target ??= Decks.current().target;
+    e.native ??= Decks.current().native;
+    // While the cards of the pair chosen load, another choice would race them.
+    const off = e.loading ? " disabled" : "";
+    const targets = Decks.targets().map(code => `<button class="pair-option${code === e.target ? " on" : ""}" ${act("pairtarget", code)} data-code="${code}"${off}>
+        <span class="pair-lang"><span class="pair-name">${esc(Decks.name(code))}</span>${SAMPLES[code] ? `<span class="pair-sample">${esc(SAMPLES[code])}</span>` : ""}</span>
+        <span class="radio"></span></button>`).join("");
+    const natives = Decks.natives(e.target).map(code =>
+        `<button class="pair-chip${code === e.native ? " on" : ""}" ${act("pairnative", code)} data-code="${code}"${off}>${esc(Decks.name(code))}</button>`).join("");
+    return `<div class="screen-col">
+        <div class="scroll" data-scroll="pair"><div class="pair-body">
+            <div class="pair-app">НЕРодная речь</div>
+            <div class="pair-title">${t("Что будем учить?")}</div>
+            <div class="pair-options">${targets}</div>
+            <div class="pair-sub">${t("Перевод на")}</div>
+            <div class="pair-chips">${natives}</div>
+            <div class="pair-note">${t("Выбрано по языку браузера. Всё можно поменять потом в настройках.")}</div>
+        </div></div>
+        <button class="primary wide${e.loading ? " off" : ""}" ${act("pairstart")}${off}>${t("Начать")}</button>
+        ${sentToast ? toast(sentToast) : ""}
+    </div>`;
+}
+
 const screens = {
+    pair: pairScreen,
     schools: schoolsScreen,
     card: cardScreen, categories: categoriesScreen, search: searchScreen, detail: detailScreen, list: listScreen,
     grammar: grammarScreen, topic: topicScreen, settings: settingsScreen,
@@ -923,7 +955,7 @@ const root = document.getElementById("app");
 let rendered = null;
 
 function render() {
-    const e = top();
+    const e = Decks.pairPending() ? pair : top();
     // Re-rendering the same screen keeps its scroll; returning to a screen restores it.
     if (rendered === e) saveScroll(e);
     const focused = document.activeElement?.dataset?.input;
@@ -1012,15 +1044,38 @@ function exportProgress() {
     setTimeout(() => URL.revokeObjectURL(a.href), 10000);
 }
 
+// Resolves to whether the deck is in use.
 function switchDeck(d) {
-    if (d === Decks.current()) return;
+    if (d === Decks.current()) return Promise.resolve(true);
     // The card on screen belongs to the deck left.
     show = null;
-    R.switchDeck(d.id).catch(() => showSentToast(t("Не удалось загрузить словарь. Проверьте интернет и откройте снова.")));
+    return R.switchDeck(d.id).then(() => true, () => {
+        showSentToast(t("Не удалось загрузить словарь. Проверьте интернет и откройте снова."));
+        return false;
+    });
 }
 
 const actions = {
     back,
+    pairtarget: code => {
+        pair.native = Decks.pick(code, pair.native).native;
+        pair.target = code;
+        schedule();
+    },
+    pairnative: code => {
+        pair.native = code;
+        schedule();
+    },
+    // The choice stays on screen until the cards of the pair chosen are in.
+    pairstart: () => {
+        pair.loading = true;
+        schedule();
+        switchDeck(Decks.pick(pair.target, pair.native)).then(ok => {
+            pair.loading = false;
+            if (ok) Decks.pairChosen();
+            schedule();
+        });
+    },
     categories: () => go("categories"),
     search: () => go("search"),
     settings: () => go("settings"),

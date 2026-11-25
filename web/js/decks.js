@@ -38,6 +38,29 @@ export function guessUi(langs = navigator.languages ?? [navigator.language]) {
     return lang === "ru" ? "ru" : SERBIAN.includes(lang) ? "sr" : "en";
 }
 
+// A first start asks for the languages on a screen of its own (ui.js): "pair" until they are
+// chosen, then "done".
+const INTRO = "reci.intro";
+
+function intro() {
+    try {
+        return localStorage.getItem(INTRO);
+    } catch {
+        return "done";
+    }
+}
+
+function setIntro(v) {
+    try {
+        localStorage.setItem(INTRO, v);
+    } catch {
+        // Storage blocked: the guess stays, as before there was a choice.
+    }
+}
+
+export const pairPending = () => intro() === "pair";
+export const pairChosen = () => setIntro("done");
+
 // Earlier users learned the first deck before there was a choice, and kept the interface in the
 // deck's native language before that was a choice. Once stored, the interface language changes
 // only in the settings.
@@ -46,7 +69,10 @@ export function init(decks, ui) {
     table = ui ?? {};
     setStores(store);
     const earlier = prefs.currentKey || hasProgress();
-    if (!deck()) useDeck(earlier ? FIRST : guess());
+    if (!deck()) {
+        useDeck(earlier ? FIRST : guess());
+        if (!earlier && intro() === null) setIntro("pair");
+    }
     if (!prefs.uiLang) setPref("uiLang", earlier ? current().native : guessUi());
 }
 

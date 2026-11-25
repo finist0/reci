@@ -750,3 +750,32 @@ a.setting { color: inherit; text-decoration: none; }
     .controls .next { flex: none; width: 46px; height: 46px; border-radius: 50%; order: 2; }
     .controls .next-label { display: none; }
 }
+
+/* --- First start: the language pair --- */
+
+.pair-body { padding: 24px 18px 16px; display: flex; flex-direction: column; }
+.pair-app { font-size: 12px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--accent); }
+.pair-title { font: 600 30px/36px var(--serif); color: var(--word); margin: 6px 0 18px; }
+.pair-options { display: flex; flex-direction: column; gap: 10px; }
+.pair-option {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px;
+    border-radius: 20px;
+    background: var(--card);
+    border: 2px solid transparent;
+    text-align: left;
+}
+.pair-option.on { background: var(--hl); border-color: var(--accent); }
+.pair-lang { display: flex; flex-direction: column; flex: 1; }
+.pair-name { font-size: 19px; font-weight: 600; color: var(--word); }
+.pair-sample { font: 15px var(--serif); color: var(--secondary); }
+.pair-option .radio { width: 24px; height: 24px; border-radius: 50%; border: 2px solid var(--faint); flex: none; }
+.pair-option.on .radio { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 6px, transparent 7px); }
+.pair-sub { font: 600 22px var(--serif); color: var(--word); margin: 28px 0 12px; }
+.pair-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.pair-chip { padding: 10px 16px; border-radius: 999px; background: var(--card); border: 2px solid transparent; font-size: 16px; color: var(--text); }
+.pair-chip.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.pair-option[disabled], .pair-chip[disabled] { opacity: .6; }
+.pair-note { margin-top: 24px; padding: 16px; border-radius: 18px; background: var(--card); font-size: 14px; line-height: 19px; color: var(--secondary); }
