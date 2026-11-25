@@ -55,8 +55,11 @@ interface is in English, Serbian or Russian.
   into"). A learned word stays learned with any translation.
 - **Almost 30,000 Serbian and over 9,000 Russian examples** with translations, synonyms,
   antonyms, related words, all stressed.
-- **Interface in English, Serbian or Russian.** On the first start the language pair and the
-  interface follow the phone's language; both can be changed in the settings.
+- **Interface in English, Serbian or Russian.** A new install takes it from the phone's
+  language; it can be changed in the settings.
+- **The first start asks what to learn and the language of the translations,** preset by the
+  phone's language. Then the app on a phone offers to set up the card on the lock
+  screen.
 - **Cyrillic or Latin script** for Serbian, three ways to show stress, pronunciation.
 - **Eight colour themes**, light and dark.
 - **No sign-up, no text messages.** Open source.
