@@ -69,15 +69,18 @@ export async function launch({ telemetry = { noticeShown: true, noticeClosed: tr
     const profile = mkdtempSync(join(tmpdir(), "reci-ui-"));
     const chrome = spawn(process.env.CHROME ?? "google-chrome", ["--headless=new", "--disable-gpu", "--no-first-run",
         "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--lang=ru", "about:blank"],
-    { stdio: "ignore", detached: true });
+    { stdio: ["ignore", "ignore", "pipe"], detached: true });
+    let stderr = "";
+    chrome.stderr.on("data", d => { stderr = (stderr + d).slice(-2000); });
     let port;
-    for (let i = 0; i < 100 && !port; i++) {
+    // A cold CI runner has been seen to take more than ten seconds over the first start.
+    for (let i = 0; i < 300 && !port; i++) {
         await sleep(100);
         try {
             port = readFileSync(join(profile, "DevToolsActivePort"), "utf-8").split("\n")[0];
         } catch {}
     }
-    if (!port) throw new Error("Chrome did not start; set CHROME to its binary");
+    if (!port) throw new Error(`Chrome did not start; set CHROME to its binary. Its last words:\n${stderr}`);
     const tabs = await (await fetch(`http://127.0.0.1:${port}/json`)).json();
     const ws = new WebSocket(tabs.find(t => t.type === "page").webSocketDebuggerUrl);
     await new Promise(r => ws.addEventListener("open", r, { once: true }));
