@@ -62,8 +62,10 @@ const sleep = ms => new Promise(r => setTimeout(r, ms));
 // `telemetry` is the stored statistics state the page starts with; by default the notice about
 // statistics was already shown and closed, so that it does not get in the way of other tests.
 // `storage` holds more local storage entries, set for the first page load only. `lang` is the
-// language the browser asks pages in; a first start takes the interface language from it.
-export async function launch({ telemetry = { noticeShown: true, noticeClosed: true }, storage = {}, lang = "ru-RU" } = {}) {
+// language the browser asks pages in; a first start takes the interface language from it. A
+// first start asks for the languages only with `intro`, so that other tests start on the cards.
+export async function launch({ telemetry = { noticeShown: true, noticeClosed: true }, storage = {}, lang = "ru-RU", intro = false } = {}) {
+    if (!intro) storage = { "reci.intro": "done", ...storage };
     const profile = mkdtempSync(join(tmpdir(), "reci-ui-"));
     const chrome = spawn(process.env.CHROME ?? "google-chrome", ["--headless=new", "--disable-gpu", "--no-first-run",
         "--no-default-browser-check", "--remote-debugging-port=0", `--user-data-dir=${profile}`, "--lang=ru", "about:blank"],
