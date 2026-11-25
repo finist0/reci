@@ -97,9 +97,9 @@ Android.
 
 РУССКИЙ
 
-• 4 200 слов с ударениями, формами и примерами.
+• 8 800 слов с ударениями, формами и примерами.
 • 400 разборов похожих слов и заметок о языке и обычаях.
-• Больше 9 000 примеров с переводом.
+• Больше 18 000 примеров с переводом.
 
 В ОБОИХ ЯЗЫКАХ
 
@@ -190,9 +190,9 @@ Ruski liči na srpski, i ta sličnost često vara. Ruske kartice sa prevodom na 
 
 RUSKI
 
-• 4.200 reči sa akcentima, oblicima i primerima.
+• 8.800 reči sa akcentima, oblicima i primerima.
 • 400 poređenja sličnih reči i beleški o jeziku i običajima: „идти ili ехать?“
-• Više od 9.000 primera sa prevodom.
+• Više od 18.000 primera sa prevodom.
 
 SRPSKI
 
@@ -286,9 +286,9 @@ SERBIAN WITH ENGLISH TRANSLATIONS
 
 RUSSIAN WITH ENGLISH TRANSLATIONS
 
-• 4,200 words with stress marks, forms and examples.
+• 8,800 words with stress marks, forms and examples.
 • 340 comparisons and notes: идти or ехать, and why Russian has no "is" in the present tense.
-• Over 9,000 examples with translations.
+• Over 18,000 examples with translations.
 
 ALSO INSIDE
 
@@ -332,7 +332,7 @@ HONEST
 | Подзаголовок | 30 символов | 24 | 26 | 30 |
 | Рекламный текст | 170 символов | 158 | 144 | 148 |
 | Ключевые слова | 100 байт | 97 | 75 | 91 |
-| Описание | 4000 символов | 3089 | 2888 | 2577 |
+| Описание | 4000 символов | 3090 | 2889 | 2578 |
 
 ## Что ещё понадобится в App Store Connect
 

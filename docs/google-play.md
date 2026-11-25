@@ -59,9 +59,9 @@ Manage translations → Add your own translations. Кто читает на яз
 
 РУССКИЙ
 
-• 4 200 слов с ударениями, формами и примерами.
+• 8 800 слов с ударениями, формами и примерами.
 • 400 разборов похожих слов и заметок о языке и обычаях.
-• Больше 9 000 примеров с переводом.
+• Больше 18 000 примеров с переводом.
 
 В ОБОИХ ЯЗЫКАХ
 
@@ -134,9 +134,9 @@ Manage translations → Add your own translations. Кто читает на яз
 
 РУСКИ
 
-• 4.200 речи са акцентима, облицима и примерима.
+• 8.800 речи са акцентима, облицима и примерима.
 • 400 поређења сличних речи и белешки о језику и обичајима: „идти или ехать?“
-• Више од 9.000 примера са преводом.
+• Више од 18.000 примера са преводом.
 
 СРПСКИ
 
@@ -213,9 +213,9 @@ SERBIAN WITH ENGLISH TRANSLATIONS
 
 RUSSIAN WITH ENGLISH TRANSLATIONS
 
-• 4,200 words with stress marks, forms and examples.
+• 8,800 words with stress marks, forms and examples.
 • 340 comparisons and notes: идти or ехать, and why Russian has no "is" in the present tense.
-• Over 9,000 examples with translations.
+• Over 18,000 examples with translations.
 
 ALSO INSIDE
 
@@ -251,7 +251,7 @@ HONEST
 |---|---|---|---|---|
 | Название | 30 | 13 | 13 | 13 |
 | Краткое описание | 80 | 70 | 75 | 78 |
-| Полное описание | 4000 | 2404 | 2371 | 2061 |
+| Полное описание | 4000 | 2405 | 2372 | 2062 |
 
 ## Что ещё понадобится в Play Console
 
