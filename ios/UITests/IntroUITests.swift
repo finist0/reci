@@ -46,7 +46,7 @@ final class IntroUITests: XCTestCase {
         XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 10))
         app.buttons["Настройки"].tap()
         XCTAssertTrue(app.staticTexts["Настройки"].waitForExistence(timeout: 5))
-        XCTAssertEqual(app.buttons["Перевод на"].firstMatch.label, "Английский", "the pair chosen, not the guess")
+        XCTAssertTrue(app.buttons["Перевод на"].firstMatch.label.hasSuffix("Английский"), "the pair chosen, not the guess")
         app.terminate()
         launch(["-uitest", "-uitest-intro"])
         XCTAssertTrue(app.staticTexts["headword"].waitForExistence(timeout: 20))

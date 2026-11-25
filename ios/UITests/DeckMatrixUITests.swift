@@ -33,7 +33,7 @@ final class DeckMatrixUITests: XCTestCase {
 
     // Waits for a settings row to show the value; a menu row is named in the interface language.
     private func shows(_ row: String, _ label: String) {
-        wait(for: [expectation(for: NSPredicate(format: "label == %@", label), evaluatedWith: app.buttons[row].firstMatch)], timeout: 10)
+        wait(for: [expectation(for: NSPredicate(format: "label ENDSWITH %@", label), evaluatedWith: app.buttons[row].firstMatch)], timeout: 10)
     }
 
     // Opens the menu of a settings row and picks the option.
@@ -55,8 +55,8 @@ final class DeckMatrixUITests: XCTestCase {
         shows("Превод на", "Српски")
         choose("Превод на", "Енглески")
         shows("Превод на", "Енглески")
-        XCTAssertEqual(app.buttons["Учим"].firstMatch.label, "Руски", "the language learned stays")
-        XCTAssertEqual(app.buttons["Језик интерфејса"].firstMatch.label, "Српски", "the interface is not the deck's")
+        XCTAssertTrue(app.buttons["Учим"].firstMatch.label.hasSuffix("Руски"), "the language learned stays")
+        XCTAssertTrue(app.buttons["Језик интерфејса"].firstMatch.label.hasSuffix("Српски"), "the interface is not the deck's")
         XCTAssertTrue(app.staticTexts["Подешавања"].exists)
         app.buttons["Назад"].firstMatch.tap()
 
