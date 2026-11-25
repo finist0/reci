@@ -39,6 +39,11 @@ final class AppModel: ObservableObject {
     private var crashWatcher: CrashWatcher?
     // The news of an update, shown once over the main screen until closed.
     @Published var news: [WhatsNew.Entry] = []
+    // What a first start shows over the cards (Intro), kept between starts in introState.
+    @Published private(set) var intro: Intro.Show = .none
+    // News or a crash report came up while the app is in front: the offer waits until the app
+    // comes to the front again with them closed.
+    private var held = false
 
     init() {
         let crash = CrashReport(dir: FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
@@ -50,6 +55,7 @@ final class AppModel: ObservableObject {
             LockDeck.wallpaperDrawn = nil
             try? FileManager.default.removeItem(at: Dict.dir)
             UserDefaults.standard.removeObject(forKey: Self.newsSeen)
+            for k in Self.introKeys { UserDefaults.standard.removeObject(forKey: k) }
             crash.clear()
         }
         // UI tests cannot crash the app on purpose; "-uitest-crash" stands for a crash at the last start.
@@ -65,12 +71,18 @@ final class AppModel: ObservableObject {
         LockDeck.writeDeck(words, deck: deck)
         telemetry = Telemetry(file: Self.telemetryFile(), post: Self.transport())
         crashOffer = crash.pending
+        Self.beginIntro(fresh: UserDefaults.standard.string(forKey: Self.newsSeen) == nil && repo.store.progress.isEmpty)
         news = Self.checkNews(fresh: repo.store.progress.isEmpty)
+        if !introState.pairAsked { intro = .pair }
+        checkIntro()
         crashWatcher = CrashWatcher { [weak self] text in
             Task { @MainActor in
                 guard let self else { return }
                 self.crash.keep(text)
                 self.crashOffer = self.crash.pending
+                // The report comes after the offer was checked: it waits for the next start.
+                self.held = true
+                if self.intro == .offer { self.intro = .none }
             }
         }
         speech.deck = deck
@@ -91,6 +103,75 @@ final class AppModel: ObservableObject {
               let data = try? Data(contentsOf: url) else { return [] }
         UserDefaults.standard.set(version, forKey: newsSeen)
         return WhatsNew.pick(WhatsNew.parse(data, platform: "ios"), version: version, seen: seen, fresh: fresh)
+    }
+
+    private static let introKeys = ["introPairAsked", "lockOfferLeft", "lockOfferAt"]
+
+    // Once per install, before the first news mark the app as seen: a phone without them is a new
+    // user, one with them an update from a version without the intro. UI tests start on the cards
+    // unless they ask for the intro with "-uitest-intro".
+    private static func beginIntro(fresh: Bool) {
+        let args = ProcessInfo.processInfo.arguments
+        if args.contains(where: { $0.hasPrefix("-uitest") }) && !args.contains("-uitest-intro") {
+            save(Intro.State(pairAsked: true, offerLeft: 0, offerAt: .distantPast))
+        } else if UserDefaults.standard.object(forKey: "lockOfferLeft") == nil {
+            save(Intro.begin(fresh: fresh))
+        }
+    }
+
+    private static func save(_ s: Intro.State) {
+        UserDefaults.standard.set(s.pairAsked, forKey: "introPairAsked")
+        UserDefaults.standard.set(s.offerLeft, forKey: "lockOfferLeft")
+        UserDefaults.standard.set(s.offerAt.timeIntervalSince1970, forKey: "lockOfferAt")
+    }
+
+    private var introState: Intro.State {
+        get {
+            let d = UserDefaults.standard
+            return Intro.State(pairAsked: d.object(forKey: "introPairAsked") as? Bool ?? true, offerLeft: d.integer(forKey: "lockOfferLeft"),
+                               offerAt: Date(timeIntervalSince1970: d.double(forKey: "lockOfferAt")))
+        }
+        set { Self.save(newValue) }
+    }
+
+    // The card works once iOS shows the card widget or Card Wallpaper has drawn it.
+    func checkIntro() {
+        guard intro == .none, introState.offerLeft > 0 else { return }
+        held = held || !news.isEmpty || crashOffer != nil
+        Task { @MainActor in
+            let works = await Stats.widgets()?.lock.contains("card") == true || LockDeck.wallpaperDrawn != nil
+            guard intro == .none else { return }
+            let (show, s) = Intro.next(introState, now: Date(), works: works, news: held)
+            introState = s
+            intro = show
+        }
+    }
+
+    func leftScreen() {
+        held = !news.isEmpty || crashOffer != nil
+    }
+
+    // The choice stays on screen until the cards of the pair chosen are in, so that no card of
+    // the guess shows and counts meanwhile.
+    func choosePair(_ id: String) {
+        let finish: @MainActor () -> Void = { [weak self] in
+            guard let self else { return }
+            self.introState = Intro.chosen(self.introState)
+            self.intro = .none
+            self.checkIntro()
+        }
+        if id == deck.id { finish() } else { switchDeck(id, then: finish) }
+    }
+
+    func postponeLockOffer() {
+        introState = Intro.postponed(introState, now: Date())
+        intro = .none
+    }
+
+    func setUpLock(mode: Int) {
+        introState = Intro.done(introState)
+        intro = .none
+        set { $0.lockMode = mode }
     }
 
     func answerCrash(send: Bool) {
@@ -242,7 +323,7 @@ final class AppModel: ObservableObject {
     // Another deck: its cards, its progress and its place in the cards, the interface in its
     // native language unless another one is chosen, and the voice of the language it teaches.
     // The cards load off the main actor; the old ones stay until the new ones are in.
-    func switchDeck(_ id: String) {
+    func switchDeck(_ id: String, then done: (@MainActor () -> Void)? = nil) {
         guard id != deck.id, !switching else { return }
         let d = Decks.deck(id)
         let kept = d.isFirst ? dict.kept : nil
@@ -258,6 +339,7 @@ final class AppModel: ObservableObject {
             syncShowing()
             changed()
             WidgetCenter.shared.reloadTimelines(ofKind: "card")
+            done?()
         }
     }
     var palette: Palette { palettes.indices.contains(prefs.theme) ? palettes[prefs.theme] : palettes[2] }
@@ -283,6 +365,7 @@ final class AppModel: ObservableObject {
         changed()
         sendStats()
         checkDictionary()
+        checkIntro()
     }
 
     // MARK: The card screen
@@ -300,6 +383,8 @@ final class AppModel: ObservableObject {
 
     // Makes sure the card on screen is picked and counted as shown once.
     func syncShowing() {
+        // Behind the choice of languages no card is on screen, so none may count as shown.
+        guard intro != .pair else { return }
         if repo.current() == nil && !repo.exhausted { repo.step(1) }
         guard let w = repo.current() else {
             showing = nil

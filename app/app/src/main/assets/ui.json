@@ -1658,5 +1658,77 @@
  "Что будем учить?": {
   "en": "What will you learn?",
   "sr": "Шта ћемо учити?"
+ },
+ "Берёте телефон — и видите слово. iPhone умеет это двумя способами:": {
+  "en": "Pick up the phone and see a word. iPhone can do it in two ways:",
+  "sr": "Узмете телефон и видите реч. iPhone то уме на два начина:"
+ },
+ "проще": {
+  "en": "simpler",
+  "sr": "једноставније"
+ },
+ "Ответ сразу показывает следующее слово": {
+  "en": "An answer shows the next word at once",
+  "sr": "Одговор одмах приказује следећу реч"
+ },
+ "Настройка за минуту": {
+  "en": "Set up in a minute",
+  "sr": "Подешавање за минут"
+ },
+ "Мелко: только слово и перевод": {
+  "en": "Small: only the word and its translation",
+  "sr": "Ситно: само реч и превод"
+ },
+ "Как: удерживать экран блокировки → Customize → три виджета под часами.": {
+  "en": "How: touch and hold the lock screen → Customize → three widgets below the clock.",
+  "sr": "Како: држите закључани екран → Customize → три виџета испод сата."
+ },
+ "Вся карточка крупно: ударение, примеры": {
+  "en": "The whole card, large: stress, examples",
+  "sr": "Цела картица крупно: нагласак, примери"
+ },
+ "Новое слово не сразу, а когда сработает автоматизация": {
+  "en": "A new word comes not at once but when the automation runs",
+  "sr": "Нова реч не стиже одмах, већ кад се покрене аутоматизација"
+ },
+ "Настройка минут пять, через Shortcuts": {
+  "en": "Set up in about five minutes, through Shortcuts",
+  "sr": "Подешавање око пет минута, преко Shortcuts"
+ },
+ "Как: команда Card Wallpaper и две автоматизации, приложение проведёт по шагам.": {
+  "en": "How: the Card Wallpaper shortcut and two automations; the app walks you through the steps.",
+  "sr": "Како: пречица Card Wallpaper и две аутоматизације, апликација ће вас водити корак по корак."
+ },
+ "Настроить виджеты": {
+  "en": "Set up the widgets",
+  "sr": "Подеси виџете"
+ },
+ "Настроить обои": {
+  "en": "Set up the wallpaper",
+  "sr": "Подеси позадину"
+ },
+ "Посмотреть, как выглядит": {
+  "en": "See how it looks",
+  "sr": "Погледај како изгледа"
+ },
+ "Так будет выглядеть": {
+  "en": "This is how it looks",
+  "sr": "Овако ће изгледати"
+ },
+ "Под часами — слово с переводом и кнопки «Не знаю» и «Знаю». Нажали — сразу следующее слово.": {
+  "en": "Below the clock: the word with its translation and the “Don't know” and “Know” buttons. Tap one, and the next word is there.",
+  "sr": "Испод сата: реч с преводом и дугмад „Не знам” и „Знам”. Додирнете и одмах је ту следећа реч."
+ },
+ "Вся карточка — обои экрана блокировки. Отвечать круглыми виджетами под часами.": {
+  "en": "The whole card is the lock screen wallpaper. You answer with the round widgets below the clock.",
+  "sr": "Цела картица је позадина закључаног екрана. Одговара се округлим виџетима испод сата."
+ },
+ "Настроить так": {
+  "en": "Set it up this way",
+  "sr": "Подеси овако"
+ },
+ "Сделайте шаги ниже — и карточка будет на экране блокировки.": {
+  "en": "Take the steps below, and the card will be on the lock screen.",
+  "sr": "Урадите кораке испод и картица ће бити на закључаном екрану."
  }
 }

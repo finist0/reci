@@ -1,9 +1,9 @@
 import ReciCore
 import SwiftUI
 
-// A stand-in for the lock screen with the real widgets or the real wallpaper drawn on it, for the
-// screenshots: UI tests cannot put widgets on the simulator's own lock screen. Shown only when
-// the app is started with "-uitest-lockpreview widgets" or "-uitest-lockpreview wallpaper".
+// A stand-in for the lock screen with the real widgets or the real wallpaper drawn on it: the
+// lock screen offer shows it, and so do the screenshots, as UI tests cannot put widgets on the
+// simulator's own lock screen ("-uitest-lockpreview widgets" or "-uitest-lockpreview wallpaper").
 struct LockPreview: View {
     @EnvironmentObject var model: AppModel
     let wallpaper: Bool

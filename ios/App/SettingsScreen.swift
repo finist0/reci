@@ -18,6 +18,10 @@ struct ProgressFile: FileDocument {
 struct SettingsScreen: View {
     @EnvironmentObject var model: AppModel
     @EnvironmentObject var router: Router
+    var lockGuide = false
+    // The guide scrolls to the lock screen section once, not on the way back from a screen
+    // opened from the settings.
+    @State private var guided = false
     @State private var exportFile: ProgressFile?
     @State private var exporting = false
     @State private var importing = false
@@ -38,138 +42,155 @@ struct SettingsScreen: View {
         let deck = model.deck
         VStack(spacing: 0) {
             Header(title: t("Настройки"))
-            ScrollView {
-                VStack(spacing: 0) {
-                    progressCard
-                    Group {
-                        GroupTitle(text: t("Язык"))
-                        Panel {
-                            let targets = Decks.targets
-                            let natives = Decks.natives(deck.target)
-                            menuChoice(t("Учу"), targets.map(Decks.name), targets.firstIndex(of: deck.target) ?? 0) { i in
-                                model.switchDeck(Decks.pick(targets[i], deck.native).id)
-                            }
-                            Line()
-                            menuChoice(t("Перевод на"), natives.map(Decks.name), natives.firstIndex(of: deck.native) ?? 0) { i in
-                                model.switchDeck(Decks.pick(deck.target, natives[i]).id)
-                            }
-                            Line()
-                            // Each language is named in itself, so that a user who cannot read
-                            // the interface finds their own.
-                            menuChoice(t("Язык интерфейса"), ["Русский", "Српски", "English"],
-                                       uiLangs.firstIndex(of: prefs.uiLang) ?? 0) { i in model.set { $0.uiLang = uiLangs[i] } }
-                        }
-                    }
-                    Group {
-                        GroupTitle(text: t("Учёба"))
-                        Panel {
-                            navRow(t("Что учим"), studySummary) { router.go(.categories) }
-                            Line()
-                            choice(t("Карточки"), [t("Обучение"), t("Перевод"), t("Слово")], prefs.cardMode) { i in model.set { $0.cardMode = i } }
-                            Text(modeText).font(.ui(13)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
-                            Line()
-                            choice(t("Слов в работе одновременно"), sizes.map(String.init), max(0, sizes.firstIndex(of: prefs.activeSize) ?? 0)) { i in
-                                model.set { $0.activeSize = sizes[i] }
-                            }
-                            Line()
-                            toggle(t("Кнопки «Не знаю / Знаю»"), nil, prefs.useMarks) { v in model.set { $0.useMarks = v } }
-                            Line()
-                            toggle(t("Проверять выученные слова"), t("Через неделю, потом через 3\u{00A0}недели, 2\u{00A0}месяца, полгода и год"), prefs.reviewKnown) { v in
-                                model.set { $0.reviewKnown = v }
-                            }
-                            if deck.target == "sr" {
+            ScrollViewReader { scroll in
+                ScrollView {
+                    VStack(spacing: 0) {
+                        progressCard
+                        Group {
+                            GroupTitle(text: t("Язык"))
+                            Panel {
+                                let targets = Decks.targets
+                                let natives = Decks.natives(deck.target)
+                                menuChoice(t("Учу"), targets.map(Decks.name), targets.firstIndex(of: deck.target) ?? 0) { i in
+                                    model.switchDeck(Decks.pick(targets[i], deck.native).id)
+                                }
                                 Line()
-                                navRow(t("Куда пойти учиться?"), t("Школы сербского языка")) { router.go(.schools) }
-                            }
-                        }
-                    }
-                    Group {
-                        GroupTitle(text: t("Экран блокировки"))
-                        Panel {
-                            choice(t("Карточка на экране блокировки"), [t("Виджеты"), t("Обои")], prefs.lockMode) { i in model.set { $0.lockMode = i } }
-                            LockSetup(mode: prefs.lockMode).padding(.horizontal, 18).padding(.bottom, 14)
-                        }
-                    }
-                    Group {
-                        GroupTitle(text: t("Оформление"))
-                        Panel {
-                            themes
-                            Line()
-                            if deck.hasSerbian {
-                                choice(t("Алфавит"), [t("Кириллица"), "Latinica"], prefs.latinFirst ? 1 : 0) { i in model.set { $0.latinFirst = i == 1 } }
+                                menuChoice(t("Перевод на"), natives.map(Decks.name), natives.firstIndex(of: deck.native) ?? 0) { i in
+                                    model.switchDeck(Decks.pick(deck.target, natives[i]).id)
+                                }
                                 Line()
+                                // Each language is named in itself, so that a user who cannot read
+                                // the interface finds their own.
+                                menuChoice(t("Язык интерфейса"), ["Русский", "Српски", "English"],
+                                           uiLangs.firstIndex(of: prefs.uiLang) ?? 0) { i in model.set { $0.uiLang = uiLangs[i] } }
                             }
-                            if deck.target == "sr" {
-                                toggle(t("Подпись другим алфавитом"), nil, prefs.showBothScripts) { v in model.set { $0.showBothScripts = v } }
+                        }
+                        Group {
+                            GroupTitle(text: t("Учёба"))
+                            Panel {
+                                navRow(t("Что учим"), studySummary) { router.go(.categories) }
                                 Line()
-                                choice(t("Ударения"), deck.accentSamples, prefs.accentMode) { i in model.set { $0.accentMode = i } }
-                            } else {
-                                // One kind of mark only: "with" is mode 1, "without" is mode 2.
-                                choice(t("Ударения"), deck.accentSamples, prefs.accentMode == 2 ? 1 : 0) { i in model.set { $0.accentMode = i + 1 } }
-                            }
-                            Line()
-                            fontSize
-                        }
-                    }
-                    Group {
-                        GroupTitle(text: t("Звук"))
-                        Panel {
-                            toggle(t("Произносить слово сразу"), nil, prefs.autoSpeak) { v in model.set { $0.autoSpeak = v } }
-                            Line()
-                            navRow(t("Голос"), model.speech.voiceName.map { t("%s · нажмите, чтобы послушать", $0.prefix(1).uppercased() + String($0.dropFirst())) }
-                                ?? deck.noVoice) { model.speech.speak(deck.voiceSample) }
-                        }
-                    }
-                    Group {
-                        GroupTitle(text: t("Данные"))
-                        Panel {
-                            navRow(t("Сохранить прогресс в файл"), t("Чтобы перенести его на другое устройство")) {
-                                if let data = try? Backup.export(model.repo) {
-                                    exportFile = ProgressFile(data: data)
-                                    exporting = true
+                                choice(t("Карточки"), [t("Обучение"), t("Перевод"), t("Слово")], prefs.cardMode) { i in model.set { $0.cardMode = i } }
+                                Text(modeText).font(.ui(13)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
+                                Line()
+                                choice(t("Слов в работе одновременно"), sizes.map(String.init), max(0, sizes.firstIndex(of: prefs.activeSize) ?? 0)) { i in
+                                    model.set { $0.activeSize = sizes[i] }
+                                }
+                                Line()
+                                toggle(t("Кнопки «Не знаю / Знаю»"), nil, prefs.useMarks) { v in model.set { $0.useMarks = v } }
+                                Line()
+                                toggle(t("Проверять выученные слова"), t("Через неделю, потом через 3\u{00A0}недели, 2\u{00A0}месяца, полгода и год"), prefs.reviewKnown) { v in
+                                    model.set { $0.reviewKnown = v }
+                                }
+                                if deck.target == "sr" {
+                                    Line()
+                                    navRow(t("Куда пойти учиться?"), t("Школы сербского языка")) { router.go(.schools) }
                                 }
                             }
-                            Line()
-                            navRow(t("Загрузить прогресс из файла"), t("Заменит прогресс на этом устройстве")) { importing = true }
-                            Line()
-                            ForEach([("compare", t("Снова показывать разборы")), ("note", t("Снова показывать заметки"))], id: \.0) { pos, title in
-                                let hidden = model.repo.hiddenArticles(pos)
-                                navRow(title, hidden > 0 ? t("Скрыто: %d", hidden) : t("Скрытых нет")) { if hidden > 0 { confirmArticles = pos } }
+                        }
+                        Group {
+                            GroupTitle(text: t("Экран блокировки")).id("lock")
+                            if lockGuide {
+                                Text(t("Сделайте шаги ниже — и карточка будет на экране блокировки."))
+                                    .font(.ui(14)).foregroundStyle(p.text)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                    .padding(14).background(RoundedRectangle(cornerRadius: 16).fill(p.highlight))
+                                    .padding(.horizontal, 14).padding(.bottom, 8)
+                                    .accessibilityIdentifier("lockGuide")
+                            }
+                            Panel {
+                                choice(t("Карточка на экране блокировки"), [t("Виджеты"), t("Обои")], prefs.lockMode) { i in model.set { $0.lockMode = i } }
+                                LockSetup(mode: prefs.lockMode).padding(.horizontal, 18).padding(.bottom, 14)
+                            }
+                            .overlay(RoundedRectangle(cornerRadius: 20).stroke(lockGuide ? p.accent : .clear, lineWidth: 2).padding(.horizontal, 14))
+                        }
+                        Group {
+                            GroupTitle(text: t("Оформление"))
+                            Panel {
+                                themes
                                 Line()
-                            }
-                            Button { confirmReset = true } label: {
-                                Text(t("Сбросить прогресс")).font(.ui(16)).foregroundStyle(markDontKnow)
-                                    .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18).padding(.vertical, 15)
-                            }
-                            if let message {
-                                Text(message).font(.ui(14)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
-                                    .accessibilityIdentifier("dataMessage")
+                                if deck.hasSerbian {
+                                    choice(t("Алфавит"), [t("Кириллица"), "Latinica"], prefs.latinFirst ? 1 : 0) { i in model.set { $0.latinFirst = i == 1 } }
+                                    Line()
+                                }
+                                if deck.target == "sr" {
+                                    toggle(t("Подпись другим алфавитом"), nil, prefs.showBothScripts) { v in model.set { $0.showBothScripts = v } }
+                                    Line()
+                                    choice(t("Ударения"), deck.accentSamples, prefs.accentMode) { i in model.set { $0.accentMode = i } }
+                                } else {
+                                    // One kind of mark only: "with" is mode 1, "without" is mode 2.
+                                    choice(t("Ударения"), deck.accentSamples, prefs.accentMode == 2 ? 1 : 0) { i in model.set { $0.accentMode = i + 1 } }
+                                }
+                                Line()
+                                fontSize
                             }
                         }
-                    }
-                    Group {
-                        GroupTitle(text: t("Обратная связь"))
-                        Panel {
-                            let waiting = model.telemetry.state.queue.count
-                            navRow(t("Написать разработчику"), waiting > 0 ? t("Ждут отправки: %d", waiting) : t("Идея, ошибка или вопрос")) { writing = true }
-                            Line()
-                            toggle(t("Анонимная статистика"), t("Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки"),
-                                   model.telemetry.state.enabled) { v in model.setStatsEnabled(v) }
-                            Line()
-                            navRow(t("Что отправляется"), model.telemetry.state.last.map { t("Последний раз: %s", $0.day) } ?? t("Ещё ничего не отправлялось"),
-                                   id: "whatIsSent") {
-                                whatSent = true
+                        Group {
+                            GroupTitle(text: t("Звук"))
+                            Panel {
+                                toggle(t("Произносить слово сразу"), nil, prefs.autoSpeak) { v in model.set { $0.autoSpeak = v } }
+                                Line()
+                                navRow(t("Голос"), model.speech.voiceName.map { t("%s · нажмите, чтобы послушать", $0.prefix(1).uppercased() + String($0.dropFirst())) }
+                                    ?? deck.noVoice) { model.speech.speak(deck.voiceSample) }
                             }
-                            Line()
-                            navRow(t("Помочь автору"), t("Поделиться, поставить звезду"), id: "helpTheAuthor") { helping = true }
                         }
-                        if let toast = model.sentToast { SentToast(text: toast).padding(.top, 10) }
+                        Group {
+                            GroupTitle(text: t("Данные"))
+                            Panel {
+                                navRow(t("Сохранить прогресс в файл"), t("Чтобы перенести его на другое устройство")) {
+                                    if let data = try? Backup.export(model.repo) {
+                                        exportFile = ProgressFile(data: data)
+                                        exporting = true
+                                    }
+                                }
+                                Line()
+                                navRow(t("Загрузить прогресс из файла"), t("Заменит прогресс на этом устройстве")) { importing = true }
+                                Line()
+                                ForEach([("compare", t("Снова показывать разборы")), ("note", t("Снова показывать заметки"))], id: \.0) { pos, title in
+                                    let hidden = model.repo.hiddenArticles(pos)
+                                    navRow(title, hidden > 0 ? t("Скрыто: %d", hidden) : t("Скрытых нет")) { if hidden > 0 { confirmArticles = pos } }
+                                    Line()
+                                }
+                                Button { confirmReset = true } label: {
+                                    Text(t("Сбросить прогресс")).font(.ui(16)).foregroundStyle(markDontKnow)
+                                        .frame(maxWidth: .infinity, alignment: .leading).padding(.horizontal, 18).padding(.vertical, 15)
+                                }
+                                if let message {
+                                    Text(message).font(.ui(14)).foregroundStyle(p.secondary).padding(.horizontal, 18).padding(.bottom, 12)
+                                        .accessibilityIdentifier("dataMessage")
+                                }
+                            }
+                        }
+                        Group {
+                            GroupTitle(text: t("Обратная связь"))
+                            Panel {
+                                let waiting = model.telemetry.state.queue.count
+                                navRow(t("Написать разработчику"), waiting > 0 ? t("Ждут отправки: %d", waiting) : t("Идея, ошибка или вопрос")) { writing = true }
+                                Line()
+                                toggle(t("Анонимная статистика"), t("Раз в день: сколько карточек показано и ответов дано, сколько слов выучено, разделы и настройки"),
+                                       model.telemetry.state.enabled) { v in model.setStatsEnabled(v) }
+                                Line()
+                                navRow(t("Что отправляется"), model.telemetry.state.last.map { t("Последний раз: %s", $0.day) } ?? t("Ещё ничего не отправлялось"),
+                                       id: "whatIsSent") {
+                                    whatSent = true
+                                }
+                                Line()
+                                navRow(t("Помочь автору"), t("Поделиться, поставить звезду"), id: "helpTheAuthor") { helping = true }
+                            }
+                            if let toast = model.sentToast { SentToast(text: toast).padding(.top, 10) }
+                        }
+                        Group {
+                            GroupTitle(text: t("О приложении"))
+                            Panel { about }
+                        }
+                        Spacer(minLength: 28)
                     }
-                    Group {
-                        GroupTitle(text: t("О приложении"))
-                        Panel { about }
-                    }
-                    Spacer(minLength: 28)
+                }
+                .onAppear {
+                    guard lockGuide, !guided else { return }
+                    guided = true
+                    // After the push animation, so that the scroll is not lost.
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { withAnimation { scroll.scrollTo("lock", anchor: .top) } }
                 }
             }
         }

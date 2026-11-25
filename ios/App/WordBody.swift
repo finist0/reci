@@ -8,6 +8,8 @@ enum Route: Hashable {
     case categories
     case search
     case settings
+    // The settings from the lock screen offer, scrolled to the steps that set the card up.
+    case lockSetup
     case schools
     case list(String)
 }
@@ -21,7 +23,7 @@ extension Route {
         case .grammar: "grammar"
         case .categories: "categories"
         case .search: "search"
-        case .settings: "settings"
+        case .settings, .lockSetup: "settings"
         case .schools: "schools"
         case .list: "list"
         }

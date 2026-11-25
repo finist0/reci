@@ -6,6 +6,7 @@ struct ReciApp: App {
     @StateObject private var model = AppModel()
     @StateObject private var router = Router()
     @Environment(\.scenePhase) private var phase
+    @State private var openLockSetup = false
 
     var body: some Scene {
         WindowGroup {
@@ -13,6 +14,10 @@ struct ReciApp: App {
                 LockPreview(wallpaper: CommandLine.arguments[i + 1] == "wallpaper")
                     .environmentObject(model)
                     .onAppear { model.syncShowing() }
+            } else if model.intro == .pair {
+                PairScreen()
+                    .environmentObject(model)
+                    .preferredColorScheme(model.palette.dark ? .dark : .light)
             } else {
                 main
             }
@@ -20,6 +25,7 @@ struct ReciApp: App {
         .environment(\.locale, model.locale)
         .onChange(of: phase) { _, now in
             if now == .active { model.reload() }
+            if now == .background { model.leftScreen() }
         }
     }
 
@@ -41,6 +47,7 @@ struct ReciApp: App {
                         case .categories: CategoriesScreen()
                         case .search: SearchScreen()
                         case .settings: SettingsScreen()
+                        case .lockSetup: SettingsScreen(lockGuide: true)
                         case .schools: SchoolsScreen()
                         case .list(let id): ListScreen(id: id)
                         }
@@ -57,6 +64,20 @@ struct ReciApp: App {
         .environmentObject(model)
         .environmentObject(router)
         .onAppear { router.onGo = { [weak model] r in model?.telemetry.count("opened", r.statName) } }
+        // The settings open once the offer is gone: a push under a cover that is going away,
+        // with the look of a way over it, may be lost.
+        .fullScreenCover(isPresented: Binding(get: { model.intro == .offer }, set: { _ in }), onDismiss: {
+            if openLockSetup {
+                openLockSetup = false
+                router.go(.lockSetup)
+            }
+        }) {
+            LockOfferScreen(onLater: { model.postponeLockOffer() }) { mode in
+                openLockSetup = true
+                model.setUpLock(mode: mode)
+            }
+            .environmentObject(model)
+        }
         .preferredColorScheme(model.palette.dark ? .dark : .light)
         .alert(t("Приложение закрылось с ошибкой"), isPresented: .constant(model.crashOffer != nil)) {
             Button(t("Не отправлять"), role: .cancel) { model.answerCrash(send: false) }
