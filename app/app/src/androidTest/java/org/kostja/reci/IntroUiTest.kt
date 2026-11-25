@@ -164,6 +164,21 @@ class IntroUiTest {
     }
 
     @Test
+    fun aTurnedScreenKeepsTheSettingsWithTheSteps() {
+        start(Intro.begin(fresh = false))
+        click("Да, настроить")
+        click("Открыть настройки")
+        activity!!.recreate()
+        compose.waitForIdle()
+        assertTrue(has("lockGuide"))
+        assertTrue(has("highlighted:Карточка при включении экрана"))
+        activity!!.onActivity { it.onBackPressedDispatcher.onBackPressed() }
+        compose.waitForIdle()
+        assertFalse(has("lockGuide"))
+        compose.onNodeWithText("Знаю").assertExists()
+    }
+
+    @Test
     fun aCrashReportPutsTheOfferOffToTheNextStart() {
         start(Intro.begin(fresh = false), crash = true)
         assertFalse(has("lockOffer"))

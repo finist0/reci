@@ -225,6 +225,34 @@ class FeedbackTest {
     }
 
     @Test
+    fun aTurnedScreenKeepsTheFormFromTheLockCardOnce() {
+        launch(route = "report:кућа")
+        activity!!.recreate()
+        compose.waitForIdle()
+        click("Отмена")
+        compose.onNodeWithContentDescription("Назад").performClick()
+        compose.waitUntil(10_000) { Repo.current() != null }
+    }
+
+    @Test
+    fun aTurnedScreenKeepsTheFormFromTheLockCardOverTheScreenUnderIt() {
+        launch(route = "schools")
+        ctx.startActivity(
+            Intent(ctx, MainActivity::class.java).putExtra(MainActivity.EXTRA_ROUTE, "report:кућа")
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
+        compose.waitUntil(10_000) { exists("Что не так с карточкой?") }
+        activity!!.recreate()
+        compose.waitForIdle()
+        click("Отмена")
+        compose.onNodeWithContentDescription("Назад").performClick()
+        compose.waitForIdle()
+        assertTrue(exists("Куда пойти учиться?"))
+        compose.onNodeWithContentDescription("Назад").performClick()
+        compose.waitUntil(10_000) { Repo.current() != null }
+    }
+
+    @Test
     fun withoutNetworkAMessageWaitsAndGoesOutLater() {
         launch()
         FakeServer.status = -1
