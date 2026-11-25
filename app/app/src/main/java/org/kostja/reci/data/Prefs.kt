@@ -226,6 +226,22 @@ object Prefs {
         get() = sp.getString("whats_new_seen", null)
         set(v) = sp.edit { putString("whats_new_seen", v) }
 
+    // The screens of a first start (Intro). Without the keys nothing is asked or offered.
+    var intro: Intro.State
+        get() = Intro.State(bool("pair_asked", true), int("lock_offer_left", 0), long("lock_offer_at", 0))
+        set(v) {
+            sp.edit { putBoolean("pair_asked", v.pairAsked).putInt("lock_offer_left", v.offerLeft).putLong("lock_offer_at", v.offerAt) }
+            changed()
+        }
+
+    // Once per device, before anything stores a deck or a card: a phone without them is a new
+    // user, one with them an update from a version without the intro.
+    fun beginIntro() {
+        if (sp.contains("lock_offer_left")) return
+        val earlier = sp.all.keys.any { it == "deck" || it == "whats_new_seen" || it == "current_key" || it.endsWith(".current_key") }
+        intro = Intro.begin(fresh = !earlier)
+    }
+
     // The showing counted last, "<key>#<card number>": the lock card and the app show the same
     // card, and a showing must count once.
     val lastShown: String

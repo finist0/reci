@@ -19,6 +19,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.kostja.reci.data.DictUpdate
+import org.kostja.reci.data.Intro
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
@@ -63,6 +64,9 @@ class LockSettingsTest {
         Repo.resetPosition()
         Repo.step(1)
         ShadowSettings.setCanDrawOverlays(true)
+        // Each test is a new install, whose first start screens would cover the cards.
+        Prefs.intro = Intro.State(pairAsked = true, offerLeft = 0, offerAt = 0)
+        Intro.showing.value = Intro.Show.NONE
     }
 
     @After

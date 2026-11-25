@@ -23,6 +23,7 @@ class App : Application() {
         Decks.init(this)
         // Before the first card stores its key, which would make a first start look like an
         // earlier user's.
+        Prefs.beginIntro()
         Prefs.uiLang
         I18n.init(this)
         Telemetry.init(this)

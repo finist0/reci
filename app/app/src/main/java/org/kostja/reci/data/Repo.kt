@@ -34,8 +34,9 @@ object Repo {
     // cards, Serbian вода with Russian or English translations is one.
     private fun dbFor(d: Deck) = ProgressDb(ctx, if (d.store == Decks.FIRST) "progress.db" else "progress-${d.store}.db")
 
-    // Switches to another deck: its cards, its progress and its place in the cards.
-    fun switchDeck(id: String) {
+    // Switches to another deck: its cards, its progress and its place in the cards. `then` runs
+    // on the main thread once the switch is done.
+    fun switchDeck(id: String, then: (() -> Unit)? = null) {
         if (id == Prefs.deck) return
         io.execute {
             synchronized(this) {
@@ -63,6 +64,7 @@ object Repo {
             main.post {
                 Speaker.reset()
                 version.intValue++
+                then?.invoke()
             }
         }
     }

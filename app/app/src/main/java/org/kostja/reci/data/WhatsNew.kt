@@ -18,6 +18,10 @@ object WhatsNew {
     val pending = mutableStateOf<List<Entry>>(emptyList())
     private var checked = false
 
+    // News are on screen or on their way there (Intro holds the lock screen offer for them).
+    var told = false
+        private set
+
     fun parse(json: String, platform: String): List<Entry> {
         val all = JSONArray(json)
         return (0 until all.length()).map { all.getJSONObject(it) }.map { e ->
@@ -62,10 +66,13 @@ object WhatsNew {
     fun check(json: String, version: String, fresh: Boolean) {
         val entries = pick(parse(json, "android"), version, Prefs.whatsNewSeen, fresh)
         Prefs.whatsNewSeen = version
-        if (entries.isNotEmpty()) Handler(Looper.getMainLooper()).post { pending.value = entries }
+        if (entries.isEmpty()) return
+        told = true
+        Handler(Looper.getMainLooper()).post { pending.value = entries }
     }
 
     fun close() {
         pending.value = emptyList()
+        told = false
     }
 }

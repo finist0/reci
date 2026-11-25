@@ -51,11 +51,14 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.layout.positionInParent
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
@@ -109,7 +112,7 @@ private fun ignoresBattery(ctx: Context) =
     ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
 
 @Composable
-fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: () -> Unit) {
+fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: () -> Unit, lockGuide: Boolean = false) {
     Prefs.version.intValue
     Repo.version.intValue
     val p = LocalPalette.current
@@ -166,7 +169,18 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
 
     Column(Modifier.fillMaxSize().background(p.bg).systemBarsPadding()) {
         Header(t("Настройки"), back)
-        Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+        val scroll = rememberScrollState()
+        // The lock screen section's place, for the steps of the lock screen offer. The settings
+        // scroll there once, not again on the way back from a screen opened from them.
+        var lockAt by remember { mutableIntStateOf(-1) }
+        var guided by rememberSaveable { mutableStateOf(false) }
+        LaunchedEffect(lockAt) {
+            if (lockGuide && !guided && lockAt >= 0) {
+                guided = true
+                scroll.animateScrollTo(lockAt)
+            }
+        }
+        Column(Modifier.weight(1f).verticalScroll(scroll)) {
             ProgressCard()
 
             GroupTitle(t("Язык"))
@@ -230,9 +244,12 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 }
             }
 
-            GroupTitle(t("Экран блокировки"))
+            Column(Modifier.onGloballyPositioned { if (lockAt < 0) lockAt = it.positionInParent().y.toInt() }) {
+                if (lockGuide) LockGuide(Prefs.lockEnabled && overlay)
+                GroupTitle(t("Экран блокировки"))
+            }
             Panel {
-                Toggle(t("Карточка при включении экрана"), null, Prefs.lockEnabled) {
+                Toggle(t("Карточка при включении экрана"), null, Prefs.lockEnabled, highlight = lockGuide && !Prefs.lockEnabled) {
                     Prefs.lockEnabled = it
                     if (it && !notify && Build.VERSION.SDK_INT >= 33) {
                         notifyLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
@@ -241,7 +258,7 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                 }
                 if (Prefs.lockEnabled) {
                     Line()
-                    Permission(t("Поверх других окон"), t("Без этого Android не покажет карточку"), overlay) {
+                    Permission(t("Поверх других окон"), t("Без этого Android не покажет карточку"), overlay, highlight = lockGuide && !overlay) {
                         ctx.startActivity(
                             Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION, Uri.parse("package:${ctx.packageName}"))
                         )
@@ -618,15 +635,43 @@ private fun Count(label: String, value: Int, color: Color) {
     }
 }
 
+// The step of the lock screen offer to take next.
+private fun Modifier.highlighted(on: Boolean, title: String, p: Palette): Modifier {
+    if (!on) return this
+    val shape = RoundedCornerShape(14.dp)
+    return testTag("highlighted:$title").padding(4.dp).clip(shape).background(p.highlight).border(2.dp, p.accent, shape)
+}
+
+// Over the lock screen section when the offer opened the settings: what is left to do.
+@Composable
+private fun LockGuide(ready: Boolean) {
+    val p = LocalPalette.current
+    Text(
+        if (ready) t("Готово! Заблокируйте телефон и включите экран — там будет карточка.")
+        else t("Включите подсвеченный пункт — и карточка готова."),
+        fontSize = 14.sp,
+        color = p.text,
+        lineHeight = 19.sp,
+        modifier = Modifier
+            .testTag("lockGuide")
+            .padding(start = 14.dp, end = 14.dp, top = 16.dp)
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(16.dp))
+            .background(p.highlight)
+            .padding(14.dp),
+    )
+}
+
 @Composable
 private fun Line() = HorizontalDivider(Modifier.padding(start = 18.dp), color = LocalPalette.current.divider)
 
 @Composable
-private fun Toggle(title: String, summary: String?, value: Boolean, onChange: (Boolean) -> Unit) {
+private fun Toggle(title: String, summary: String?, value: Boolean, highlight: Boolean = false, onChange: (Boolean) -> Unit) {
     val p = LocalPalette.current
     Row(
         Modifier
             .fillMaxWidth()
+            .highlighted(highlight, title, p)
             .clickable { onChange(!value) }
             .padding(horizontal = 18.dp, vertical = 10.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -785,11 +830,12 @@ private fun Themes() {
 }
 
 @Composable
-private fun Permission(title: String, hint: String, granted: Boolean, onGrant: () -> Unit) {
+private fun Permission(title: String, hint: String, granted: Boolean, highlight: Boolean = false, onGrant: () -> Unit) {
     val p = LocalPalette.current
     Row(
         Modifier
             .fillMaxWidth()
+            .highlighted(highlight, title, p)
             .clickable(enabled = !granted, onClick = onGrant)
             .padding(horizontal = 18.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically,

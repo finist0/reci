@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import org.kostja.reci.R
 import org.kostja.reci.data.DictUpdate
+import org.kostja.reci.data.Intro
 import org.kostja.reci.data.Prefs
 import org.kostja.reci.data.Repo
 import org.kostja.reci.data.Speaker
@@ -23,7 +24,8 @@ sealed interface Screen {
     data object Card : Screen
     data object Categories : Screen
     data object Search : Screen
-    data object Settings : Screen
+    // From the lock screen offer, the settings show the steps to set up the card.
+    data class Settings(val lockGuide: Boolean = false) : Screen
     data object Schools : Screen
     data class Detail(val key: String, val report: Boolean = false) : Screen
     data class Words(val category: String) : Screen
@@ -36,7 +38,7 @@ sealed interface Screen {
             Card -> "card"
             Categories -> "categories"
             Search -> "search"
-            Settings -> "settings"
+            is Settings -> "settings"
             Schools -> "schools"
             is Detail -> "detail"
             is Words -> "list"
@@ -48,7 +50,7 @@ sealed interface Screen {
         fun fromRoute(route: String?): Screen? = when (route) {
             "categories" -> Categories
             "search" -> Search
-            "settings" -> Settings
+            "settings" -> Settings()
             "schools" -> Schools
             "grammar" -> GrammarIndex
             else -> when {
@@ -77,6 +79,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             Prefs.version.intValue
             ReciTheme {
+                if (Intro.showing.value == Intro.Show.PAIR) {
+                    PairScreen { Intro.choose(applicationContext, it) }
+                    return@ReciTheme
+                }
                 // Each screen in the stack keeps its saveable state (tab, query, scroll)
                 // until it is popped, so coming back from a card restores it.
                 val holder = rememberSaveableStateHolder()
@@ -103,7 +109,7 @@ class MainActivity : ComponentActivity() {
                         CardScreen(
                             onNext = { Repo.step(1) },
                             onSearch = { go(Screen.Search) },
-                            onSettings = { go(Screen.Settings) },
+                            onSettings = { go(Screen.Settings()) },
                             onCategories = { go(Screen.Categories) },
                             onSchools = { go(Screen.Schools) },
                             onGrammar = { id ->
@@ -121,7 +127,8 @@ class MainActivity : ComponentActivity() {
                     Screen.Categories -> CategoriesScreen(openList = { go(Screen.Words(it)) }, back = back)
                     is Screen.Words -> WordListScreen(s.category, open = { go(Screen.Detail(it)) }, back = back)
                     Screen.Search -> SearchScreen(open = { go(Screen.Detail(it)) }, back = back)
-                    Screen.Settings -> SettingsScreen(
+                    is Screen.Settings -> SettingsScreen(
+                        lockGuide = s.lockGuide,
                         openCategories = { go(Screen.Categories) },
                         openSchools = { go(Screen.Schools) },
                         back = back,
@@ -144,6 +151,12 @@ class MainActivity : ComponentActivity() {
                     is Screen.GrammarTopic -> GrammarTopicScreen(s.id, open = { go(Screen.GrammarTopic(it)) }, back = back)
                 }
                 }
+                if (Intro.showing.value == Intro.Show.OFFER) {
+                    LockOffer(onLater = Intro::later, onSetUp = {
+                        Intro.setUp()
+                        go(Screen.Settings(lockGuide = true))
+                    })
+                }
                 WhatsNewDialog()
                 CrashDialog()
             }
@@ -152,8 +165,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onStart() {
         super.onStart()
+        Intro.check(this)
         sendStats()
         DictUpdate.check()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        if (!isChangingConfigurations) Intro.leftScreen()
     }
 
     override fun onNewIntent(intent: Intent) {
