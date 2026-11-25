@@ -46,7 +46,22 @@ sealed interface Screen {
             is GrammarTopic -> "topic"
         }
 
+    // The route back to this screen, which fromSaved reads: a recreated activity keeps the stack.
+    val route: String
+        get() = when (this) {
+            Card -> "card"
+            Categories -> "categories"
+            Search -> "search"
+            is Settings -> if (lockGuide) "settings:guide" else "settings"
+            Schools -> "schools"
+            is Detail -> if (report) "report:$key" else "grammar:w:$key"
+            is Words -> "list:$category"
+            GrammarIndex -> "grammar"
+            is GrammarTopic -> "grammar:$id"
+        }
+
     companion object {
+        // The routes the lock card sends; an intent from another app may carry them too.
         fun fromRoute(route: String?): Screen? = when (route) {
             "categories" -> Categories
             "search" -> Search
@@ -60,6 +75,14 @@ sealed interface Screen {
                 route.startsWith("grammar:w:") -> Detail(route.removePrefix("grammar:w:"))
                 else -> GrammarTopic(route.substringAfter(':'))
             }
+        }
+
+        // Also the screens that only the app itself opens.
+        fun fromSaved(route: String): Screen? = when {
+            route == "card" -> Card
+            route == "settings:guide" -> Settings(lockGuide = true)
+            route.startsWith("list:") -> Words(route.removePrefix("list:"))
+            else -> fromRoute(route)
         }
     }
 }
@@ -75,7 +98,13 @@ class MainActivity : ComponentActivity() {
         setTaskDescription(ActivityManager.TaskDescription(getString(R.string.app_name)))
         LockService.sync(this)
         WhatsNew.checkOnce(this)
-        handle(intent)
+        // A recreated activity (a turned screen, a new theme) has handled its intent already.
+        if (savedInstanceState == null) {
+            handle(intent)
+        } else {
+            stack.clear()
+            stack.addAll(savedInstanceState.getStringArrayList(STACK)!!.map { Screen.fromSaved(it)!! })
+        }
         setContent {
             Prefs.version.intValue
             ReciTheme {
@@ -175,6 +204,11 @@ class MainActivity : ComponentActivity() {
         if (!isChangingConfigurations) Intro.leftScreen()
     }
 
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        outState.putStringArrayList(STACK, ArrayList(stack.map { it.route }))
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handle(intent)
@@ -188,5 +222,6 @@ class MainActivity : ComponentActivity() {
 
     companion object {
         const val EXTRA_ROUTE = "route"
+        private const val STACK = "stack"
     }
 }
