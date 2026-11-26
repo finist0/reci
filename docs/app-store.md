@@ -162,7 +162,7 @@ Ruska ili srpska reč na zaključanom ekranu: sa akcentom, primerima i prevodom 
 ### Ključne reči (do 100 bajtova, odvojene zarezom)
 
 ```
-ruski,rečnik,kartice,akcenat,reči,učenje,russian,rusija,widget,gramatika
+ruski,rečnik,rječnik,kartice,akcenat,naglasak,riječi,učenje,widget,gramatika,ćirilica
 ```
 
 ### Opis (do 4000 znakova)
@@ -259,7 +259,7 @@ A Serbian or Russian word on your lock screen, with its stress, examples and an 
 ### Keywords (up to 100 bytes, comma-separated)
 
 ```
-vocabulary,learn,lock screen,widget,cyrillic,srpski,serbia,russia,dictionary,grammar,stress
+vocabulary,learn,lock screen,widget,cyrillic,srpski,ruski,words,dictionary,grammar,stress
 ```
 
 ### Description (up to 4000 characters)
@@ -331,7 +331,7 @@ HONEST
 | Название | 30 символов | 13 | 13 | 13 |
 | Подзаголовок | 30 символов | 24 | 26 | 30 |
 | Рекламный текст | 170 символов | 158 | 144 | 148 |
-| Ключевые слова | 100 байт | 97 | 75 | 91 |
+| Ключевые слова | 100 байт | 97 | 90 | 89 |
 | Описание | 4000 символов | 3090 | 2889 | 2578 |
 
 ## Что ещё понадобится в App Store Connect
