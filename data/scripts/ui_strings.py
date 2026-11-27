@@ -28,6 +28,8 @@ PLURAL = re.compile(r'\bplural\([^,()]+,\s*' + LIT + r',\s*' + LIT + r',\s*' + L
 # Russian values of the label tables: "basic" to "Базовые слова", "basic": "Базовые слова".
 LABEL = re.compile(r'(?:"[\w:-]+"|\b\d+|\b[A-Z_]+\()\s*(?:to|:|->|=)?\s*' + LIT)
 CYR = re.compile(r"[А-Яа-яЁё]")
+# The interface language choice names each language in itself, in any interface.
+OWN_NAMES = {"Русский", "Српски"}
 
 
 def unescape(s):
@@ -56,7 +58,7 @@ def keys():
     for item in news["items"]:
         found.setdefault(item["text"], TABLE.parent.relative_to(ROOT) / "whatsnew.json")
     # Sample words with stress marks are shown as they are.
-    return {k: v for k, v in found.items() if CYR.search(k) and "\u0301" not in k}
+    return {k: v for k, v in found.items() if CYR.search(k) and "\u0301" not in k and k not in OWN_NAMES}
 
 
 def main():
