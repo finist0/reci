@@ -97,9 +97,9 @@ How the next card is chosen, in detail (in Russian): [docs/learning.md](docs/lea
 
 The app is in closed testing on Google Play. To install it from there:
 
-1. Join the testers group: https://groups.google.com/g/reci-testing.
-2. Open https://play.google.com/apps/testing/org.kostja.reci and tap "Become a tester".
-3. Install the app: https://play.google.com/store/apps/details?id=org.kostja.reci.
+1. Join the testers group: <https://groups.google.com/g/reci-testing>.
+2. Open <https://play.google.com/apps/testing/org.kostja.reci> and tap "Become a tester".
+3. Install the app: <https://play.google.com/store/apps/details?id=org.kostja.reci>.
 
 Use the same Google account as in Google Play on the phone. Updates then come from Google
 Play by themselves. Please stay in the group and in the test for at least two weeks: Google
@@ -110,7 +110,7 @@ Then [set it up on Android](#android-setup).
 <a id="install-app-store"></a>
 ### iPhone and iPad: App Store
 
-1. Install Nerodnaya Rech from the App Store: https://apps.apple.com/app/id6831608708.
+1. Install Nerodnaya Rech from the App Store: <https://apps.apple.com/app/id6831608708>.
 2. Open the app → Settings → "Card on the lock screen" → "Wallpaper". The card becomes the
    lock screen wallpaper: the Card Wallpaper action (НЕРодная речь) for the Shortcuts app
    draws it.

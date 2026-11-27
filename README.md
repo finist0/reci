@@ -100,10 +100,10 @@
 
 Идёт закрытое тестирование в Google Play. Чтобы поставить приложение оттуда:
 
-1. Вступите в группу тестировщиков: https://groups.google.com/g/reci-testing.
-2. Откройте https://play.google.com/apps/testing/org.kostja.reci и нажмите
+1. Вступите в группу тестировщиков: <https://groups.google.com/g/reci-testing>.
+2. Откройте <https://play.google.com/apps/testing/org.kostja.reci> и нажмите
    «Стать тестировщиком».
-3. Установите приложение: https://play.google.com/store/apps/details?id=org.kostja.reci.
+3. Установите приложение: <https://play.google.com/store/apps/details?id=org.kostja.reci>.
 
 Везде нужен тот же аккаунт Google, что и в Google Play на телефоне. Обновления будут
 приходить из Google Play сами. Пожалуйста, не выходите из группы и из теста хотя бы две
@@ -114,7 +114,7 @@
 <a id="install-app-store"></a>
 ### iPhone и iPad: App Store
 
-1. Установите НЕРодную речь из App Store: https://apps.apple.com/app/id6831608708.
+1. Установите НЕРодную речь из App Store: <https://apps.apple.com/app/id6831608708>.
 2. Откройте приложение → «Настройки» → «Карточка на экране блокировки» → «Обои».
    Карточка станет обоями экрана блокировки: её рисует действие Card Wallpaper
    (НЕРодная речь) для приложения Shortcuts.

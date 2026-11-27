@@ -99,10 +99,10 @@
 
 Апликација је у затвореном тестирању на Google Play-у. Да бисте је инсталирали одатле:
 
-1. Придружите се групи тестера: https://groups.google.com/g/reci-testing.
-2. Отворите https://play.google.com/apps/testing/org.kostja.reci и пријавите се као
+1. Придружите се групи тестера: <https://groups.google.com/g/reci-testing>.
+2. Отворите <https://play.google.com/apps/testing/org.kostja.reci> и пријавите се као
    тестер.
-3. Инсталирајте апликацију: https://play.google.com/store/apps/details?id=org.kostja.reci.
+3. Инсталирајте апликацију: <https://play.google.com/store/apps/details?id=org.kostja.reci>.
 
 Свуда треба исти Google налог као у Google Play-у на телефону. Ажурирања ће после стизати
 сама из Google Play-а. Молимо вас, не излазите из групе и из теста бар две недеље: толико
@@ -113,7 +113,7 @@
 <a id="install-app-store"></a>
 ### iPhone и iPad: App Store
 
-1. Инсталирајте апликацију „НЕРодная речь“ из App Store-а: https://apps.apple.com/app/id6831608708.
+1. Инсталирајте апликацију „НЕРодная речь“ из App Store-а: <https://apps.apple.com/app/id6831608708>.
 2. Отворите апликацију → „Подешавања“ → „Картица на закључаном екрану“ → „Позадина“.
    Картица постаје позадина закључаног екрана: црта је радња Card Wallpaper
    (НЕРодная речь) за апликацију Shortcuts.
