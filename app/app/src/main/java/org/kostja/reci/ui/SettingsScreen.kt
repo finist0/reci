@@ -105,8 +105,6 @@ internal fun afterCallsRequest(activity: Activity, granted: Boolean) {
     activity.startActivity(Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${activity.packageName}")))
 }
 
-// The values of Prefs.uiLang in the order of the interface language choice.
-private val uiLangs = listOf("ru", "sr", "en")
 
 private fun ignoresBattery(ctx: Context) =
     ctx.getSystemService(PowerManager::class.java).isIgnoringBatteryOptimizations(ctx.packageName)
@@ -194,10 +192,7 @@ fun SettingsScreen(openCategories: () -> Unit, openSchools: () -> Unit, back: ()
                     Repo.switchDeck(Decks.pick(deck.target, it).id)
                 }
                 Line()
-                // Each language is named in itself, so that a user who cannot read the
-                // interface finds their own.
-                val uiNames = listOf("Русский", "Српски", "English")
-                MenuChoice(t("Язык интерфейса"), "uilang", uiLangs, Prefs.uiLang, { uiNames[uiLangs.indexOf(it).coerceAtLeast(0)] }) {
+                MenuChoice(t("Язык интерфейса"), "uilang", Decks.uiLangs, Prefs.uiLang, Decks::uiName) {
                     Prefs.uiLang = it
                 }
             }

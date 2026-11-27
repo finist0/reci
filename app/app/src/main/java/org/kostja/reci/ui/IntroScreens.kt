@@ -92,20 +92,16 @@ fun PairScreen(onStart: (deck: String) -> Unit) {
             Spacer(Modifier.height(12.dp))
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 Decks.natives(target).forEach { code ->
-                    val on = code == native
-                    Text(
-                        Decks.name(code),
-                        fontSize = 16.sp,
-                        color = if (on) p.accent else p.text,
-                        fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
-                        modifier = Modifier
-                            .testTag("native:$code")
-                            .clip(RoundedCornerShape(50))
-                            .background(p.card)
-                            .border(2.dp, if (on) p.accent else Color.Transparent, RoundedCornerShape(50))
-                            .clickable(enabled = !loading) { native = code }
-                            .padding(horizontal = 16.dp, vertical = 10.dp),
-                    )
+                    OptionChip(Decks.name(code), "native:$code", code == native, !loading) { native = code }
+                }
+            }
+            Spacer(Modifier.height(28.dp))
+            Text(t("Язык интерфейса"), fontFamily = Serif, fontSize = 22.sp, fontWeight = FontWeight.SemiBold, color = p.word)
+            Spacer(Modifier.height(12.dp))
+            // Apart from the translations: one may learn with Russian ones in an English interface.
+            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Decks.uiLangs.forEach { code ->
+                    OptionChip(Decks.uiName(code), "ui:$code", code == Prefs.uiLang, !loading) { Prefs.uiLang = code }
                 }
             }
             Spacer(Modifier.height(24.dp))
@@ -120,6 +116,24 @@ fun PairScreen(onStart: (deck: String) -> Unit) {
         }
         PrimaryButton(t("Начать"), Modifier.padding(18.dp), enabled = !loading) { onStart(Decks.pick(target, native).id) }
     }
+}
+
+@Composable
+private fun OptionChip(label: String, tag: String, on: Boolean, enabled: Boolean, onClick: () -> Unit) {
+    val p = LocalPalette.current
+    Text(
+        label,
+        fontSize = 16.sp,
+        color = if (on) p.accent else p.text,
+        fontWeight = if (on) FontWeight.SemiBold else FontWeight.Normal,
+        modifier = Modifier
+            .testTag(tag)
+            .clip(RoundedCornerShape(50))
+            .background(p.card)
+            .border(2.dp, if (on) p.accent else Color.Transparent, RoundedCornerShape(50))
+            .clickable(enabled = enabled, onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 10.dp),
+    )
 }
 
 @Composable

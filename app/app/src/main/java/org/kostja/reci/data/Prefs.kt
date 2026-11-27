@@ -240,6 +240,7 @@ object Prefs {
         if (sp.contains("lock_offer_left")) return
         val earlier = sp.all.keys.any { it == "deck" || it == "whats_new_seen" || it == "current_key" || it.endsWith(".current_key") }
         intro = Intro.begin(fresh = !earlier)
+        if (!earlier) latinFirst = Decks.guessLatin()
     }
 
     // The showing counted last, "<key>#<card number>": the lock card and the app show the same

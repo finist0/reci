@@ -74,12 +74,19 @@ object Decks {
         return if (all.any { it.id == id }) id else FIRST
     }
 
-    // The interface language of a first start: the phone's, if the interface speaks it.
+    // The interface language of a first start: the phone's, if the interface speaks it, and
+    // Russian where the translations are Russian.
     fun guessUi(lang: String = Locale.getDefault().language) = when (lang) {
-        "ru" -> "ru"
+        in russianReaders -> "ru"
         in serbian -> "sr"
         else -> "en"
     }
+
+    private val latinReaders = setOf("hr", "bs", "sl", "sh", "cnr")
+
+    // A first start shows Serbian in Latin letters on a phone set to a language written in them.
+    fun guessLatin(locale: Locale = Locale.getDefault()) =
+        locale.language in latinReaders || locale.language == "sr" && locale.script == "Latn"
 
     // Storage names of what belongs to the language learned (Deck.store): the first deck keeps
     // the names it had before there were others.
@@ -105,6 +112,17 @@ object Decks {
 
     // A language as an option of the settings, named in the interface language.
     fun name(code: String) = langName(code, I18n.lang).replaceFirstChar { it.titlecase() }
+
+    // The values of Prefs.uiLang, in the order they are offered.
+    val uiLangs = listOf("ru", "sr", "en")
+
+    // An interface language named in itself, so that a user who cannot read the interface
+    // finds their own.
+    fun uiName(code: String) = when (code) {
+        "ru" -> "Русский"
+        "sr" -> if (Prefs.latinFirst) "Srpski" else "Српски"
+        else -> "English"
+    }
 
     // A word to show the font size and the stress marks on.
     val sample: String
