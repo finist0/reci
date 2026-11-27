@@ -33,6 +33,9 @@ test("a first visit chooses the languages, preset by the browser's, before the c
     assert.deepEqual(await on(page, ".pair-chip"), ["en"], "the translations stay where a deck has them");
     await page.tap('.pair-option[data-code="sr"]');
     await page.tap('.pair-chip[data-code="ru"]');
+    assert.deepEqual(await on(page, ".pair-ui"), ["en"], "the translations leave the interface alone");
+    await page.tap('.pair-ui[data-code="sr"]');
+    assert.equal(await page.eval("document.querySelector('[data-act=pairstart]').textContent.trim()"), "Почни");
     await page.tap('[data-act="pairstart"]');
     await page.waitFor("document.querySelector('.card-wrap')");
     assert.equal(await deck(page), "sr-ru", "the cards come once the pair chosen is in");

@@ -137,6 +137,9 @@ test("a first start takes the interface language from the browser; an earlier us
     assert.equal(Decks.guessUi(["sr-Latn-RS"]), "sr");
     assert.equal(Decks.guessUi(["hr-HR"]), "sr");
     assert.equal(Decks.guessUi(["de-DE"]), "en");
+    for (const l of ["uk-UA", "be-BY"]) assert.equal(Decks.guessUi([l]), "ru", "Russian translations, Russian interface");
+    for (const l of ["hr-HR", "bs", "sl-SI", "sr-Latn-RS", "cnr"]) assert.ok(Decks.guessLatin([l]), l);
+    for (const l of ["sr-RS", "sr-Cyrl-RS", "mk", "ru-RU", "en-US"]) assert.ok(!Decks.guessLatin([l]), l);
 
     const ui = JSON.parse(readFileSync(resolve(WEB, R.ASSETS, "ui.json"), "utf-8"));
     const start = (lang, stored = "") => {
