@@ -169,7 +169,7 @@ test("with a second deck for a language learned, the translations follow the lan
 test("a first start takes the interface language from the browser and keeps it", async t => {
     const ui = page => page.eval("import('./js/store.js').then(S => S.prefs.uiLang)");
     for (const [lang, want, title] of [["ru-RU", "ru", "Настройки"], ["sr-RS", "sr", "Подешавања"],
-        ["hr-HR", "sr", "Подешавања"], ["de-DE", "en", "Settings"]]) {
+        ["hr-HR", "sr", "Podešavanja"], ["de-DE", "en", "Settings"]]) {
         const page = await app(t, { lang });
         assert.equal(await ui(page), want, lang);
         assert.equal(await page.eval(`document.querySelector('[data-act="settings"]').getAttribute("aria-label")`), title);
@@ -215,7 +215,7 @@ test("the Russian deck speaks Russian and searches Russian without ё", async t 
 });
 
 test("in Latin the Russian words of a Serbian text stay in Cyrillic", async t => {
-    const page = await app(t, { lang: "sr", storage: { "reci.prefs": JSON.stringify({ latinFirst: true }) } });
+    const page = await app(t, { lang: "sr", storage: { "reci.prefs": JSON.stringify({ deck: "ru-sr", latinFirst: true }) } });
     assert.equal(await deck(page), "ru-sr");
     const tiles = () => page.eval("[...document.querySelectorAll('.tile')].map(e => e.textContent)");
     await page.tap('[data-act="ref"]');
