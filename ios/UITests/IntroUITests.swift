@@ -24,6 +24,10 @@ final class IntroUITests: XCTestCase {
         app.buttons["target:sr"].tap()
         // Not the guess, so that the cards of another deck load before the choice goes.
         app.buttons["native:en"].tap()
+        XCTAssertTrue(app.buttons["ui:ru"].isSelected, "the translations leave the interface alone")
+        app.buttons["ui:en"].tap()
+        XCTAssertEqual(app.buttons["pairStart"].label, "Start")
+        app.buttons["ui:ru"].tap()
         app.buttons["pairStart"].tap()
     }
 

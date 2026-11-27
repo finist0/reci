@@ -64,6 +64,21 @@ final class DeckTests: XCTestCase {
         Decks.systemLanguage = "ru"
     }
 
+    func testAFirstStartTakesTheScriptFromThePhone() throws {
+        XCTAssertEqual(try start("uk").prefs.uiLang, "ru", "Russian translations, Russian interface")
+        XCTAssertEqual(try start("be").prefs.uiLang, "ru")
+        for tag in ["hr-HR", "bs", "sl-SI", "sr-Latn-RS", "cnr"] { XCTAssertTrue(Decks.guessLatin(tag), tag) }
+        for tag in ["sr-RS", "sr-Cyrl-RS", "mk", "ru-RU", "en-US"] { XCTAssertFalse(Decks.guessLatin(tag), tag) }
+
+        let was = Decks.systemTag
+        defer { Decks.systemTag = was }
+        Decks.systemTag = "hr-HR"
+        XCTAssertTrue(try start("hr").prefs.latinFirst)
+        XCTAssertFalse(try start("hr", #"{"currentKey": "кућа"}"#).prefs.latinFirst, "an earlier user keeps the script")
+        Decks.systemTag = "ru-RU"
+        _ = try start("ru")
+    }
+
     func testTheRussianDeckKeepsItsOwnProgress() throws {
         let store = Fixtures.tempStore()
         let sr = Repo(store: store, words: Fixtures.words)
