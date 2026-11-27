@@ -113,6 +113,10 @@ class IntroUiTest {
         assertTrue("Russian is translated into Serbian", has("native:sr"))
         tap("target:sr")
         tap("native:en")
+        assertTrue("the translations leave the interface alone", hasText("Начать"))
+        tap("ui:en")
+        assertTrue(hasText("Start"))
+        tap("ui:ru")
         click("Начать")
         compose.waitUntil(30_000) { Prefs.deck == "sr-en" && Repo.current() != null }
         assertTrue(Prefs.intro.pairAsked)

@@ -70,6 +70,32 @@ class DeckTest {
     }
 
     @Test
+    fun aFirstStartTakesTheInterfaceAndTheScriptFromThePhone() {
+        assertEquals("ru", Decks.guessUi("ru"))
+        assertEquals("Russian translations, Russian interface", "ru", Decks.guessUi("uk"))
+        assertEquals("ru", Decks.guessUi("be"))
+        assertEquals("sr", Decks.guessUi("hr"))
+        assertEquals("en", Decks.guessUi("de"))
+        listOf("hr", "bs-BA", "sl", "sr-Latn-RS", "cnr").forEach { assertTrue(it, Decks.guessLatin(Locale.forLanguageTag(it))) }
+        listOf("sr-RS", "sr-Cyrl-RS", "mk", "ru", "en").forEach { assertFalse(it, Decks.guessLatin(Locale.forLanguageTag(it))) }
+
+        val sp = RuntimeEnvironment.getApplication().getSharedPreferences("prefs", Context.MODE_PRIVATE)
+        val was = Locale.getDefault()
+        try {
+            Locale.setDefault(Locale.forLanguageTag("hr-HR"))
+            sp.edit().clear().commit()
+            Prefs.beginIntro()
+            assertTrue(Prefs.latinFirst)
+
+            sp.edit().clear().putString("current_key", "кућа").commit()
+            Prefs.beginIntro()
+            assertFalse("an earlier user keeps the script", Prefs.latinFirst)
+        } finally {
+            Locale.setDefault(was)
+        }
+    }
+
+    @Test
     fun theRussianDeckKeepsItsOwnProgress() {
         waitIo()
         val sr = Repo.words.first { it.key == "кућа" }
