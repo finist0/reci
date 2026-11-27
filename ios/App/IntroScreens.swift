@@ -26,15 +26,14 @@ struct PairScreen: View {
                     Text(t("Перевод на")).font(.serif(22, .semibold)).foregroundStyle(p.word).padding(.top, 28).padding(.bottom, 12)
                     HStack(spacing: 8) {
                         ForEach(Decks.natives(target), id: \.self) { code in
-                            let on = code == native
-                            Button { native = code } label: {
-                                Text(Decks.name(code)).font(.ui(16, on ? .semibold : .regular)).foregroundStyle(on ? p.accent : p.text)
-                                    .padding(.horizontal, 16).padding(.vertical, 10)
-                                    .background(Capsule().fill(p.card))
-                                    .overlay(Capsule().stroke(on ? p.accent : .clear, lineWidth: 2))
-                            }
-                            .accessibilityIdentifier("native:\(code)")
-                            .accessibilityAddTraits(on ? .isSelected : [])
+                            chip(Decks.name(code), "native:\(code)", code == native) { native = code }
+                        }
+                    }
+                    Text(t("Язык интерфейса")).font(.serif(22, .semibold)).foregroundStyle(p.word).padding(.top, 28).padding(.bottom, 12)
+                    // Apart from the translations: one may learn with Russian ones in an English interface.
+                    HStack(spacing: 8) {
+                        ForEach(Decks.uiLangs, id: \.self) { code in
+                            chip(Decks.uiName(code), "ui:\(code)", code == model.prefs.uiLang) { model.set { $0.uiLang = code } }
                         }
                     }
                     Text(t("Выбрано по языку телефона. Всё можно поменять потом в настройках."))
@@ -62,6 +61,18 @@ struct PairScreen: View {
             target = model.deck.target
             native = model.deck.native
         }
+    }
+
+    private func chip(_ label: String, _ id: String, _ on: Bool, action: @escaping () -> Void) -> some View {
+        let p = model.palette
+        return Button(action: action) {
+            Text(label).font(.ui(16, on ? .semibold : .regular)).foregroundStyle(on ? p.accent : p.text)
+                .padding(.horizontal, 16).padding(.vertical, 10)
+                .background(Capsule().fill(p.card))
+                .overlay(Capsule().stroke(on ? p.accent : .clear, lineWidth: 2))
+        }
+        .accessibilityIdentifier(id)
+        .accessibilityAddTraits(on ? .isSelected : [])
     }
 
     private func option(_ code: String) -> some View {

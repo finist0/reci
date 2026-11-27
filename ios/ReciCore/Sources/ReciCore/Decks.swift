@@ -68,11 +68,10 @@ public enum Decks {
     // An unknown or missing id means the first deck.
     public static func deck(_ id: String?) -> Deck { all.first { $0.id == id } ?? all[0] }
 
-    // The language the phone is set to; tests set it.
-    public static var systemLanguage: String = {
-        let tag = Locale.preferredLanguages.first ?? ""
-        return String(tag.prefix { $0 != "-" && $0 != "_" }).lowercased()
-    }()
+    // The language the phone is set to, as a tag (sr-Latn-RS) and as a language (sr); tests set
+    // them.
+    public static var systemTag = Locale.preferredLanguages.first ?? ""
+    public static var systemLanguage = String(systemTag.prefix { $0 != "-" && $0 != "_" }).lowercased()
 
     // Serbian and the languages close to it.
     static let serbian: Set<String> = ["sr", "hr", "bs", "sh", "cnr", "mk", "sl"]
@@ -87,9 +86,32 @@ public enum Decks {
         return all.contains { $0.id == id } ? id : first
     }
 
-    // The interface language of a first start: the phone's, if the interface speaks it.
+    // The interface language of a first start: the phone's, if the interface speaks it, and
+    // Russian where the translations are Russian.
     public static func guessUi(_ language: String) -> String {
-        language == "ru" ? "ru" : serbian.contains(language) ? "sr" : "en"
+        russianReaders.contains(language) ? "ru" : serbian.contains(language) ? "sr" : "en"
+    }
+
+    static let latinReaders: Set<String> = ["hr", "bs", "sl", "sh", "cnr"]
+
+    // A first start shows Serbian in Latin letters on a phone set to a language written in them.
+    public static func guessLatin(_ tag: String) -> Bool {
+        let parts = tag.lowercased().split { $0 == "-" || $0 == "_" }
+        guard let language = parts.first.map(String.init) else { return false }
+        return latinReaders.contains(language) || language == "sr" && parts.contains("latn")
+    }
+
+    // The values of Prefs.uiLang, in the order they are offered.
+    public static let uiLangs = ["ru", "sr", "en"]
+
+    // An interface language named in itself, so that a user who cannot read the interface finds
+    // their own.
+    public static func uiName(_ code: String) -> String {
+        switch code {
+        case "ru": return "Русский"
+        case "sr": return I18n.latin ? "Srpski" : "Српски"
+        default: return "English"
+        }
     }
 
     private static func langName(_ code: String, _ l: String) -> String {

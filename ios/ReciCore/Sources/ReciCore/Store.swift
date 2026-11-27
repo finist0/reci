@@ -55,6 +55,7 @@ public final class Store {
             let earlier = stored.keys.contains { $0 == "currentKey" || $0.hasSuffix(".currentKey") }
                 || FileManager.default.fileExists(atPath: progressURL(d).path)
             p.uiLang = earlier ? d.native : Decks.guessUi(Decks.systemLanguage)
+            if !earlier { p.latinFirst = Decks.guessLatin(Decks.systemTag) }
         }
         prefs = p
         progress = (try? Data(contentsOf: progressURL(d))).flatMap { try? dec.decode([String: Progress].self, from: $0) } ?? [:]

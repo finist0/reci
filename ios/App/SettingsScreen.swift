@@ -34,7 +34,6 @@ struct SettingsScreen: View {
 
     private let sizes = [10, 15, 20, 30]
     // The values of Prefs.uiLang in the order of the interface language choice.
-    private let uiLangs = ["ru", "sr", "en"]
 
     var body: some View {
         let p = model.palette
@@ -59,10 +58,8 @@ struct SettingsScreen: View {
                                     model.switchDeck(Decks.pick(deck.target, natives[i]).id)
                                 }
                                 Line()
-                                // Each language is named in itself, so that a user who cannot read
-                                // the interface finds their own.
-                                menuChoice(t("Язык интерфейса"), ["Русский", "Српски", "English"],
-                                           uiLangs.firstIndex(of: prefs.uiLang) ?? 0) { i in model.set { $0.uiLang = uiLangs[i] } }
+                                menuChoice(t("Язык интерфейса"), Decks.uiLangs.map(Decks.uiName),
+                                           Decks.uiLangs.firstIndex(of: prefs.uiLang) ?? 0) { i in model.set { $0.uiLang = Decks.uiLangs[i] } }
                             }
                         }
                         Group {
