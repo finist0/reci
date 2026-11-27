@@ -1762,5 +1762,9 @@
  "Повторный запуск из списка недавних приложений больше не открывает заново форму сообщения об ошибке.": {
   "en": "Opening the app again from the recent apps no longer brings back the error report form.",
   "sr": "Поновно отварање апликације из листе недавних више не враћа формулар за пријаву грешке."
+ },
+ "В сербских карточках с переводом на английский исправлены ударения в заметках и примерах, как в 2.4 у карточек с русским переводом.": {
+  "en": "Stress marks in the notes and examples of the Serbian cards with English translation are fixed, as they were for the Russian translation in 2.4.",
+  "sr": "У српским картицама са преводом на енглески исправљени су акценти у белешкама и примерима, као у 2.4 код картица са руским преводом."
  }
 }
