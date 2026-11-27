@@ -797,9 +797,6 @@ const menu = (title, values, value, label, name) => `
             `<option value="${esc(v)}"${v === value ? " selected" : ""}>${esc(label(v))}</option>`).join("")}</select>
     </label>`;
 
-// The values of prefs.uiLang in the order of the interface language choice.
-const UI_LANGS = ["ru", "sr", "en"];
-
 const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
 
 let appVersion = "";
@@ -828,11 +825,9 @@ function settingsScreen(e) {
         <b>${t("Компьютер:")}</b> ${t("в Chrome или Edge значок установки в адресной строке.")}<br>
         ${t("Прогресс хранится в этом браузере на этом устройстве.")}</div>`);
     const deck = Decks.current();
-    // Each language is named in itself, so that a user who cannot read the interface finds their own.
-    const uiNames = ["Русский", "Српски", "English"];
     const languages = groupTitle(t("Язык")) + panel(menu(t("Учу"), Decks.targets(), deck.target, Decks.name, "target") + line +
         menu(t("Перевод на"), Decks.natives(deck.target), deck.native, Decks.name, "native") + line +
-        menu(t("Язык интерфейса"), UI_LANGS, prefs.uiLang, v => uiNames[Math.max(0, UI_LANGS.indexOf(v))], "uilang"));
+        menu(t("Язык интерфейса"), Decks.UI_LANGS, prefs.uiLang, Decks.uiName, "uilang"));
     const accents = serbian ? choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode, "accents")
         // One kind of mark only: "with" is mode 1, "without" is mode 2.
         : choice(t("Ударения"), Decks.accentSamples(), prefs.accentMode === 2 ? 1 : 0, "stressplace");
@@ -928,6 +923,9 @@ function pairScreen(e) {
         <span class="radio"></span></button>`).join("");
     const natives = Decks.natives(e.target).map(code =>
         `<button class="pair-chip${code === e.native ? " on" : ""}" ${act("pairnative", code)} data-code="${code}"${off}>${esc(Decks.name(code))}</button>`).join("");
+    // Apart from the translations: one may learn with Russian ones in an English interface.
+    const uis = Decks.UI_LANGS.map(code =>
+        `<button class="pair-ui${code === prefs.uiLang ? " on" : ""}" ${act("pairui", code)} data-code="${code}"${off}>${esc(Decks.uiName(code))}</button>`).join("");
     return `<div class="screen-col">
         <div class="scroll" data-scroll="pair"><div class="pair-body">
             <div class="pair-app">НЕРодная речь</div>
@@ -935,6 +933,8 @@ function pairScreen(e) {
             <div class="pair-options">${targets}</div>
             <div class="pair-sub">${t("Перевод на")}</div>
             <div class="pair-chips">${natives}</div>
+            <div class="pair-sub">${t("Язык интерфейса")}</div>
+            <div class="pair-chips">${uis}</div>
             <div class="pair-note">${t("Выбрано по языку браузера. Всё можно поменять потом в настройках.")}</div>
         </div></div>
         <button class="primary wide${e.loading ? " off" : ""}" ${act("pairstart")}${off}>${t("Начать")}</button>
@@ -1064,6 +1064,10 @@ const actions = {
     },
     pairnative: code => {
         pair.native = code;
+        schedule();
+    },
+    pairui: code => {
+        setPref("uiLang", code);
         schedule();
     },
     // The choice stays on screen until the cards of the pair chosen are in.

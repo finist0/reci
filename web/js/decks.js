@@ -32,11 +32,27 @@ export function store(id) {
     return d ? all.find(x => x.target === d.target).id : id;
 }
 
-// The interface language of a first start: the browser's, if the interface speaks it.
+// The interface language of a first start: the browser's, if the interface speaks it, and
+// Russian where the translations are Russian.
 export function guessUi(langs = navigator.languages ?? [navigator.language]) {
     const lang = browserLang(langs);
-    return lang === "ru" ? "ru" : SERBIAN.includes(lang) ? "sr" : "en";
+    return RUSSIAN_READERS.includes(lang) ? "ru" : SERBIAN.includes(lang) ? "sr" : "en";
 }
+
+const LATIN_READERS = ["hr", "bs", "sl", "sh", "cnr"];
+
+// A first start shows Serbian in Latin letters in a browser set to a language written in them.
+export function guessLatin(langs = navigator.languages ?? [navigator.language]) {
+    const lang = browserLang(langs);
+    return LATIN_READERS.includes(lang) || lang === "sr" && /[-_]latn\b/i.test(String(langs[0]));
+}
+
+// The values of prefs.uiLang, in the order they are offered.
+export const UI_LANGS = ["ru", "sr", "en"];
+
+// An interface language named in itself, so that a user who cannot read the interface finds
+// their own.
+export const uiName = code => code === "ru" ? "Русский" : code === "sr" ? (prefs.latinFirst ? "Srpski" : "Српски") : "English";
 
 // A first start asks for the languages on a screen of its own (ui.js): "pair" until they are
 // chosen, then "done".
@@ -72,6 +88,7 @@ export function init(decks, ui) {
     if (!deck()) {
         useDeck(earlier ? FIRST : guess());
         if (!earlier && intro() === null) setIntro("pair");
+        if (!earlier) setPref("latinFirst", guessLatin());
     }
     if (!prefs.uiLang) setPref("uiLang", earlier ? current().native : guessUi());
 }

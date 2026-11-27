@@ -775,7 +775,7 @@ a.setting { color: inherit; text-decoration: none; }
 .pair-option.on .radio { border-color: var(--accent); background: radial-gradient(circle, var(--accent) 0 6px, transparent 7px); }
 .pair-sub { font: 600 22px var(--serif); color: var(--word); margin: 28px 0 12px; }
 .pair-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.pair-chip { padding: 10px 16px; border-radius: 999px; background: var(--card); border: 2px solid transparent; font-size: 16px; color: var(--text); }
-.pair-chip.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
-.pair-option[disabled], .pair-chip[disabled] { opacity: .6; }
+.pair-chip, .pair-ui { padding: 10px 16px; border-radius: 999px; background: var(--card); border: 2px solid transparent; font-size: 16px; color: var(--text); }
+.pair-chip.on, .pair-ui.on { border-color: var(--accent); color: var(--accent); font-weight: 600; }
+.pair-option[disabled], .pair-chip[disabled], .pair-ui[disabled] { opacity: .6; }
 .pair-note { margin-top: 24px; padding: 16px; border-radius: 18px; background: var(--card); font-size: 14px; line-height: 19px; color: var(--secondary); }
